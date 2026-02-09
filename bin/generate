@@ -16,16 +16,10 @@
 require "json"
 require "yaml"
 require "fileutils"
-require "rubygems/package"
-require "stringio"
-require "zlib"
 
 SCINT_LIB = File.expand_path("../../scint/lib", __dir__)
 $LOAD_PATH.unshift(SCINT_LIB)
-require "scint/lockfile/parser"
-require "scint/cache/layout"
-require "scint/spec_utils"
-require "scint/platform"
+require "scint"
 
 # Gems provided by Ruby itself — filter these from dependency lists.
 RUBY_PROVIDED = %w[bundler rubygems].freeze
@@ -80,223 +74,52 @@ NATIVE_DEPS = load_native_deps(default_native_deps, extra_native_deps)
 
 # -- Resolve gems ----------------------------------------------------------
 
-cache    = Scint::Cache::Layout.new(root: cache_root)
-abi      = Scint::Platform.abi_key
-lockfile = Scint::Lockfile::Parser.parse(lockfile_path)
+project_dir = File.dirname(File.expand_path(lockfile_path))
+Scint.cache_root = cache_root if cache_root
+bundle = Scint::Bundle.new(project_dir)
 
-# Filter to current platform, deduplicate (prefer platform-specific)
-# Skip PATH-sourced gems — they're the project's own code, not third-party deps.
-path_skipped = []
-by_name = {}
-lockfile.specs.each do |spec|
-  next unless Scint::Platform.match_platform?(spec[:platform])
-  if spec[:source].is_a?(Scint::Source::Path)
-    path_skipped << spec[:name]
-    next
-  end
-  name = spec[:name]
-  prev = by_name[name]
-  if prev.nil? || (spec[:platform] != "ruby" && prev[:platform] == "ruby")
-    by_name[name] = spec
-  end
-end
+# Use the library to parse lockfile, filter platforms, extract metadata
+exported_gems, path_skipped = Scint::Cache::Export.from_lockfile(bundle)
 unless path_skipped.empty?
   $stderr.puts "Skipped #{path_skipped.size} PATH-sourced gem(s): #{path_skipped.join(", ")}"
 end
 
-gems = by_name.values.map do |spec|
-  name     = spec[:name]
-  version  = spec[:version]
-  platform = spec[:platform] || "ruby"
-  full_name = Scint::SpecUtils.full_name_for(name, version, platform)
-
-  cached_dir    = cache.cached_path(spec, abi)
-  manifest_path = cache.cached_manifest_path(spec, abi)
-
-  # Read real gemspec from spec.marshal if available
-  spec_marshal_path = cached_dir + ".spec.marshal"
-  real_spec = nil
-  if File.exist?(spec_marshal_path)
-    real_spec = Marshal.load(File.binread(spec_marshal_path)) rescue nil
-  end
-
-  # Detect extensions from manifest
-  needs_ext = false
-  if File.exist?(manifest_path)
-    manifest = JSON.parse(File.read(manifest_path, encoding: "UTF-8"))
-    needs_ext = manifest.dig("build", "extensions") == true
-  end
-
-  # In Nix, prebuilt .so from scint's cache won't work (wrong Ruby, wrong libs).
-  # Every gem with extensions must be compiled from source inside the sandbox.
-  needs_compilation = needs_ext
-
-  # Detect nested source dir (monorepo pattern: cached/activesupport-8.2.0.alpha/activesupport/lib/)
-  source_subdir = nil
-  if Dir.exist?(cached_dir)
-    unless Dir.exist?(File.join(cached_dir, "lib"))
-      candidate = File.join(cached_dir, name)
-      if Dir.exist?(candidate) && Dir.exist?(File.join(candidate, "lib"))
-        source_subdir = name
-      end
-    end
-  end
-
-  # Detect extconf.rb paths for native gems
-  extconfs = []
-  if needs_compilation && Dir.exist?(cached_dir)
-    extconfs = Dir.glob(File.join(cached_dir, "ext", "**", "extconf.rb"))
-      .map { |p| p.sub("#{cached_dir}/", "") }
-  end
-
-  # require_paths: prefer spec.marshal, fall back to .gem YAML metadata, then ["lib"]
-  require_paths = nil
-  require_paths = real_spec.require_paths if real_spec
-
-  unless require_paths
-    gem_path = cache.inbound_path(spec)
-    if File.exist?(gem_path)
-      begin
-        File.open(gem_path, "rb") do |io|
-          Gem::Package::TarReader.new(io) do |tar|
-            tar.each do |entry|
-              if entry.full_name == "metadata.gz"
-                yaml = Zlib::GzipReader.new(StringIO.new(entry.read)).read
-                meta = YAML.safe_load(yaml,
-                  permitted_classes: [Gem::Specification, Gem::Version, Gem::Requirement, Gem::Dependency, Symbol, Time])
-                require_paths = meta.require_paths rescue meta["require_paths"] rescue nil
-                break
-              end
-            end
-          end
-        end
-      rescue => e
-        $stderr.puts "WARN: #{full_name}: could not read .gem metadata: #{e.message}"
-      end
-    end
-  end
-
-  require_paths ||= ["lib"]
-
-  # Verify require_paths exist; empty for meta-gems (rails, rubocop-rails-omakase)
-  if Dir.exist?(cached_dir) || source_subdir
-    base = source_subdir ? File.join(cached_dir, source_subdir) : cached_dir
-    require_paths = require_paths.select { |p| Dir.exist?(File.join(base, p)) }
-  end
-
-  # Executables: prefer spec.marshal (if populated), fall back to .gem YAML metadata
-  executables = nil
-  bindir = nil
-  if real_spec && real_spec.respond_to?(:executables) && !real_spec.executables.empty?
-    executables = real_spec.executables
-    bindir = real_spec.bindir
-  end
-
-  if executables.nil? || executables.empty?
-    gem_path = cache.inbound_path(spec)
-    if File.exist?(gem_path)
-      begin
-        File.open(gem_path, "rb") do |io|
-          Gem::Package::TarReader.new(io) do |tar|
-            tar.each do |entry|
-              if entry.full_name == "metadata.gz"
-                yaml = Zlib::GzipReader.new(StringIO.new(entry.read)).read
-                meta = YAML.safe_load(yaml,
-                  permitted_classes: [Gem::Specification, Gem::Version, Gem::Requirement, Gem::Dependency, Symbol, Time])
-                executables = meta.executables rescue nil
-                bindir = meta.bindir rescue nil
-                break
-              end
-            end
-          end
-        end
-      rescue => e
-        # ignore
-      end
-    end
-  end
-
-  executables ||= []
-  bindir ||= "exe"
-
-  nix_attr = name  # Use gem name as nix attribute (idiomatic)
-
-  # Detect git source
-  git_source = nil
-  if spec[:source].is_a?(Scint::Source::Git)
-    src = spec[:source]
-    uri = src.uri
-    base_name = File.basename(uri.sub(%r{^(\w+://)?([^/:]+:)?(//\w*/)?(\w*/)*}, ""), ".git")
-    shortref = src.revision[0..11]
-    git_source = {
-      uri: uri,
-      revision: src.revision,
-      base_name: base_name,
-      shortref: shortref,
-      checkout_dir: "#{base_name}-#{shortref}",
-    }
-  end
-
-  {
-    name: name, version: version, platform: platform,
-    full_name: full_name, nix_attr: nix_attr,
-    deps: (spec[:dependencies] || []).map { |d| d[:name] }.reject { |d| RUBY_PROVIDED.include?(d) || path_skipped.include?(d) },
-    cached: Dir.exist?(cached_dir), cached_dir: cached_dir,
-    needs_compilation: needs_compilation,
-    native_deps: needs_compilation ? (NATIVE_DEPS[name] || []) : [],
-    source_subdir: source_subdir,
-    extconfs: extconfs,
-    require_paths: require_paths,
-    executables: executables,
-    bindir: bindir,
-    git_source: git_source,
-  }
-end
-
-# Check all cached
-missing = gems.reject { |g| g[:cached] }
-if missing.any?
-  $stderr.puts "ERROR: #{missing.size} gems not in scint cache:"
-  missing.each { |g| $stderr.puts "  #{g[:full_name]}" }
-  $stderr.puts "\nRun: scint cache add --lockfile #{lockfile_path}"
-  exit 1
-end
-
-# -- Generate per-gem dirs -------------------------------------------------
+# -- Export sources & build gem metadata -----------------------------------
 
 output_dir = File.expand_path(output_dir)
 FileUtils.mkdir_p(output_dir)
 
 name_to_attr = {}
-gems.each { |g| name_to_attr[g[:name]] = g[:nix_attr] }
+exported_gems.each { |g| name_to_attr[g.name] = g.name }
 
-generated = 0
-copied    = 0
+gems = exported_gems.map do |eg|
+  dir = File.join(output_dir, eg.full_name)
+  deps = eg.dependencies.reject { |d| RUBY_PROVIDED.include?(d) || path_skipped.include?(d) }
+
+  # Export source (no-op if already exists)
+  eg.export(File.join(dir, "source"))
+
+  {
+    name: eg.name, version: eg.version, platform: "ruby",
+    full_name: eg.full_name, nix_attr: eg.name,
+    deps: deps,
+    needs_compilation: eg.has_extensions,
+    native_deps: eg.has_extensions ? (NATIVE_DEPS[eg.name] || []) : [],
+    source_subdir: eg.source_subdir,
+    require_paths: eg.require_paths,
+    executables: eg.executables,
+    bindir: eg.bindir,
+    is_platform_gem: eg.platform_gem?,
+    nix_platform_expr: eg.nix_platform_expr,
+    git_source: eg.git_source? ? { checkout_dir: eg.git_checkout_dir } : nil,
+    exported: eg,
+  }
+end
+
+copied = gems.count { |g| g[:exported].exported? }
 
 gems.each do |g|
   dir = File.join(output_dir, g[:full_name])
-  source_dir = File.join(dir, "source")
-
-  # Always copy source if missing
-  unless Dir.exist?(source_dir)
-    FileUtils.mkdir_p(dir)
-    if g[:source_subdir]
-      FileUtils.cp_r(File.join(g[:cached_dir], g[:source_subdir]), source_dir)
-    else
-      FileUtils.cp_r(g[:cached_dir], source_dir)
-    end
-
-    # Strip pre-built .so/.bundle from scint's cache — they're linked against
-    # the wrong Ruby/system libs and must be recompiled inside the Nix sandbox.
-    if g[:needs_compilation]
-      Dir.glob(File.join(source_dir, "lib", "**", "*.{so,bundle}")).each do |f|
-        File.delete(f)
-      end
-    end
-
-    copied += 1
-  end
-
   name    = g[:name]
   version = g[:version]
 
@@ -307,9 +130,6 @@ gems.each do |g|
     cnix << "#\n"
     cnix << "# Override build behaviour here. This file is never overwritten by generate.\n"
     cnix << "# default.nix imports this and merges the attrs below.\n"
-    cnix << "#\n"
-    cnix << "# extconf.rb locations found in source:\n"
-    g[:extconfs].each { |e| cnix << "#   #{e}\n" }
     cnix << "#\n"
     cnix << "# Known native deps: #{g[:native_deps].inspect}\n"
     cnix << "{\n"
@@ -331,9 +151,13 @@ gems.each do |g|
     args = %w[lib stdenv ruby]
     args.concat(g[:native_deps])
     args << "gemDeps ? {}"
+    args << "gemPlatform ? null" if g[:is_platform_gem]
     nix << "{ #{args.join(", ")} }:\n\n"
     nix << "let\n"
     nix << "  compile = import ./compile.nix;\n"
+    if g[:is_platform_gem]
+      nix << "  gemFullName = if gemPlatform != null then \"#{name}-#{version}-${gemPlatform}\" else \"#{name}-#{version}\";\n"
+    end
     nix << "in\n\n"
     nix << "stdenv.mkDerivation {\n"
     nix << "  pname = \"#{name}\";\n"
@@ -365,7 +189,13 @@ gems.each do |g|
   else
     args = %w[lib stdenv ruby]
     args << "gemDeps ? {}"
+    args << "gemPlatform ? null" if g[:is_platform_gem]
     nix << "{ #{args.join(", ")} }:\n\n"
+    if g[:is_platform_gem]
+      nix << "let\n"
+      nix << "  gemFullName = if gemPlatform != null then \"#{name}-#{version}-${gemPlatform}\" else \"#{name}-#{version}\";\n"
+      nix << "in\n\n"
+    end
     nix << "stdenv.mkDerivation {\n"
     nix << "  pname = \"#{name}\";\n"
     nix << "  version = \"#{version}\";\n"
@@ -385,17 +215,25 @@ gems.each do |g|
   if g[:needs_compilation]
     nix << "    ${compile.preInstall}\n"
   end
-  # Use full_name for dirs/files (includes platform suffix for platform gems)
-  gem_full_name = g[:platform] == "ruby" ? "#{name}-#{version}" : "#{name}-#{version}-#{g[:platform]}"
-  nix << "    mkdir -p $out/gems/#{gem_full_name}\n"
-  nix << "    cp -r . $out/gems/#{gem_full_name}/\n"
-  nix << "    mkdir -p $out/specifications\n"
-  nix << "    cat > $out/specifications/#{gem_full_name}.gemspec <<'GEMSPEC'\n"
+
+  if g[:is_platform_gem]
+    nix << "    mkdir -p $out/gems/${gemFullName}\n"
+    nix << "    cp -r . $out/gems/${gemFullName}/\n"
+    nix << "    mkdir -p $out/specifications\n"
+    nix << "    cat > $out/specifications/${gemFullName}.gemspec <<GEMSPEC\n"
+  else
+    nix << "    mkdir -p $out/gems/#{name}-#{version}\n"
+    nix << "    cp -r . $out/gems/#{name}-#{version}/\n"
+    nix << "    mkdir -p $out/specifications\n"
+    nix << "    cat > $out/specifications/#{name}-#{version}.gemspec <<'GEMSPEC'\n"
+  end
   nix << "    Gem::Specification.new do |s|\n"
   nix << "      s.name = \"#{name}\"\n"
   nix << "      s.version = \"#{version}\"\n"
-  if g[:platform] != "ruby"
-    nix << "      s.platform = \"#{g[:platform]}\"\n"
+  if g[:is_platform_gem]
+    # gemPlatform is a Nix string interpolated into the heredoc.
+    # The Ruby `if` guard prevents setting platform when gemPlatform is null/"".
+    nix << "      s.platform = \"${toString gemPlatform}\" unless \"${toString gemPlatform}\".empty?\n"
   end
   nix << "      s.summary = \"#{name}\"\n"
   nix << "      s.require_paths = [#{g[:require_paths].map { |p| "\"#{p}\"" }.join(", ")}]\n"
@@ -414,13 +252,25 @@ gems.each do |g|
   nix << "}\n"
 
   File.write(File.join(dir, "default.nix"), nix)
-  generated += 1
 end
 
 # -- top-level default.nix (always regenerated) ----------------------------
 
+platform_gems = gems.select { |g| g[:is_platform_gem] }
+
 nix = header
-nix << "{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby }:\n\nlet\n  gems = {\n"
+nix << "{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby }:\n\n"
+nix << "let\n"
+
+unless platform_gems.empty?
+  nix << "  hp = pkgs.stdenv.hostPlatform;\n\n"
+  platform_gems.each do |g|
+    nix << "  gemPlatform_#{g[:name].gsub("-", "_")} =\n"
+    nix << "    #{g[:nix_platform_expr]};\n\n"
+  end
+end
+
+nix << "  gems = {\n"
 
 gems.each do |g|
   nix << "\n    \"#{g[:nix_attr]}\" = pkgs.callPackage ./#{g[:full_name]} {\n"
@@ -431,6 +281,7 @@ gems.each do |g|
     valid_deps.each { |d| nix << " \"#{d}\"" }
     nix << "; };\n"
   end
+  nix << "      gemPlatform = gemPlatform_#{g[:name].gsub("-", "_")};\n" if g[:is_platform_gem]
   nix << "    };\n"
 end
 
@@ -446,28 +297,19 @@ git_gems = gems.select { |g| g[:git_source] }
 git_checkouts = {}
 git_gems.each do |g|
   dir = g[:git_source][:checkout_dir]
-  git_checkouts[dir] ||= { gems: [], source: g[:git_source] }
-  git_checkouts[dir][:gems] << g
+  git_checkouts[dir] ||= []
+  git_checkouts[dir] << g
 end
 
-# For each git checkout, create a source dir and derivation with the full repo source
-git_checkouts.each do |checkout_dir, info|
+# For each git checkout, export the merged source and write a derivation
+git_checkouts.each do |checkout_dir, group|
   checkout_out_dir = File.join(output_dir, "_git_#{checkout_dir}")
   source_dir = File.join(checkout_out_dir, "source")
 
+  # Export the full merged tree — the library already merged monorepo dirs
   unless Dir.exist?(source_dir)
-    FileUtils.mkdir_p(source_dir)
-    # Merge all cached dirs from all gems in this git checkout.
-    # For monorepos (rails, azure-storage-ruby), each sub-gem's cached dir
-    # may only contain its own slice. We overlay them all into one tree.
-    info[:gems].each do |g|
-      Dir.children(g[:cached_dir]).each do |child|
-        src = File.join(g[:cached_dir], child)
-        dst = File.join(source_dir, child)
-        FileUtils.cp_r(src, dst) unless File.exist?(dst)
-      end
-    end
-    $stderr.puts "  Merged git checkout: #{checkout_dir} from #{info[:gems].size} gem(s)"
+    group.first[:exported].export(source_dir, full: true)
+    $stderr.puts "  Merged git checkout: #{checkout_dir} from #{group.size} gem(s)"
   end
 
   # Write default.nix — simple copy, no build
@@ -494,6 +336,14 @@ nix << "{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby }:\n\nlet\n"
 nix << "  gems = import ./default.nix { inherit pkgs ruby; };\n"
 nix << "  rubyApiVersion = ruby.version.major + \".\" + ruby.version.minor + \".0\";\n"
 
+unless platform_gems.empty?
+  nix << "  hp = pkgs.stdenv.hostPlatform;\n"
+  platform_gems.each do |g|
+    nix << "  gemPlatform_#{g[:name].gsub("-", "_")} =\n"
+    nix << "    #{g[:nix_platform_expr]};\n"
+  end
+end
+
 # Import git checkout derivations
 git_checkouts.each do |checkout_dir, _|
   nix << "  gitCheckout_#{checkout_dir.gsub("-", "_")} = pkgs.callPackage ./_git_#{checkout_dir} {};\n"
@@ -510,9 +360,16 @@ nix << "    mkdir -p $prefix/gems $prefix/specifications $prefix/bundler/gems\n\
 # Rubygems-sourced: symlink into ruby/<ver>/gems/ + ruby/<ver>/specifications/
 nix << "    # Rubygems-sourced gems\n"
 rubygems_gems.each do |g|
-  full = g[:platform] == "ruby" ? "#{g[:name]}-#{g[:version]}" : "#{g[:name]}-#{g[:version]}-#{g[:platform]}"
-  nix << "    ln -s ${gems.\"#{g[:nix_attr]}\"}/gems/#{full} $prefix/gems/#{full}\n"
-  nix << "    ln -s ${gems.\"#{g[:nix_attr]}\"}/specifications/#{full}.gemspec $prefix/specifications/#{full}.gemspec\n"
+  if g[:is_platform_gem]
+    pvar = "gemPlatform_#{g[:name].gsub("-", "_")}"
+    full_expr = "#{g[:name]}-#{g[:version]}-${#{pvar}}"
+    nix << "    ln -s ${gems.\"#{g[:nix_attr]}\"}/gems/#{full_expr} $prefix/gems/#{full_expr}\n"
+    nix << "    ln -s ${gems.\"#{g[:nix_attr]}\"}/specifications/#{full_expr}.gemspec $prefix/specifications/#{full_expr}.gemspec\n"
+  else
+    full = "#{g[:name]}-#{g[:version]}"
+    nix << "    ln -s ${gems.\"#{g[:nix_attr]}\"}/gems/#{full} $prefix/gems/#{full}\n"
+    nix << "    ln -s ${gems.\"#{g[:nix_attr]}\"}/specifications/#{full}.gemspec $prefix/specifications/#{full}.gemspec\n"
+  end
 end
 
 # Git-sourced: symlink full checkout dirs at ruby/<ver>/bundler/gems/<base>-<shortref>/
@@ -528,19 +385,22 @@ unless gems_with_exes.empty?
   nix << "\n    # Gem binstubs\n"
   nix << "    mkdir -p $prefix/bin\n"
   gems_with_exes.each do |g|
-    full = g[:platform] == "ruby" ? "#{g[:name]}-#{g[:version]}" : "#{g[:name]}-#{g[:version]}-#{g[:platform]}"
     g[:executables].each do |exe|
       if g[:git_source]
         checkout_dir = g[:git_source][:checkout_dir]
         nix_var = "gitCheckout_#{checkout_dir.gsub("-", "_")}"
-        # Git gems: exe is relative to the checkout subdir
         source_subdir = g[:source_subdir]
         if source_subdir
           nix << "    ln -sf ${#{nix_var}}/#{source_subdir}/#{g[:bindir]}/#{exe} $prefix/bin/#{exe}\n"
         else
           nix << "    ln -sf ${#{nix_var}}/#{g[:bindir]}/#{exe} $prefix/bin/#{exe}\n"
         end
+      elsif g[:is_platform_gem]
+        pvar = "gemPlatform_#{g[:name].gsub("-", "_")}"
+        full_expr = "#{g[:name]}-#{g[:version]}-${#{pvar}}"
+        nix << "    ln -sf ${gems.\"#{g[:nix_attr]}\"}/gems/#{full_expr}/#{g[:bindir]}/#{exe} $prefix/bin/#{exe}\n"
       else
+        full = "#{g[:name]}-#{g[:version]}"
         nix << "    ln -sf ${gems.\"#{g[:nix_attr]}\"}/gems/#{full}/#{g[:bindir]}/#{exe} $prefix/bin/#{exe}\n"
       end
     end
@@ -554,12 +414,12 @@ File.write(File.join(output_dir, "bundle-path.nix"), nix)
 
 File.write(File.join(output_dir, "gemset.json"), JSON.pretty_generate(
   gems.map { |g|
-    h = { name: g[:name], version: g[:version], platform: g[:platform],
+    h = { name: g[:name], version: g[:version],
           full_name: g[:full_name], nix_attr: g[:nix_attr], deps: g[:deps],
           needs_compilation: g[:needs_compilation], native_deps: g[:native_deps],
           require_paths: g[:require_paths] }
     h[:source_subdir] = g[:source_subdir] if g[:source_subdir]
-    h[:extconfs] = g[:extconfs] if g[:extconfs] && !g[:extconfs].empty?
+    h[:is_platform_gem] = true if g[:is_platform_gem]
     h[:git_source] = g[:git_source] if g[:git_source]
     h
   }
@@ -581,4 +441,4 @@ end
 nix << "]\n"
 File.write(File.join(output_dir, "#{project_name}.deps.nix"), nix)
 
-$stdout.puts "#{generated} generated (#{copied} sources copied). #{gems.size} total."
+$stdout.puts "#{gems.size} generated (#{copied} sources copied). #{gems.size} total."

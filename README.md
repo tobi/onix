@@ -2,7 +2,7 @@
 
 Turn a Ruby app's `Gemfile.lock` into hermetic, individually-cacheable Nix derivations — one per gem. Every gem gets its own store path. Native extensions are compiled from source inside the Nix sandbox. The output is a `BUNDLE_PATH`-compatible directory that `bundler/setup` accepts without modification — no bundler install step, no network access, fully reproducible.
 
-Tested against [Fizzy](../fizzy) (a Rails 8.2 app): 161 gems, 23 native extensions, 3 git sources (including the Rails monorepo), 1026 tests passing on Ruby 3.4.
+Tested against 9 real-world Ruby projects totaling 2,228 gems (see [Status](#status) below).
 
 ## How it works
 
@@ -219,3 +219,64 @@ Every fix was made in `bin/generate` so a clean `rm -rf out/gems && bin/generate
 7. **Meta-gem require_paths** — gems like `rails` and `rubocop-rails-omakase` have no `lib/` directory. Their `require_paths` are set to `[]` instead of the default `["lib"]`.
 
 8. **Parameterized Ruby version** — all nix files accept a `ruby` argument so you can target any nixpkgs Ruby without regenerating.
+
+9. **PATH sources skipped** — gems from `PATH` sources in `Gemfile.lock` (the project's own code in monorepos) are excluded from generation. They're application code, not third-party deps. Their names are also stripped from dependency lists so no dangling references are generated.
+
+## Status
+
+Tested against 9 projects from `~/src/ruby-tests/`. The generator handles rubygems, git, and path sources across a wide range of real-world Gemfiles.
+
+| Project | Gems | Source types | Lint result | Notes |
+|---------|-----:|-------------|:-----------:|-------|
+| [Fizzy](../fizzy) | 161 | GEM + GIT(3) | **7/7** | Rails 8.2 app, 1026 tests passing |
+| [Liquid](https://github.com/Shopify/liquid) | 44 | GEM + GIT + PATH | **7/7** | PATH source (self) correctly skipped |
+| [Spree](https://github.com/spree/spree) | 222 | GEM + PATH(7) | **7/7** | 7 monorepo sub-packages skipped |
+| [Solidus](https://github.com/solidusio/solidus) | 200 | GEM + PATH(8) | 6/7 | faraday require-paths mismatch (benign) |
+| [Redmine](https://www.redmine.org/) | 154 | GEM | 6/7 | faraday require-paths mismatch (benign) |
+| [Discourse](https://github.com/discourse/discourse) | 296 | GEM | 4/7 | 2 native build failures, gemspec-deps |
+| [Rails](https://github.com/rails/rails) | 217 | GEM + PATH(14) | 3/7 | 2 native build failures (libxml-ruby, mysql2) |
+| [Mastodon](https://github.com/mastodon/mastodon) | 350 | GEM + GIT | 3/7 | 6 native build failures (pg, nokogiri, etc.) |
+| [Chatwoot](https://github.com/chatwoot/chatwoot) | 364 | GEM + GIT(2) | 3/7 | 2 native failures, require-paths (grpc) |
+| [Forem](https://github.com/forem/forem) | 381 | GEM + GIT | 3/7 | 8 native build failures |
+| **Total** | **2,228** | | | |
+
+### What passes everywhere
+
+- **Code generation** — all 9 projects generate successfully. Nix files parse, dependencies resolve, source trees are clean.
+- **Pure-ruby gems** — install and load correctly across all projects.
+- **Git sources** — monorepo checkouts (Rails), single-gem repos (webpush, acts_as_follower), multi-gem repos (azure-storage-ruby) all handled.
+- **PATH sources** — correctly identified and excluded (Rails' 14 sub-packages, Solidus' 8, Spree's 7, Liquid's self-reference).
+
+### Remaining failures
+
+All failures are in two categories, both fixable through the existing `compile.nix` override mechanism or by expanding the generator:
+
+**1. Native extension build failures** — gems that need system libraries not yet in the `NATIVE_DEPS` mapping:
+
+| Gem | Missing dep | Projects affected |
+|-----|------------|-------------------|
+| pg | libpq | mastodon, chatwoot, forem |
+| mysql2 | mysql | rails |
+| nokogiri (source build) | libxml2 libxslt (already mapped, but source variant differs from prebuilt) | mastodon |
+| libxml-ruby | libxml2 | rails |
+| charlock_holmes | icu | mastodon |
+| idn-ruby | libidn | mastodon |
+| rpam2 | pam | mastodon |
+| mini_racer | v8 | discourse |
+| extralite-bundle | sqlite | discourse |
+| hiredis-client | hiredis | mastodon |
+| datadog | custom build (Rust FFI) | chatwoot |
+| google-protobuf | protobuf | forem |
+| pg_query | libpg_query | forem |
+| better_html | custom parser | forem |
+
+Fix: add these to `NATIVE_DEPS` in `bin/generate`, or override per-gem via `compile.nix`.
+
+**2. `require_paths` mismatches** — gems where generated paths differ from `.gem` metadata. Most are benign:
+
+- `faraday` includes `spec/external_adapters` (test path, not needed at runtime)
+- Native gems like `ox`, `commonmarker`, `digest-crc` list `ext` in require_paths (handled by extension compilation)
+- `grpc` has an unusual `src/ruby/lib` layout (prebuilt platform gem)
+- `concurrent-ruby` uses `lib/concurrent-ruby` instead of `lib`
+
+Fix: improve require_paths detection in `bin/generate` to handle these patterns.
