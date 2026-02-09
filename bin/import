@@ -248,7 +248,9 @@ git_repos.each do |repo_key, repo|
 
   git_dir = File.join(OUTPUT_DIR, repo[:base], "git-#{repo[:shortrev]}")
   FileUtils.mkdir_p(git_dir)
-  FileUtils.ln_sf(source_dir, File.join(git_dir, "source"))
+  source_link = File.join(git_dir, "source")
+  FileUtils.rm_f(source_link)
+  FileUtils.ln_s(source_dir, source_link)
 
   # Check which gems need a generated gemspec
   missing_gemspecs = repo[:gems].select do |spec|

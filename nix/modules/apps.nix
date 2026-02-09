@@ -16,4 +16,5 @@
   "redmine" = import ../app/redmine.nix;
   "solidus" = import ../app/solidus.nix;
   "spree" = import ../app/spree.nix;
+  "synthetic" = import ../app/synthetic.nix;
 }

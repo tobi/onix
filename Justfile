@@ -62,8 +62,9 @@ link:
         version=$(basename "$d")
         target="cache/sources/${name}-${version}"
         link="${d}source"
-        if [[ -d "$target" && ! -e "$link" ]]; then
-            ln -sf "$(cd "$target" && pwd)" "$link"
+        if [[ -d "$target" ]]; then
+            rm -f "$link"
+            ln -s "$(cd "$target" && pwd)" "$link"
             n=$((n + 1))
         fi
     done

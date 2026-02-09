@@ -17,6 +17,8 @@ let
   bundle_path = "ruby/${rubyVersion}";
   overlay = import ../../../../overlays/ffi-yajl.nix { inherit pkgs ruby; };
   overlayDeps = if builtins.isList overlay then overlay else overlay.deps or [ ];
+  overlayBuildGems =
+    if builtins.isAttrs overlay && overlay ? buildGems then overlay.buildGems else [ ];
   overlayBuildPhase =
     if builtins.isAttrs overlay && overlay ? buildPhase then overlay.buildPhase else null;
   overlayBeforeBuild =
@@ -27,6 +29,7 @@ let
     if builtins.isAttrs overlay && overlay ? postInstall then overlay.postInstall else "";
   overlayExtconfFlags =
     if builtins.isAttrs overlay && overlay ? extconfFlags then overlay.extconfFlags else "";
+  gemPath = builtins.concatStringsSep ":" (map (g: "${g}/${g.bundle_path}") overlayBuildGems);
 in
 stdenv.mkDerivation {
   pname = "ffi-yajl";
@@ -40,9 +43,10 @@ stdenv.mkDerivation {
 
   buildPhase =
     if overlayBuildPhase != null then
-      overlayBuildPhase
+      (if gemPath != "" then "export GEM_PATH=${gemPath}\n" else "") + overlayBuildPhase
     else
       ''
+        ${lib.optionalString (gemPath != "") "export GEM_PATH=${gemPath}"}
         extconfFlags="${overlayExtconfFlags}"
         ${overlayBeforeBuild}
         for extconf in $(find ext -name extconf.rb 2>/dev/null); do

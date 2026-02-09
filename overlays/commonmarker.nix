@@ -1,16 +1,15 @@
 # commonmarker — Rust extension via rb_sys, needs cargo/rustc + clang for bindgen
 { pkgs, ruby }:
-let
-  rb_sys = pkgs.callPackage ../nix/gem/rb_sys/0.9.124 { inherit ruby; };
-in
 {
   deps = with pkgs; [
     rustc
     cargo
     libclang
   ];
+  buildGems = [
+    (pkgs.callPackage ../nix/gem/rb_sys/0.9.124 { inherit ruby; })
+  ];
   buildPhase = ''
-    export GEM_PATH=${rb_sys}/${rb_sys.bundle_path}
     export CARGO_HOME="$TMPDIR/cargo"
     mkdir -p "$CARGO_HOME"
     export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"

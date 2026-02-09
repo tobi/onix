@@ -236,7 +236,9 @@ meta_by_key.each_value do |meta|
 
   gem_dir = File.join(output_dir, name, version)
   FileUtils.mkdir_p(gem_dir)
-  FileUtils.ln_sf(source_dir, File.join(gem_dir, "source"))
+  source_link = File.join(gem_dir, "source")
+  FileUtils.rm_f(source_link)
+  FileUtils.ln_s(source_dir, source_link)
 
   has_overlay = overlays.key?(name)
   has_heredoc = true  # installPhase always has gemspec heredoc
@@ -280,6 +282,8 @@ meta_by_key.each_value do |meta|
   if has_overlay
     nix << "  overlay = import ../../../../overlays/#{name}.nix { inherit pkgs ruby; };\n"
     nix << "  overlayDeps = if builtins.isList overlay then overlay else overlay.deps or [ ];\n"
+    nix << "  overlayBuildGems =\n"
+    nix << "    if builtins.isAttrs overlay && overlay ? buildGems then overlay.buildGems else [ ];\n"
     nix << "  overlayBuildPhase =\n"
     nix << "    if builtins.isAttrs overlay && overlay ? buildPhase then overlay.buildPhase else null;\n"
     nix << "  overlayBeforeBuild =\n"
@@ -290,12 +294,29 @@ meta_by_key.each_value do |meta|
     nix << "    if builtins.isAttrs overlay && overlay ? postInstall then overlay.postInstall else \"\";\n"
     nix << "  overlayExtconfFlags =\n"
     nix << "    if builtins.isAttrs overlay && overlay ? extconfFlags then overlay.extconfFlags else \"\";\n"
+    nix << "  gemPath = builtins.concatStringsSep \":\" (map (g: \"${g}/${g.bundle_path}\") overlayBuildGems);\n"
   end
 
   # Auto-detected build-time gem deps: resolve to derivation paths
-  if auto && !auto[:build_gem_deps].empty? && !auto[:is_rust]
-    auto[:build_gem_deps].each do |gdep|
-      # Find the latest version of this gem in our pool
+  if !has_overlay && auto && (!auto[:build_gem_deps].empty? || auto[:is_rust])
+    resolved_gems = []
+
+    # Rust gems need rb_sys
+    if auto[:is_rust]
+      rb_sys_dir = File.join(output_dir, "rb_sys")
+      if Dir.exist?(rb_sys_dir)
+        rb_sys_versions = Dir.children(rb_sys_dir)
+                             .select { |d| d != "default.nix" && File.directory?(File.join(rb_sys_dir, d)) && !d.start_with?("git-") }
+                             .sort_by { |v| Gem::Version.new(v) rescue Gem::Version.new("0") }
+        unless rb_sys_versions.empty?
+          nix << "  rb_sys = import ../../../rb_sys/#{rb_sys_versions.last} { inherit lib stdenv ruby; };\n"
+          resolved_gems << "rb_sys"
+        end
+      end
+    end
+
+    # Other build-time gem deps
+    auto[:build_gem_deps].reject { |g| g == "rb_sys" }.each do |gdep|
       gdep_dir = File.join(output_dir, gdep)
       if Dir.exist?(gdep_dir)
         versions = Dir.children(gdep_dir)
@@ -303,22 +324,16 @@ meta_by_key.each_value do |meta|
                       .sort_by { |v| Gem::Version.new(v) rescue Gem::Version.new("0") }
         unless versions.empty?
           v = versions.last
-          nix << "  #{gdep.gsub("-", "_")} = import ../../../#{gdep}/#{v} { inherit lib stdenv ruby; };\n"
+          varname = gdep.gsub("-", "_")
+          nix << "  #{varname} = import ../../../#{gdep}/#{v} { inherit lib stdenv ruby; };\n"
+          resolved_gems << varname
         end
       end
     end
-  end
 
-  # Rust gems: emit rb_sys derivation
-  if auto&.dig(:is_rust)
-    rb_sys_dir = File.join(output_dir, "rb_sys")
-    if Dir.exist?(rb_sys_dir)
-      rb_sys_versions = Dir.children(rb_sys_dir)
-                           .select { |d| d != "default.nix" && File.directory?(File.join(rb_sys_dir, d)) && !d.start_with?("git-") }
-                           .sort_by { |v| Gem::Version.new(v) rescue Gem::Version.new("0") }
-      unless rb_sys_versions.empty?
-        nix << "  rb_sys = import ../../../rb_sys/#{rb_sys_versions.last} { inherit lib stdenv ruby; };\n"
-      end
+    unless resolved_gems.empty?
+      gem_path_expr = resolved_gems.map { |g| "\"${#{g}}/${#{g}.bundle_path}\"" }.join(" ")
+      nix << "  gemPath = builtins.concatStringsSep \":\" [ #{gem_path_expr} ];\n"
     end
   end
 
@@ -350,13 +365,18 @@ meta_by_key.each_value do |meta|
       "  fi",
       "done",
     ]
+    # Determine if we have a gemPath to export (from overlay buildGems or auto-detection)
+    has_gem_path = has_overlay || (auto && (!auto[:build_gem_deps].empty? || auto[:is_rust]))
+
     if has_overlay
       nix << "  nativeBuildInputs = [ ruby ] ++ overlayDeps;\n\n"
       nix << "  buildPhase =\n"
       nix << "    if overlayBuildPhase != null then\n"
-      nix << "      overlayBuildPhase\n"
+      # Custom buildPhase — GEM_PATH injected automatically before the custom phase
+      nix << "      (if gemPath != \"\" then \"export GEM_PATH=${gemPath}\\n\" else \"\") + overlayBuildPhase\n"
       nix << "    else\n"
       nix << "      ''\n"
+      nix << "        ${lib.optionalString (gemPath != \"\") \"export GEM_PATH=${gemPath}\"}\n"
       nix << "        extconfFlags=\"${overlayExtconfFlags}\"\n"
       nix << "        ${overlayBeforeBuild}\n"
       default_build_lines.each { |l| nix << "        #{l}\n" }
@@ -368,7 +388,7 @@ meta_by_key.each_value do |meta|
       auto[:deps].each { |d| rust_deps << "pkgs.#{d}" }
       nix << "  nativeBuildInputs = [ ruby #{rust_deps.join(" ")} ];\n\n"
       nix << "  buildPhase = ''\n"
-      nix << "    export GEM_PATH=${rb_sys}/${rb_sys.bundle_path}\n"
+      nix << "    export GEM_PATH=${gemPath}\n"
       nix << "    export CARGO_HOME=\"$TMPDIR/cargo\"\n"
       nix << "    mkdir -p \"$CARGO_HOME\"\n"
       nix << "    export LIBCLANG_PATH=\"${pkgs.llvmPackages.libclang.lib}/lib\"\n"
@@ -383,12 +403,10 @@ meta_by_key.each_value do |meta|
       dep_list = auto[:deps].map { |d| "pkgs.#{d}" }.join(" ")
       nix << "  nativeBuildInputs = [ ruby #{dep_list} ];\n\n"
       nix << "  buildPhase = ''\n"
-      nix << "    extconfFlags=\"#{auto[:extconf_flags] || ""}\"\n"
-      # Build-time gem deps → GEM_PATH
-      unless auto[:build_gem_deps].empty? || auto[:is_rust]
-        gem_paths = auto[:build_gem_deps].map { |g| "${#{g.gsub("-", "_")}}/${#{g.gsub("-", "_")}.bundle_path}" }
-        nix << "    export GEM_PATH=#{gem_paths.join(":")}\n"
+      if has_gem_path
+        nix << "    export GEM_PATH=${gemPath}\n"
       end
+      nix << "    extconfFlags=\"#{auto[:extconf_flags] || ""}\"\n"
       default_build_lines.each { |l| nix << "    #{l}\n" }
       nix << "  '';\n\n"
     else

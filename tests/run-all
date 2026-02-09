@@ -9,7 +9,7 @@ set -euo pipefail
 
 dir="$(cd "$(dirname "$0")" && pwd)"
 
-all_projects=(fizzy chatwoot discourse forem liquid mastodon rails redmine solidus spree)
+all_projects=(synthetic fizzy chatwoot discourse forem liquid mastodon rails redmine solidus spree)
 
 if [ $# -gt 0 ]; then
   projects=("$@")

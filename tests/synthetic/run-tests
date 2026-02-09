@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+dir="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$dir/../.." && pwd)"
+
+echo "--- Test 1: require rails (git gem) ---"
+nix-shell "$dir/devshell.nix" --run "
+  cd '$dir'
+  ruby -e '
+    require \"bundler/setup\"
+    require \"rails\"
+    puts \"Rails version: #{Rails.version}\"
+    raise \"expected alpha\" unless Rails.version.include?(\"alpha\")
+    puts \"OK: rails git gem loaded\"
+  '
+"
+
+echo ""
+echo "--- Test 2: require liquid (rubygems) ---"
+nix-shell "$dir/devshell.nix" --run "
+  cd '$dir'
+  ruby -e '
+    require \"bundler/setup\"
+    require \"liquid\"
+    tmpl = Liquid::Template.parse(\"Hello {{ name }}!\")
+    result = tmpl.render(\"name\" => \"Nix\")
+    raise \"expected Hello Nix!, got #{result}\" unless result == \"Hello Nix!\"
+    puts \"Liquid #{Liquid::VERSION}: #{result}\"
+    puts \"OK: liquid loaded and rendered\"
+  '
+"
+
+echo ""
+echo "--- Test 3: native extensions (nokogiri, sqlite3, puma) ---"
+nix-shell "$dir/devshell.nix" --run "
+  cd '$dir'
+  ruby -e '
+    require \"bundler/setup\"
+    require \"nokogiri\"
+    doc = Nokogiri::HTML(\"<h1>test</h1>\")
+    puts \"Nokogiri #{Nokogiri::VERSION}: #{doc.at(\"h1\").text}\"
+
+    require \"sqlite3\"
+    db = SQLite3::Database.new(\":memory:\")
+    db.execute(\"CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT)\")
+    db.execute(\"INSERT INTO t VALUES (1, ?)\", \"nix\")
+    row = db.execute(\"SELECT name FROM t WHERE id = 1\").first
+    raise \"expected nix, got #{row}\" unless row == [\"nix\"]
+    puts \"SQLite3 #{SQLite3::VERSION}: in-memory OK\"
+
+    require \"puma\"
+    puts \"Puma #{Puma::Const::PUMA_VERSION}: loaded\"
+
+    puts \"OK: all native extensions work\"
+  '
+"
+
+echo ""
+echo "--- Test 4: rails boot (git) + sqlite3 (native) ---"
+nix-shell "$dir/devshell.nix" --run "
+  cd '$dir'
+  RAILS_ENV=test ruby -e '
+    require \"bundler/setup\"
+    require \"rails\"
+    require \"action_controller/railtie\"
+    require \"active_record/railtie\"
+
+    class SyntheticApp < Rails::Application
+      config.load_defaults 8.0
+      config.eager_load = false
+      config.secret_key_base = \"test\"
+      config.active_record.encryption.primary_key = \"test\"
+      config.active_record.encryption.deterministic_key = \"test\"
+      config.active_record.encryption.key_derivation_salt = \"test\"
+    end
+
+    SyntheticApp.initialize!
+
+    ActiveRecord::Base.establish_connection(adapter: \"sqlite3\", database: \":memory:\")
+    ActiveRecord::Schema.define do
+      create_table :posts do |t|
+        t.string :title
+      end
+    end
+
+    class Post < ActiveRecord::Base; end
+    Post.create!(title: \"Hello from Nix\")
+    post = Post.first
+    raise \"expected Hello from Nix\" unless post.title == \"Hello from Nix\"
+    puts \"Rails #{Rails.version} + SQLite3: ActiveRecord works\"
+    puts \"OK: full rails boot with database\"
+  '
+"
+
+echo ""
+echo "--- Test 5: git gem monorepo resolution ---"
+nix-shell "$dir/devshell.nix" --run "
+  cd '$dir'
+  ruby -e '
+    require \"bundler/setup\"
+    # All these come from the same git checkout
+    {
+      \"activesupport\" => \"active_support\",
+      \"activemodel\"   => \"active_model\",
+      \"activerecord\"  => \"active_record\",
+      \"actionpack\"    => \"action_pack\",
+      \"actionview\"    => \"action_view\",
+      \"railties\"      => \"rails/railtie\",
+    }.each do |gem_name, require_name|
+      require require_name
+      puts \"  #{gem_name}: loaded\"
+    end
+    puts \"OK: all rails monorepo gems resolve from git\"
+  '
+"
+
+echo ""
+echo "All synthetic tests passed."
