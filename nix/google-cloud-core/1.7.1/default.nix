@@ -1,4 +1,10 @@
+#
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
 # google-cloud-core 1.7.1
+#
 { lib, stdenv, ruby }:
 
 let

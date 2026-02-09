@@ -1,4 +1,10 @@
+#
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
 # selenium-webdriver 4.39.0
+#
 { lib, stdenv, ruby }:
 
 let

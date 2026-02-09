@@ -1,6 +1,12 @@
+#
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate-gemset to refresh  ║
+# ╚══════════════════════════════════════════════════════════════════╝
+#
 # Git: useragent @ 433ca320a42d
 # URI: https://github.com/basecamp/useragent
 # Gems: useragent
+#
 { lib, stdenv, ruby }:
 
 let

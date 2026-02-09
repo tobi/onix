@@ -1,4 +1,10 @@
+#
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
 # faraday-follow_redirects 0.3.0
+#
 { lib, stdenv, ruby }:
 
 let

@@ -1,4 +1,10 @@
+#
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
 # omniauth-google-oauth2 1.1.3
+#
 { lib, stdenv, ruby }:
 
 let

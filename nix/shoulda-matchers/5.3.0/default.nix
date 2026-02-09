@@ -1,4 +1,10 @@
+#
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
 # shoulda-matchers 5.3.0
+#
 { lib, stdenv, ruby }:
 
 let

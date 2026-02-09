@@ -1,6 +1,12 @@
+#
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate-gemset to refresh  ║
+# ╚══════════════════════════════════════════════════════════════════╝
+#
 # Git: lexxy @ 4f0fc4d5773b
 # URI: https://github.com/basecamp/lexxy
 # Gems: lexxy
+#
 { lib, stdenv, ruby }:
 
 let

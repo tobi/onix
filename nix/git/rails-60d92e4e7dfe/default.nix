@@ -1,6 +1,12 @@
+#
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate-gemset to refresh  ║
+# ╚══════════════════════════════════════════════════════════════════╝
+#
 # Git: rails @ 60d92e4e7dfe
 # URI: https://github.com/rails/rails.git
 # Gems: actioncable, actionmailbox, actionmailer, actionpack, actiontext, actionview, activejob, activemodel, activerecord, activestorage, activesupport, rails, railties
+#
 { lib, stdenv, ruby }:
 
 let

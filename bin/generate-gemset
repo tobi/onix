@@ -80,8 +80,14 @@ $stderr.puts "#{project}: #{rubygem_specs.size} rubygems, #{git_specs.size} git 
 # -- Generate gemset .nix --------------------------------------------------
 
 nix = +""
+nix << "#\n"
+nix << "# ╔══════════════════════════════════════════════════════════════════╗\n"
+nix << "# ║  GENERATED — do not edit.  Run bin/generate-gemset to refresh  ║\n"
+nix << "# ╚══════════════════════════════════════════════════════════════════╝\n"
+nix << "#\n"
 nix << "# #{project.upcase} — #{rubygem_specs.size + git_specs.size} gems\n"
 nix << "# Generated from #{File.basename(lockfile)}\n"
+nix << "#\n"
 nix << "{ pkgs, ruby }:\n\n"
 nix << "let\n"
 nix << "  call = path: pkgs.callPackage path { inherit ruby; };\n"
@@ -126,9 +132,15 @@ git_repos.each do |repo_key, repo|
   FileUtils.ln_sf(source_dir, File.join(git_dir, "source"))
 
   gnix = +""
+  gnix << "#\n"
+  gnix << "# ╔══════════════════════════════════════════════════════════════════╗\n"
+  gnix << "# ║  GENERATED — do not edit.  Run bin/generate-gemset to refresh  ║\n"
+  gnix << "# ╚══════════════════════════════════════════════════════════════════╝\n"
+  gnix << "#\n"
   gnix << "# Git: #{repo[:base]} @ #{repo[:shortrev]}\n"
   gnix << "# URI: #{repo[:uri]}\n"
   gnix << "# Gems: #{repo[:gems].map(&:name).join(", ")}\n"
+  gnix << "#\n"
   gnix << "{ lib, stdenv, ruby }:\n\n"
   gnix << "let\n"
   gnix << "  rubyVersion = \"${ruby.version.majMin}.0\";\n"

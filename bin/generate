@@ -86,7 +86,13 @@ meta_by_key.each_value do |meta|
   has_overlay = overlays.key?(name)
 
   nix = +""
+  nix << "#\n"
+  nix << "# ╔══════════════════════════════════════════════════════════════╗\n"
+  nix << "# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║\n"
+  nix << "# ╚══════════════════════════════════════════════════════════════╝\n"
+  nix << "#\n"
   nix << "# #{name} #{version}\n"
+  nix << "#\n"
 
   args = ["lib", "stdenv", "ruby"]
   args << "pkgs" if has_overlay

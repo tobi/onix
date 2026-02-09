@@ -1,4 +1,10 @@
+#
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
 # faraday_middleware-aws-sigv4 1.0.1
+#
 { lib, stdenv, ruby }:
 
 let

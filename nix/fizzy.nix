@@ -1,5 +1,11 @@
+#
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate-gemset to refresh  ║
+# ╚══════════════════════════════════════════════════════════════════╝
+#
 # FIZZY — 161 gems
 # Generated from Gemfile.lock
+#
 { pkgs, ruby }:
 
 let
