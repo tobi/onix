@@ -292,8 +292,7 @@ in
   "aws-sdk-schemas" = args: gem "aws-sdk-schemas" args;
   "aws-sdk-secretsmanager" = args: gem "aws-sdk-secretsmanager" args;
   "aws-sdk-securityhub" = args: gem "aws-sdk-securityhub" args;
-  "aws-sdk-serverlessapplicationrepository" =
-    args: gem "aws-sdk-serverlessapplicationrepository" args;
+  "aws-sdk-serverlessapplicationrepository" = args: gem "aws-sdk-serverlessapplicationrepository" args;
   "aws-sdk-servicecatalog" = args: gem "aws-sdk-servicecatalog" args;
   "aws-sdk-servicediscovery" = args: gem "aws-sdk-servicediscovery" args;
   "aws-sdk-servicequotas" = args: gem "aws-sdk-servicequotas" args;
@@ -612,8 +611,7 @@ in
   "fluent-plugin-grafana-loki" = args: gem "fluent-plugin-grafana-loki" args;
   "fluent-plugin-ignore-filter" = args: gem "fluent-plugin-ignore-filter" args;
   "fluent-plugin-kinesis-aggregation" = args: gem "fluent-plugin-kinesis-aggregation" args;
-  "fluent-plugin-kubernetes_metadata_filter" =
-    args: gem "fluent-plugin-kubernetes_metadata_filter" args;
+  "fluent-plugin-kubernetes_metadata_filter" = args: gem "fluent-plugin-kubernetes_metadata_filter" args;
   "fluent-plugin-record-modifier" = args: gem "fluent-plugin-record-modifier" args;
   "fluent-plugin-rewrite-tag-filter" = args: gem "fluent-plugin-rewrite-tag-filter" args;
   "fluent-plugin-s3" = args: gem "fluent-plugin-s3" args;
@@ -966,30 +964,20 @@ in
   "opentelemetry-exporter-otlp" = args: gem "opentelemetry-exporter-otlp" args;
   "opentelemetry-helpers-sql" = args: gem "opentelemetry-helpers-sql" args;
   "opentelemetry-helpers-sql-processor" = args: gem "opentelemetry-helpers-sql-processor" args;
-  "opentelemetry-instrumentation-action_mailer" =
-    args: gem "opentelemetry-instrumentation-action_mailer" args;
-  "opentelemetry-instrumentation-action_pack" =
-    args: gem "opentelemetry-instrumentation-action_pack" args;
-  "opentelemetry-instrumentation-action_view" =
-    args: gem "opentelemetry-instrumentation-action_view" args;
-  "opentelemetry-instrumentation-active_job" =
-    args: gem "opentelemetry-instrumentation-active_job" args;
-  "opentelemetry-instrumentation-active_model_serializers" =
-    args: gem "opentelemetry-instrumentation-active_model_serializers" args;
-  "opentelemetry-instrumentation-active_record" =
-    args: gem "opentelemetry-instrumentation-active_record" args;
-  "opentelemetry-instrumentation-active_storage" =
-    args: gem "opentelemetry-instrumentation-active_storage" args;
-  "opentelemetry-instrumentation-active_support" =
-    args: gem "opentelemetry-instrumentation-active_support" args;
+  "opentelemetry-instrumentation-action_mailer" = args: gem "opentelemetry-instrumentation-action_mailer" args;
+  "opentelemetry-instrumentation-action_pack" = args: gem "opentelemetry-instrumentation-action_pack" args;
+  "opentelemetry-instrumentation-action_view" = args: gem "opentelemetry-instrumentation-action_view" args;
+  "opentelemetry-instrumentation-active_job" = args: gem "opentelemetry-instrumentation-active_job" args;
+  "opentelemetry-instrumentation-active_model_serializers" = args: gem "opentelemetry-instrumentation-active_model_serializers" args;
+  "opentelemetry-instrumentation-active_record" = args: gem "opentelemetry-instrumentation-active_record" args;
+  "opentelemetry-instrumentation-active_storage" = args: gem "opentelemetry-instrumentation-active_storage" args;
+  "opentelemetry-instrumentation-active_support" = args: gem "opentelemetry-instrumentation-active_support" args;
   "opentelemetry-instrumentation-base" = args: gem "opentelemetry-instrumentation-base" args;
-  "opentelemetry-instrumentation-concurrent_ruby" =
-    args: gem "opentelemetry-instrumentation-concurrent_ruby" args;
+  "opentelemetry-instrumentation-concurrent_ruby" = args: gem "opentelemetry-instrumentation-concurrent_ruby" args;
   "opentelemetry-instrumentation-excon" = args: gem "opentelemetry-instrumentation-excon" args;
   "opentelemetry-instrumentation-faraday" = args: gem "opentelemetry-instrumentation-faraday" args;
   "opentelemetry-instrumentation-http" = args: gem "opentelemetry-instrumentation-http" args;
-  "opentelemetry-instrumentation-http_client" =
-    args: gem "opentelemetry-instrumentation-http_client" args;
+  "opentelemetry-instrumentation-http_client" = args: gem "opentelemetry-instrumentation-http_client" args;
   "opentelemetry-instrumentation-net_http" = args: gem "opentelemetry-instrumentation-net_http" args;
   "opentelemetry-instrumentation-pg" = args: gem "opentelemetry-instrumentation-pg" args;
   "opentelemetry-instrumentation-rack" = args: gem "opentelemetry-instrumentation-rack" args;
