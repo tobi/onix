@@ -430,10 +430,10 @@ loadable:                      7 key gems load successfully
 
 ## Design
 
+- **Everything local, everything pre-sealed** — `bin/fetch` downloads gems and clones git repos ahead of time into `cache/`. Git repos are checked out to the exact revision, stripped of `.git`, and only the needed files are kept. By the time Nix evaluates, every source is a local `builtins.path` — no network access, no `fetchGit`, no `fetchurl`. The Nix sandbox never touches the internet.
 - **One derivation per gem** — individually cacheable, parallel builds, content-addressed store paths
 - **Lazy evaluation** — only gems you select get built; the rest of the pool is never touched
 - **System libraries always** — vendored copies stripped; overlays point to nixpkgs
-- **`builtins.fetchGit` for git gems** — nix fetches at eval time, pinned to exact commit
 - **Platform-native mimicry** — source-compiled gems look like prebuilt platform gems to bundler
 - **Parameterized Ruby** — `ruby` flows through every derivation; one argument changes everything
 - **Module-style config** — `gem.app.<name>.enable = true` with per-gem overrides, composable

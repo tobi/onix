@@ -11,14 +11,15 @@ bin/generate          cache/meta/*.json → nix/gem/<name>/<version>/default.nix
                                         → nix/gem/<name>/default.nix (selectors)
                                         → nix/modules/gem.nix (catalogue)
     ↓
-bin/generate-gemset   Gemfile.lock → nix/app/<project>.nix
+bin/import            Gemfile.lock → nix/app/<project>.nix
                                    → nix/gem/<repo>/git-<rev>/default.nix
+                                   → nix/modules/apps.nix (registry)
     ↓
 just build [app]      nix-build → /nix/store/<hash>-<gem>-<ver>/
                       buildEnv  → unified BUNDLE_PATH
 ```
 
-Everything under `nix/` is generated. Never hand-edit — run `bin/generate` and `bin/generate-gemset` to regenerate.
+Everything under `nix/` is generated. Never hand-edit — run `bin/generate` and `bin/import` to regenerate.
 
 All customization lives in `overlays/`.
 
@@ -178,7 +179,7 @@ Overlay gems need `pkgs` to import their overlay. In the generated derivation, `
 "nokogiri" = gem "nokogiri" { version = "1.19.0"; pkgs = pkgs; };
 ```
 
-`bin/generate-gemset` handles this automatically — any gem with an overlay gets `pkgs = pkgs;` in the gemset.
+`bin/import` handles this automatically — any gem with an overlay gets `pkgs = pkgs;` in the gemset.
 
 ## Workflow for fixing a failing gem
 
