@@ -12,6 +12,7 @@ checks=(
   statix
   dep-completeness
   source-clean
+  secrets
   require-paths-vs-gem-metadata
   gemspec-deps
   require-paths

@@ -7,221 +7,872 @@
 # Generated from Gemfile.lock
 #
 [
-  { name = "action_text-trix"; version = "2.1.16"; }
-  { name = "addressable"; version = "2.8.7"; }
-  { name = "amq-protocol"; version = "2.3.2"; }
-  { name = "argon2"; version = "2.3.2"; }
-  { name = "ast"; version = "2.4.2"; }
-  { name = "aws-eventstream"; version = "1.4.0"; }
-  { name = "aws-partitions"; version = "1.1150.0"; }
-  { name = "aws-sdk-core"; version = "3.230.0"; }
-  { name = "aws-sdk-kms"; version = "1.110.0"; }
-  { name = "aws-sdk-s3"; version = "1.197.0"; }
-  { name = "aws-sdk-sns"; version = "1.92.0"; }
-  { name = "aws-sigv4"; version = "1.12.1"; }
-  { name = "backburner"; version = "1.7.0"; }
-  { name = "base64"; version = "0.3.0"; }
-  { name = "bcrypt"; version = "3.1.20"; }
-  { name = "bcrypt_pbkdf"; version = "1.1.1"; }
-  { name = "beaneater"; version = "1.1.3"; }
-  { name = "bigdecimal"; version = "3.2.3"; }
-  { name = "bindex"; version = "0.8.1"; }
-  { name = "bootsnap"; version = "1.18.4"; }
-  { name = "brakeman"; version = "7.0.0"; }
-  { name = "builder"; version = "3.3.0"; }
-  { name = "bundler-audit"; version = "0.9.3"; }
-  { name = "bunny"; version = "2.23.0"; }
-  { name = "capybara"; version = "3.40.0"; }
-  { name = "chef-utils"; version = "18.6.2"; }
-  { name = "childprocess"; version = "5.1.0"; }
-  { name = "concurrent-ruby"; version = "1.3.6"; }
-  { name = "connection_pool"; version = "2.5.4"; }
-  { name = "crack"; version = "1.0.0"; }
-  { name = "crass"; version = "1.0.6"; }
-  { name = "cssbundling-rails"; version = "1.4.1"; }
-  { name = "dalli"; version = "4.3.2"; }
-  { name = "dante"; version = "0.2.0"; }
-  { name = "dartsass-rails"; version = "0.5.1"; }
-  { name = "date"; version = "3.4.1"; }
-  { name = "debug"; version = "1.10.0"; }
-  { name = "declarative"; version = "0.0.20"; }
-  { name = "digest-crc"; version = "0.6.5"; }
-  { name = "dotenv"; version = "3.1.7"; }
-  { name = "drb"; version = "2.2.3"; }
-  { name = "ed25519"; version = "1.3.0"; }
-  { name = "erb"; version = "5.1.1"; }
-  { name = "erubi"; version = "1.13.1"; }
-  { name = "et-orbi"; version = "1.2.11"; }
-  { name = "event_emitter"; version = "0.2.6"; }
-  { name = "execjs"; version = "2.10.0"; }
-  { name = "faraday"; version = "2.14.0"; }
-  { name = "faraday-net_http"; version = "3.4.2"; }
-  { name = "ffi"; version = "1.17.1"; }
-  { name = "ffi-compiler"; version = "1.3.2"; }
-  { name = "fugit"; version = "1.11.1"; }
-  { name = "globalid"; version = "1.2.1"; }
-  { name = "google-apis-core"; version = "0.15.1"; }
-  { name = "google-apis-iamcredentials_v1"; version = "0.22.0"; }
-  { name = "google-apis-storage_v1"; version = "0.49.0"; }
-  { name = "google-cloud-core"; version = "1.7.1"; }
-  { name = "google-cloud-env"; version = "2.2.1"; }
-  { name = "google-cloud-errors"; version = "1.4.0"; }
-  { name = "google-cloud-storage"; version = "1.54.0"; }
-  { name = "google-logging-utils"; version = "0.1.0"; }
-  { name = "google-protobuf"; version = "4.29.3"; }
-  { name = "googleauth"; version = "1.12.2"; }
-  { name = "hashdiff"; version = "1.1.2"; }
-  { name = "httpclient"; version = "2.9.0"; }
-  { name = "i18n"; version = "1.14.7"; }
-  { name = "image_processing"; version = "1.14.0"; }
-  { name = "importmap-rails"; version = "2.1.0"; }
-  { name = "io-console"; version = "0.8.1"; }
-  { name = "irb"; version = "1.15.2"; }
-  { name = "jbuilder"; version = "2.13.0"; }
-  { name = "jmespath"; version = "1.6.2"; }
-  { name = "jsbundling-rails"; version = "1.3.1"; }
-  { name = "json"; version = "2.15.2"; }
-  { name = "jwt"; version = "2.10.1"; }
-  { name = "kamal"; version = "2.4.0"; }
-  { name = "kramdown"; version = "2.5.1"; }
-  { name = "kramdown-parser-gfm"; version = "1.1.0"; }
-  { name = "language_server-protocol"; version = "3.17.0.3"; }
-  { name = "launchy"; version = "3.0.1"; }
-  { name = "libxml-ruby"; version = "5.0.4"; }
-  { name = "lint_roller"; version = "1.1.0"; }
-  { name = "listen"; version = "3.9.0"; }
-  { name = "logger"; version = "1.7.0"; }
-  { name = "loofah"; version = "2.24.1"; }
-  { name = "mail"; version = "2.8.1"; }
-  { name = "marcel"; version = "1.0.4"; }
-  { name = "matrix"; version = "0.4.2"; }
-  { name = "mdl"; version = "0.12.0"; }
-  { name = "mini_magick"; version = "5.3.1"; }
-  { name = "mini_mime"; version = "1.1.5"; }
-  { name = "mini_portile2"; version = "2.8.9"; }
-  { name = "minitest"; version = "6.0.0"; }
-  { name = "minitest-mock"; version = "5.27.0"; }
-  { name = "minitest-retry"; version = "0.2.3"; }
-  { name = "mixlib-cli"; version = "2.1.8"; }
-  { name = "mixlib-config"; version = "3.0.27"; }
-  { name = "mixlib-shellout"; version = "3.3.4"; }
-  { name = "mono_logger"; version = "1.1.2"; }
-  { name = "msgpack"; version = "1.7.5"; }
-  { name = "multi_json"; version = "1.15.0"; }
-  { name = "mustermann"; version = "3.0.4"; }
-  { name = "mutex_m"; version = "0.3.0"; }
-  { name = "mysql2"; version = "0.5.6"; }
-  { name = "net-http"; version = "0.9.1"; }
-  { name = "net-imap"; version = "0.5.5"; }
-  { name = "net-pop"; version = "0.1.2"; }
-  { name = "net-protocol"; version = "0.2.2"; }
-  { name = "net-scp"; version = "4.0.0"; }
-  { name = "net-sftp"; version = "4.0.0"; }
-  { name = "net-smtp"; version = "0.5.1"; }
-  { name = "net-ssh"; version = "7.3.0"; }
-  { name = "nio4r"; version = "2.7.4"; }
-  { name = "nokogiri"; version = "1.18.10"; }
-  { name = "os"; version = "1.1.4"; }
-  { name = "ostruct"; version = "0.6.1"; }
-  { name = "parallel"; version = "1.26.3"; }
-  { name = "parser"; version = "3.3.9.0"; }
-  { name = "pg"; version = "1.6.3"; }
-  { name = "pp"; version = "0.6.2"; }
-  { name = "prettyprint"; version = "0.2.0"; }
-  { name = "prism"; version = "1.7.0"; }
-  { name = "propshaft"; version = "1.3.1"; }
-  { name = "psych"; version = "5.2.6"; }
-  { name = "public_suffix"; version = "6.0.1"; }
-  { name = "puma"; version = "6.5.0"; }
-  { name = "queue_classic"; version = "4.0.0"; }
-  { name = "raabro"; version = "1.4.0"; }
-  { name = "racc"; version = "1.8.1"; }
-  { name = "rack"; version = "3.2.1"; }
-  { name = "rack-cache"; version = "1.17.0"; }
-  { name = "rack-protection"; version = "4.1.1"; }
-  { name = "rack-session"; version = "2.1.1"; }
-  { name = "rack-test"; version = "2.2.0"; }
-  { name = "rackup"; version = "2.2.1"; }
-  { name = "rails-dom-testing"; version = "2.3.0"; }
-  { name = "rails-html-sanitizer"; version = "1.6.2"; }
-  { name = "rainbow"; version = "3.1.1"; }
-  { name = "rake"; version = "13.3.0"; }
-  { name = "rb-fsevent"; version = "0.11.2"; }
-  { name = "rb-inotify"; version = "0.11.1"; }
-  { name = "rbtree"; version = "0.4.6"; }
-  { name = "rdoc"; version = "6.15.0"; }
-  { name = "redcarpet"; version = "3.6.1"; }
-  { name = "redis"; version = "5.4.1"; }
-  { name = "redis-client"; version = "0.25.2"; }
-  { name = "redis-namespace"; version = "1.11.0"; }
-  { name = "regexp_parser"; version = "2.10.0"; }
-  { name = "reline"; version = "0.6.1"; }
-  { name = "representable"; version = "3.2.0"; }
-  { name = "resque"; version = "2.7.0"; }
-  { name = "resque-scheduler"; version = "4.11.0"; }
-  { name = "retriable"; version = "3.1.2"; }
-  { name = "rexml"; version = "3.4.0"; }
-  { name = "rouge"; version = "4.6.1"; }
-  { name = "rubocop"; version = "1.79.2"; }
-  { name = "rubocop-ast"; version = "1.46.0"; }
-  { name = "rubocop-md"; version = "2.0.1"; }
-  { name = "rubocop-minitest"; version = "0.37.1"; }
-  { name = "rubocop-packaging"; version = "0.6.0"; }
-  { name = "rubocop-performance"; version = "1.24.0"; }
-  { name = "rubocop-rails"; version = "2.30.3"; }
-  { name = "rubocop-rails-omakase"; version = "1.0.0"; }
-  { name = "ruby-progressbar"; version = "1.13.0"; }
-  { name = "ruby-vips"; version = "2.2.2"; }
-  { name = "ruby2_keywords"; version = "0.0.5"; }
-  { name = "rubyzip"; version = "2.4.1"; }
-  { name = "rufus-scheduler"; version = "3.9.2"; }
-  { name = "sass-embedded"; version = "1.83.4"; }
-  { name = "sdoc"; version = "2.6.5"; }
-  { name = "securerandom"; version = "0.4.1"; }
-  { name = "selenium-webdriver"; version = "4.32.0"; }
-  { name = "serverengine"; version = "2.0.7"; }
-  { name = "set"; version = "1.1.2"; }
-  { name = "sigdump"; version = "0.2.5"; }
-  { name = "signet"; version = "0.19.0"; }
-  { name = "sinatra"; version = "4.1.1"; }
-  { name = "sneakers"; version = "2.11.0"; }
-  { name = "solid_cable"; version = "3.0.5"; }
-  { name = "solid_cache"; version = "1.0.6"; }
-  { name = "solid_queue"; version = "1.1.2"; }
-  { name = "sorted_set"; version = "1.0.3"; }
-  { name = "sprockets"; version = "4.2.1"; }
-  { name = "sprockets-rails"; version = "3.5.2"; }
-  { name = "sqlite3"; version = "2.5.0"; }
-  { name = "sshkit"; version = "1.23.2"; }
-  { name = "stackprof"; version = "0.2.27"; }
-  { name = "stimulus-rails"; version = "1.3.4"; }
-  { name = "stringio"; version = "3.1.7"; }
-  { name = "tailwindcss-rails"; version = "3.2.0"; }
-  { name = "tailwindcss-ruby"; version = "3.4.17"; }
-  { name = "terser"; version = "1.2.4"; }
-  { name = "thor"; version = "1.3.2"; }
-  { name = "thruster"; version = "0.1.16"; }
-  { name = "tilt"; version = "2.6.1"; }
-  { name = "timeout"; version = "0.4.3"; }
-  { name = "tomlrb"; version = "2.0.3"; }
-  { name = "trailblazer-option"; version = "0.1.2"; }
-  { name = "trilogy"; version = "2.9.0"; }
-  { name = "tsort"; version = "0.2.0"; }
-  { name = "turbo-rails"; version = "2.0.11"; }
-  { name = "tzinfo"; version = "2.0.6"; }
-  { name = "uber"; version = "0.1.0"; }
-  { name = "unicode-display_width"; version = "3.1.4"; }
-  { name = "unicode-emoji"; version = "4.2.0"; }
-  { name = "uri"; version = "1.0.3"; }
-  { name = "useragent"; version = "0.16.11"; }
-  { name = "w3c_validators"; version = "1.3.7"; }
-  { name = "web-console"; version = "4.2.1"; }
-  { name = "webmock"; version = "3.25.0"; }
-  { name = "webrick"; version = "1.9.1"; }
-  { name = "websocket"; version = "1.2.11"; }
-  { name = "websocket-client-simple"; version = "0.9.0"; }
-  { name = "websocket-driver"; version = "0.7.7"; }
-  { name = "websocket-extensions"; version = "0.1.5"; }
-  { name = "xpath"; version = "3.2.0"; }
-  { name = "zeitwerk"; version = "2.7.3"; }
+  {
+    name = "action_text-trix";
+    version = "2.1.16";
+  }
+  {
+    name = "addressable";
+    version = "2.8.7";
+  }
+  {
+    name = "amq-protocol";
+    version = "2.3.2";
+  }
+  {
+    name = "argon2";
+    version = "2.3.2";
+  }
+  {
+    name = "ast";
+    version = "2.4.2";
+  }
+  {
+    name = "aws-eventstream";
+    version = "1.4.0";
+  }
+  {
+    name = "aws-partitions";
+    version = "1.1150.0";
+  }
+  {
+    name = "aws-sdk-core";
+    version = "3.230.0";
+  }
+  {
+    name = "aws-sdk-kms";
+    version = "1.110.0";
+  }
+  {
+    name = "aws-sdk-s3";
+    version = "1.197.0";
+  }
+  {
+    name = "aws-sdk-sns";
+    version = "1.92.0";
+  }
+  {
+    name = "aws-sigv4";
+    version = "1.12.1";
+  }
+  {
+    name = "backburner";
+    version = "1.7.0";
+  }
+  {
+    name = "base64";
+    version = "0.3.0";
+  }
+  {
+    name = "bcrypt";
+    version = "3.1.20";
+  }
+  {
+    name = "bcrypt_pbkdf";
+    version = "1.1.1";
+  }
+  {
+    name = "beaneater";
+    version = "1.1.3";
+  }
+  {
+    name = "bigdecimal";
+    version = "3.2.3";
+  }
+  {
+    name = "bindex";
+    version = "0.8.1";
+  }
+  {
+    name = "bootsnap";
+    version = "1.18.4";
+  }
+  {
+    name = "brakeman";
+    version = "7.0.0";
+  }
+  {
+    name = "builder";
+    version = "3.3.0";
+  }
+  {
+    name = "bundler-audit";
+    version = "0.9.3";
+  }
+  {
+    name = "bunny";
+    version = "2.23.0";
+  }
+  {
+    name = "capybara";
+    version = "3.40.0";
+  }
+  {
+    name = "chef-utils";
+    version = "18.6.2";
+  }
+  {
+    name = "childprocess";
+    version = "5.1.0";
+  }
+  {
+    name = "concurrent-ruby";
+    version = "1.3.6";
+  }
+  {
+    name = "connection_pool";
+    version = "2.5.4";
+  }
+  {
+    name = "crack";
+    version = "1.0.0";
+  }
+  {
+    name = "crass";
+    version = "1.0.6";
+  }
+  {
+    name = "cssbundling-rails";
+    version = "1.4.1";
+  }
+  {
+    name = "dalli";
+    version = "4.3.2";
+  }
+  {
+    name = "dante";
+    version = "0.2.0";
+  }
+  {
+    name = "dartsass-rails";
+    version = "0.5.1";
+  }
+  {
+    name = "date";
+    version = "3.4.1";
+  }
+  {
+    name = "debug";
+    version = "1.10.0";
+  }
+  {
+    name = "declarative";
+    version = "0.0.20";
+  }
+  {
+    name = "digest-crc";
+    version = "0.6.5";
+  }
+  {
+    name = "dotenv";
+    version = "3.1.7";
+  }
+  {
+    name = "drb";
+    version = "2.2.3";
+  }
+  {
+    name = "ed25519";
+    version = "1.3.0";
+  }
+  {
+    name = "erb";
+    version = "5.1.1";
+  }
+  {
+    name = "erubi";
+    version = "1.13.1";
+  }
+  {
+    name = "et-orbi";
+    version = "1.2.11";
+  }
+  {
+    name = "event_emitter";
+    version = "0.2.6";
+  }
+  {
+    name = "execjs";
+    version = "2.10.0";
+  }
+  {
+    name = "faraday";
+    version = "2.14.0";
+  }
+  {
+    name = "faraday-net_http";
+    version = "3.4.2";
+  }
+  {
+    name = "ffi";
+    version = "1.17.1";
+  }
+  {
+    name = "ffi-compiler";
+    version = "1.3.2";
+  }
+  {
+    name = "fugit";
+    version = "1.11.1";
+  }
+  {
+    name = "globalid";
+    version = "1.2.1";
+  }
+  {
+    name = "google-apis-core";
+    version = "0.15.1";
+  }
+  {
+    name = "google-apis-iamcredentials_v1";
+    version = "0.22.0";
+  }
+  {
+    name = "google-apis-storage_v1";
+    version = "0.49.0";
+  }
+  {
+    name = "google-cloud-core";
+    version = "1.7.1";
+  }
+  {
+    name = "google-cloud-env";
+    version = "2.2.1";
+  }
+  {
+    name = "google-cloud-errors";
+    version = "1.4.0";
+  }
+  {
+    name = "google-cloud-storage";
+    version = "1.54.0";
+  }
+  {
+    name = "google-logging-utils";
+    version = "0.1.0";
+  }
+  {
+    name = "google-protobuf";
+    version = "4.29.3";
+  }
+  {
+    name = "googleauth";
+    version = "1.12.2";
+  }
+  {
+    name = "hashdiff";
+    version = "1.1.2";
+  }
+  {
+    name = "httpclient";
+    version = "2.9.0";
+  }
+  {
+    name = "i18n";
+    version = "1.14.7";
+  }
+  {
+    name = "image_processing";
+    version = "1.14.0";
+  }
+  {
+    name = "importmap-rails";
+    version = "2.1.0";
+  }
+  {
+    name = "io-console";
+    version = "0.8.1";
+  }
+  {
+    name = "irb";
+    version = "1.15.2";
+  }
+  {
+    name = "jbuilder";
+    version = "2.13.0";
+  }
+  {
+    name = "jmespath";
+    version = "1.6.2";
+  }
+  {
+    name = "jsbundling-rails";
+    version = "1.3.1";
+  }
+  {
+    name = "json";
+    version = "2.15.2";
+  }
+  {
+    name = "jwt";
+    version = "2.10.1";
+  }
+  {
+    name = "kamal";
+    version = "2.4.0";
+  }
+  {
+    name = "kramdown";
+    version = "2.5.1";
+  }
+  {
+    name = "kramdown-parser-gfm";
+    version = "1.1.0";
+  }
+  {
+    name = "language_server-protocol";
+    version = "3.17.0.3";
+  }
+  {
+    name = "launchy";
+    version = "3.0.1";
+  }
+  {
+    name = "libxml-ruby";
+    version = "5.0.4";
+  }
+  {
+    name = "lint_roller";
+    version = "1.1.0";
+  }
+  {
+    name = "listen";
+    version = "3.9.0";
+  }
+  {
+    name = "logger";
+    version = "1.7.0";
+  }
+  {
+    name = "loofah";
+    version = "2.24.1";
+  }
+  {
+    name = "mail";
+    version = "2.8.1";
+  }
+  {
+    name = "marcel";
+    version = "1.0.4";
+  }
+  {
+    name = "matrix";
+    version = "0.4.2";
+  }
+  {
+    name = "mdl";
+    version = "0.12.0";
+  }
+  {
+    name = "mini_magick";
+    version = "5.3.1";
+  }
+  {
+    name = "mini_mime";
+    version = "1.1.5";
+  }
+  {
+    name = "mini_portile2";
+    version = "2.8.9";
+  }
+  {
+    name = "minitest";
+    version = "6.0.0";
+  }
+  {
+    name = "minitest-mock";
+    version = "5.27.0";
+  }
+  {
+    name = "minitest-retry";
+    version = "0.2.3";
+  }
+  {
+    name = "mixlib-cli";
+    version = "2.1.8";
+  }
+  {
+    name = "mixlib-config";
+    version = "3.0.27";
+  }
+  {
+    name = "mixlib-shellout";
+    version = "3.3.4";
+  }
+  {
+    name = "mono_logger";
+    version = "1.1.2";
+  }
+  {
+    name = "msgpack";
+    version = "1.7.5";
+  }
+  {
+    name = "multi_json";
+    version = "1.15.0";
+  }
+  {
+    name = "mustermann";
+    version = "3.0.4";
+  }
+  {
+    name = "mutex_m";
+    version = "0.3.0";
+  }
+  {
+    name = "mysql2";
+    version = "0.5.6";
+  }
+  {
+    name = "net-http";
+    version = "0.9.1";
+  }
+  {
+    name = "net-imap";
+    version = "0.5.5";
+  }
+  {
+    name = "net-pop";
+    version = "0.1.2";
+  }
+  {
+    name = "net-protocol";
+    version = "0.2.2";
+  }
+  {
+    name = "net-scp";
+    version = "4.0.0";
+  }
+  {
+    name = "net-sftp";
+    version = "4.0.0";
+  }
+  {
+    name = "net-smtp";
+    version = "0.5.1";
+  }
+  {
+    name = "net-ssh";
+    version = "7.3.0";
+  }
+  {
+    name = "nio4r";
+    version = "2.7.4";
+  }
+  {
+    name = "nokogiri";
+    version = "1.18.10";
+  }
+  {
+    name = "os";
+    version = "1.1.4";
+  }
+  {
+    name = "ostruct";
+    version = "0.6.1";
+  }
+  {
+    name = "parallel";
+    version = "1.26.3";
+  }
+  {
+    name = "parser";
+    version = "3.3.9.0";
+  }
+  {
+    name = "pg";
+    version = "1.6.3";
+  }
+  {
+    name = "pp";
+    version = "0.6.2";
+  }
+  {
+    name = "prettyprint";
+    version = "0.2.0";
+  }
+  {
+    name = "prism";
+    version = "1.7.0";
+  }
+  {
+    name = "propshaft";
+    version = "1.3.1";
+  }
+  {
+    name = "psych";
+    version = "5.2.6";
+  }
+  {
+    name = "public_suffix";
+    version = "6.0.1";
+  }
+  {
+    name = "puma";
+    version = "6.5.0";
+  }
+  {
+    name = "queue_classic";
+    version = "4.0.0";
+  }
+  {
+    name = "raabro";
+    version = "1.4.0";
+  }
+  {
+    name = "racc";
+    version = "1.8.1";
+  }
+  {
+    name = "rack";
+    version = "3.2.1";
+  }
+  {
+    name = "rack-cache";
+    version = "1.17.0";
+  }
+  {
+    name = "rack-protection";
+    version = "4.1.1";
+  }
+  {
+    name = "rack-session";
+    version = "2.1.1";
+  }
+  {
+    name = "rack-test";
+    version = "2.2.0";
+  }
+  {
+    name = "rackup";
+    version = "2.2.1";
+  }
+  {
+    name = "rails-dom-testing";
+    version = "2.3.0";
+  }
+  {
+    name = "rails-html-sanitizer";
+    version = "1.6.2";
+  }
+  {
+    name = "rainbow";
+    version = "3.1.1";
+  }
+  {
+    name = "rake";
+    version = "13.3.0";
+  }
+  {
+    name = "rb-fsevent";
+    version = "0.11.2";
+  }
+  {
+    name = "rb-inotify";
+    version = "0.11.1";
+  }
+  {
+    name = "rbtree";
+    version = "0.4.6";
+  }
+  {
+    name = "rdoc";
+    version = "6.15.0";
+  }
+  {
+    name = "redcarpet";
+    version = "3.6.1";
+  }
+  {
+    name = "redis";
+    version = "5.4.1";
+  }
+  {
+    name = "redis-client";
+    version = "0.25.2";
+  }
+  {
+    name = "redis-namespace";
+    version = "1.11.0";
+  }
+  {
+    name = "regexp_parser";
+    version = "2.10.0";
+  }
+  {
+    name = "reline";
+    version = "0.6.1";
+  }
+  {
+    name = "representable";
+    version = "3.2.0";
+  }
+  {
+    name = "resque";
+    version = "2.7.0";
+  }
+  {
+    name = "resque-scheduler";
+    version = "4.11.0";
+  }
+  {
+    name = "retriable";
+    version = "3.1.2";
+  }
+  {
+    name = "rexml";
+    version = "3.4.0";
+  }
+  {
+    name = "rouge";
+    version = "4.6.1";
+  }
+  {
+    name = "rubocop";
+    version = "1.79.2";
+  }
+  {
+    name = "rubocop-ast";
+    version = "1.46.0";
+  }
+  {
+    name = "rubocop-md";
+    version = "2.0.1";
+  }
+  {
+    name = "rubocop-minitest";
+    version = "0.37.1";
+  }
+  {
+    name = "rubocop-packaging";
+    version = "0.6.0";
+  }
+  {
+    name = "rubocop-performance";
+    version = "1.24.0";
+  }
+  {
+    name = "rubocop-rails";
+    version = "2.30.3";
+  }
+  {
+    name = "rubocop-rails-omakase";
+    version = "1.0.0";
+  }
+  {
+    name = "ruby-progressbar";
+    version = "1.13.0";
+  }
+  {
+    name = "ruby-vips";
+    version = "2.2.2";
+  }
+  {
+    name = "ruby2_keywords";
+    version = "0.0.5";
+  }
+  {
+    name = "rubyzip";
+    version = "2.4.1";
+  }
+  {
+    name = "rufus-scheduler";
+    version = "3.9.2";
+  }
+  {
+    name = "sass-embedded";
+    version = "1.83.4";
+  }
+  {
+    name = "sdoc";
+    version = "2.6.5";
+  }
+  {
+    name = "securerandom";
+    version = "0.4.1";
+  }
+  {
+    name = "selenium-webdriver";
+    version = "4.32.0";
+  }
+  {
+    name = "serverengine";
+    version = "2.0.7";
+  }
+  {
+    name = "set";
+    version = "1.1.2";
+  }
+  {
+    name = "sigdump";
+    version = "0.2.5";
+  }
+  {
+    name = "signet";
+    version = "0.19.0";
+  }
+  {
+    name = "sinatra";
+    version = "4.1.1";
+  }
+  {
+    name = "sneakers";
+    version = "2.11.0";
+  }
+  {
+    name = "solid_cable";
+    version = "3.0.5";
+  }
+  {
+    name = "solid_cache";
+    version = "1.0.6";
+  }
+  {
+    name = "solid_queue";
+    version = "1.1.2";
+  }
+  {
+    name = "sorted_set";
+    version = "1.0.3";
+  }
+  {
+    name = "sprockets";
+    version = "4.2.1";
+  }
+  {
+    name = "sprockets-rails";
+    version = "3.5.2";
+  }
+  {
+    name = "sqlite3";
+    version = "2.5.0";
+  }
+  {
+    name = "sshkit";
+    version = "1.23.2";
+  }
+  {
+    name = "stackprof";
+    version = "0.2.27";
+  }
+  {
+    name = "stimulus-rails";
+    version = "1.3.4";
+  }
+  {
+    name = "stringio";
+    version = "3.1.7";
+  }
+  {
+    name = "tailwindcss-rails";
+    version = "3.2.0";
+  }
+  {
+    name = "tailwindcss-ruby";
+    version = "3.4.17";
+  }
+  {
+    name = "terser";
+    version = "1.2.4";
+  }
+  {
+    name = "thor";
+    version = "1.3.2";
+  }
+  {
+    name = "thruster";
+    version = "0.1.16";
+  }
+  {
+    name = "tilt";
+    version = "2.6.1";
+  }
+  {
+    name = "timeout";
+    version = "0.4.3";
+  }
+  {
+    name = "tomlrb";
+    version = "2.0.3";
+  }
+  {
+    name = "trailblazer-option";
+    version = "0.1.2";
+  }
+  {
+    name = "trilogy";
+    version = "2.9.0";
+  }
+  {
+    name = "tsort";
+    version = "0.2.0";
+  }
+  {
+    name = "turbo-rails";
+    version = "2.0.11";
+  }
+  {
+    name = "tzinfo";
+    version = "2.0.6";
+  }
+  {
+    name = "uber";
+    version = "0.1.0";
+  }
+  {
+    name = "unicode-display_width";
+    version = "3.1.4";
+  }
+  {
+    name = "unicode-emoji";
+    version = "4.2.0";
+  }
+  {
+    name = "uri";
+    version = "1.0.3";
+  }
+  {
+    name = "useragent";
+    version = "0.16.11";
+  }
+  {
+    name = "w3c_validators";
+    version = "1.3.7";
+  }
+  {
+    name = "web-console";
+    version = "4.2.1";
+  }
+  {
+    name = "webmock";
+    version = "3.25.0";
+  }
+  {
+    name = "webrick";
+    version = "1.9.1";
+  }
+  {
+    name = "websocket";
+    version = "1.2.11";
+  }
+  {
+    name = "websocket-client-simple";
+    version = "0.9.0";
+  }
+  {
+    name = "websocket-driver";
+    version = "0.7.7";
+  }
+  {
+    name = "websocket-extensions";
+    version = "0.1.5";
+  }
+  {
+    name = "xpath";
+    version = "3.2.0";
+  }
+  {
+    name = "zeitwerk";
+    version = "2.7.3";
+  }
 ]

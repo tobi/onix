@@ -66,7 +66,8 @@ let
           if cfg ? gem && cfg.gem ? app then
             let
               enabledApps = lib.filterAttrs (_: v: v.enable or false) cfg.gem.app;
-              appEntries = lib.concatMap (name:
+              appEntries = lib.concatMap (
+                name:
                 if appPresets ? ${name} then
                   appPresets.${name}
                 else
@@ -75,29 +76,39 @@ let
             in
             appEntries
           else
-            [];
+            [ ];
 
         # Direct gem configs: gem.<name> = { enable = true; version = "..."; }
         directGems =
           if cfg ? gem then
             let
               # Filter out the "app" key and any disabled gems
-              gemCfg = lib.filterAttrs (n: v:
-                n != "app" && builtins.isAttrs v && (v.enable or false)
-              ) cfg.gem;
+              gemCfg = lib.filterAttrs (n: v: n != "app" && builtins.isAttrs v && (v.enable or false)) cfg.gem;
             in
-            lib.mapAttrsToList (name: v:
+            lib.mapAttrsToList (
+              name: v:
               if v ? git then
-                { inherit name; git = v.git; }
+                {
+                  inherit name;
+                  git = v.git;
+                }
               else
-                { inherit name; version = v.version; }
+                {
+                  inherit name;
+                  version = v.version;
+                }
             ) gemCfg
           else
-            [];
+            [ ];
       in
       # Direct gems override app gems (by name)
       let
-        directByName = builtins.listToAttrs (map (e: { name = e.name; value = e; }) directGems);
+        directByName = builtins.listToAttrs (
+          map (e: {
+            name = e.name;
+            value = e;
+          }) directGems
+        );
         appFiltered = builtins.filter (e: !(directByName ? ${e.name})) appGems;
       in
       appFiltered ++ directGems;

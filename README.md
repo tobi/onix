@@ -420,6 +420,7 @@ nixfmt:                        5,236 files, all formatted
 statix:                        0 warnings
 dep-completeness:              OK
 source-clean:                  no leaked .so files
+secrets:                       repo + 3,794 gem sources, 0 findings
 require-paths-vs-gem-metadata: 3,782 checked
 gemspec-deps:                  172 gemspecs checked
 require-paths:                 172 specs checked

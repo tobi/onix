@@ -7,300 +7,1188 @@
 # Generated from Gemfile.lock
 #
 [
-  { name = "Ascii85"; version = "2.0.1"; }
-  { name = "actionmailer"; version = "8.0.4"; }
-  { name = "actionpack"; version = "8.0.4"; }
-  { name = "actionview"; version = "8.0.4"; }
-  { name = "actionview_precompiler"; version = "0.4.0"; }
-  { name = "active_model_serializers"; version = "0.8.4"; }
-  { name = "activejob"; version = "8.0.4"; }
-  { name = "activemodel"; version = "8.0.4"; }
-  { name = "activerecord"; version = "8.0.4"; }
-  { name = "activesupport"; version = "8.0.4"; }
-  { name = "addressable"; version = "2.8.8"; }
-  { name = "afm"; version = "1.0.0"; }
-  { name = "annotaterb"; version = "4.20.0"; }
-  { name = "ast"; version = "2.4.3"; }
-  { name = "aws-eventstream"; version = "1.4.0"; }
-  { name = "aws-partitions"; version = "1.1134.0"; }
-  { name = "aws-sdk-core"; version = "3.227.0"; }
-  { name = "aws-sdk-kms"; version = "1.99.0"; }
-  { name = "aws-sdk-mediaconvert"; version = "1.165.0"; }
-  { name = "aws-sdk-s3"; version = "1.182.0"; }
-  { name = "aws-sdk-sns"; version = "1.96.0"; }
-  { name = "aws-sigv4"; version = "1.12.1"; }
-  { name = "base64"; version = "0.3.0"; }
-  { name = "benchmark"; version = "0.5.0"; }
-  { name = "better_errors"; version = "2.10.1"; }
-  { name = "bigdecimal"; version = "3.3.1"; }
-  { name = "binding_of_caller"; version = "1.0.1"; }
-  { name = "bootsnap"; version = "1.19.0"; }
-  { name = "builder"; version = "3.3.0"; }
-  { name = "bullet"; version = "8.1.0"; }
-  { name = "capybara"; version = "3.40.0"; }
-  { name = "capybara-playwright-driver"; version = "0.5.7"; }
-  { name = "cbor"; version = "0.5.10.1"; }
-  { name = "certified"; version = "1.0.0"; }
-  { name = "cgi"; version = "0.5.0"; }
-  { name = "chunky_png"; version = "1.4.0"; }
-  { name = "coderay"; version = "1.1.3"; }
-  { name = "colored2"; version = "4.0.3"; }
-  { name = "concurrent-ruby"; version = "1.3.5"; }
-  { name = "connection_pool"; version = "2.5.5"; }
-  { name = "cose"; version = "1.3.1"; }
-  { name = "cppjieba_rb"; version = "0.4.4"; }
-  { name = "crack"; version = "1.0.1"; }
-  { name = "crass"; version = "1.0.6"; }
-  { name = "css_parser"; version = "1.21.1"; }
-  { name = "csv"; version = "3.3.5"; }
-  { name = "date"; version = "3.5.0"; }
-  { name = "debug"; version = "1.11.0"; }
-  { name = "debug_inspector"; version = "1.2.0"; }
-  { name = "diff-lcs"; version = "1.6.2"; }
-  { name = "diffy"; version = "3.4.4"; }
-  { name = "digest"; version = "3.2.1"; }
-  { name = "digest-xxhash"; version = "0.2.9"; }
-  { name = "discourse-emojis"; version = "1.0.44"; }
-  { name = "discourse-fonts"; version = "0.0.19"; }
-  { name = "discourse-seed-fu"; version = "2.3.12"; }
-  { name = "discourse_ai-tokenizers"; version = "0.4"; }
-  { name = "discourse_dev_assets"; version = "0.0.6"; }
-  { name = "discourse_math_bundle"; version = "1.0.1"; }
-  { name = "docile"; version = "1.4.1"; }
-  { name = "drb"; version = "2.2.3"; }
-  { name = "dry-initializer"; version = "3.2.0"; }
-  { name = "ed25519"; version = "1.4.0"; }
-  { name = "email_reply_trimmer"; version = "0.2.0"; }
-  { name = "erb"; version = "6.0.0"; }
-  { name = "erubi"; version = "1.13.1"; }
-  { name = "excon"; version = "1.3.2"; }
-  { name = "exifr"; version = "1.4.1"; }
-  { name = "extralite-bundle"; version = "2.13"; }
-  { name = "fabrication"; version = "3.0.0"; }
-  { name = "faker"; version = "3.5.3"; }
-  { name = "faraday"; version = "2.14.0"; }
-  { name = "faraday-multipart"; version = "1.1.1"; }
-  { name = "faraday-net_http"; version = "3.4.2"; }
-  { name = "faraday-retry"; version = "2.3.2"; }
-  { name = "fast_blank"; version = "1.0.1"; }
-  { name = "fastimage"; version = "2.3.1"; }
-  { name = "ffi"; version = "1.17.2"; }
-  { name = "fspath"; version = "3.1.2"; }
-  { name = "globalid"; version = "1.3.0"; }
-  { name = "goldiloader"; version = "6.0.0"; }
-  { name = "google-protobuf"; version = "4.33.2"; }
-  { name = "guess_html_encoding"; version = "0.0.11"; }
-  { name = "hana"; version = "1.3.7"; }
-  { name = "hashdiff"; version = "1.2.1"; }
-  { name = "hashery"; version = "2.1.2"; }
-  { name = "hashie"; version = "5.0.0"; }
-  { name = "highline"; version = "3.1.2"; }
-  { name = "htmlentities"; version = "4.4.2"; }
-  { name = "http_accept_language"; version = "2.1.1"; }
-  { name = "i18n"; version = "1.14.7"; }
-  { name = "image_optim"; version = "0.31.4"; }
-  { name = "image_size"; version = "3.4.0"; }
-  { name = "in_threads"; version = "1.6.0"; }
-  { name = "inflection"; version = "1.0.0"; }
-  { name = "io-console"; version = "0.8.1"; }
-  { name = "irb"; version = "1.15.3"; }
-  { name = "iso8601"; version = "0.13.0"; }
-  { name = "jmespath"; version = "1.6.2"; }
-  { name = "json"; version = "2.17.1"; }
-  { name = "json-schema"; version = "6.0.0"; }
-  { name = "json_schemer"; version = "2.5.0"; }
-  { name = "jwt"; version = "2.10.1"; }
-  { name = "kgio"; version = "2.11.4"; }
-  { name = "language_server-protocol"; version = "3.17.0.5"; }
-  { name = "libv8-node"; version = "24.1.0.0"; }
-  { name = "lint_roller"; version = "1.1.0"; }
-  { name = "listen"; version = "3.9.0"; }
-  { name = "literate_randomizer"; version = "0.4.0"; }
-  { name = "logger"; version = "1.7.0"; }
-  { name = "lograge"; version = "0.14.0"; }
-  { name = "logstash-event"; version = "1.2.02"; }
-  { name = "logster"; version = "2.20.1"; }
-  { name = "loofah"; version = "2.24.1"; }
-  { name = "lru_redux"; version = "1.1.0"; }
-  { name = "lz4-ruby"; version = "0.3.3"; }
-  { name = "mail"; version = "2.9.0"; }
-  { name = "matrix"; version = "0.4.3"; }
-  { name = "maxminddb"; version = "0.1.22"; }
-  { name = "memory_profiler"; version = "1.1.0"; }
-  { name = "message_bus"; version = "4.4.1"; }
-  { name = "messageformat-wrapper"; version = "1.1.0"; }
-  { name = "method_source"; version = "1.1.0"; }
-  { name = "mime-types"; version = "3.7.0"; }
-  { name = "mime-types-data"; version = "3.2025.0924"; }
-  { name = "mini_mime"; version = "1.1.5"; }
-  { name = "mini_racer"; version = "0.19.1"; }
-  { name = "mini_scheduler"; version = "0.18.0"; }
-  { name = "mini_sql"; version = "1.6.0"; }
-  { name = "mini_suffix"; version = "0.3.3"; }
-  { name = "minio_runner"; version = "1.0.0"; }
-  { name = "minitest"; version = "5.26.2"; }
-  { name = "mocha"; version = "2.8.2"; }
-  { name = "msgpack"; version = "1.8.0"; }
-  { name = "multi_json"; version = "1.18.0"; }
-  { name = "multi_xml"; version = "0.7.2"; }
-  { name = "multipart-post"; version = "2.4.1"; }
-  { name = "mustache"; version = "1.1.1"; }
-  { name = "net-http"; version = "0.8.0"; }
-  { name = "net-imap"; version = "0.5.12"; }
-  { name = "net-pop"; version = "0.1.2"; }
-  { name = "net-protocol"; version = "0.2.2"; }
-  { name = "net-smtp"; version = "0.5.1"; }
-  { name = "nio4r"; version = "2.7.5"; }
-  { name = "nokogiri"; version = "1.18.10"; }
-  { name = "oauth"; version = "1.1.3"; }
-  { name = "oauth-tty"; version = "1.0.6"; }
-  { name = "oauth2"; version = "1.4.11"; }
-  { name = "octokit"; version = "5.6.1"; }
-  { name = "oj"; version = "3.16.12"; }
-  { name = "omniauth"; version = "2.1.2"; }
-  { name = "omniauth-facebook"; version = "9.0.0"; }
-  { name = "omniauth-github"; version = "2.0.0"; }
-  { name = "omniauth-google-oauth2"; version = "1.0.1"; }
-  { name = "omniauth-oauth"; version = "1.2.1"; }
-  { name = "omniauth-oauth2"; version = "1.7.3"; }
-  { name = "omniauth-twitter"; version = "1.4.0"; }
-  { name = "openssl"; version = "3.3.2"; }
-  { name = "openssl-signature_algorithm"; version = "1.3.0"; }
-  { name = "optimist"; version = "3.2.1"; }
-  { name = "ostruct"; version = "0.6.3"; }
-  { name = "parallel"; version = "1.27.0"; }
-  { name = "parallel_tests"; version = "5.5.0"; }
-  { name = "parser"; version = "3.3.10.0"; }
-  { name = "pastel"; version = "0.8.0"; }
-  { name = "pdf-reader"; version = "2.15.0"; }
-  { name = "pg"; version = "1.6.2"; }
-  { name = "pitchfork"; version = "0.18.1"; }
-  { name = "playwright-ruby-client"; version = "1.57.0"; }
-  { name = "pp"; version = "0.6.3"; }
-  { name = "prettier_print"; version = "1.2.1"; }
-  { name = "prettyprint"; version = "0.2.0"; }
-  { name = "prism"; version = "1.6.0"; }
-  { name = "progress"; version = "3.6.0"; }
-  { name = "propshaft"; version = "1.3.1"; }
-  { name = "pry"; version = "0.15.2"; }
-  { name = "pry-rails"; version = "0.3.11"; }
-  { name = "pry-stack_explorer"; version = "0.6.1"; }
-  { name = "psych"; version = "5.2.6"; }
-  { name = "public_suffix"; version = "7.0.0"; }
-  { name = "puma"; version = "7.1.0"; }
-  { name = "racc"; version = "1.8.1"; }
-  { name = "rack"; version = "2.2.21"; }
-  { name = "rack-mini-profiler"; version = "4.0.1"; }
-  { name = "rack-protection"; version = "3.2.0"; }
-  { name = "rack-session"; version = "1.0.2"; }
-  { name = "rack-test"; version = "2.2.0"; }
-  { name = "rackup"; version = "1.0.1"; }
-  { name = "rails-dom-testing"; version = "2.3.0"; }
-  { name = "rails-html-sanitizer"; version = "1.6.2"; }
-  { name = "rails_failover"; version = "2.3.0"; }
-  { name = "rails_multisite"; version = "7.0.0"; }
-  { name = "railties"; version = "8.0.4"; }
-  { name = "rainbow"; version = "3.1.1"; }
-  { name = "raindrops"; version = "0.20.1"; }
-  { name = "rake"; version = "13.3.1"; }
-  { name = "rake-compiler-dock"; version = "1.10.0"; }
-  { name = "rb-fsevent"; version = "0.11.2"; }
-  { name = "rb-inotify"; version = "0.11.1"; }
-  { name = "rb_sys"; version = "0.9.119"; }
-  { name = "rbs"; version = "3.9.5"; }
-  { name = "rbtrace"; version = "0.5.3"; }
-  { name = "rchardet"; version = "1.10.0"; }
-  { name = "rdoc"; version = "6.17.0"; }
-  { name = "redcarpet"; version = "3.6.1"; }
-  { name = "redis"; version = "5.4.0"; }
-  { name = "redis-client"; version = "0.26.1"; }
-  { name = "redis-namespace"; version = "1.11.0"; }
-  { name = "regexp_parser"; version = "2.11.3"; }
-  { name = "reline"; version = "0.6.3"; }
-  { name = "request_store"; version = "1.7.0"; }
-  { name = "rexml"; version = "3.4.4"; }
-  { name = "rinku"; version = "2.0.6"; }
-  { name = "rotp"; version = "6.3.0"; }
-  { name = "rouge"; version = "4.7.0"; }
-  { name = "rqrcode"; version = "3.1.1"; }
-  { name = "rqrcode_core"; version = "2.0.1"; }
-  { name = "rrule"; version = "0.7.0"; }
-  { name = "rspec"; version = "3.13.2"; }
-  { name = "rspec-core"; version = "3.13.6"; }
-  { name = "rspec-expectations"; version = "3.13.5"; }
-  { name = "rspec-html-matchers"; version = "0.10.0"; }
-  { name = "rspec-mocks"; version = "3.13.7"; }
-  { name = "rspec-multi-mock"; version = "0.3.1"; }
-  { name = "rspec-rails"; version = "8.0.2"; }
-  { name = "rspec-support"; version = "3.13.6"; }
-  { name = "rss"; version = "0.3.1"; }
-  { name = "rswag-specs"; version = "2.17.0"; }
-  { name = "rtlcss"; version = "0.2.1"; }
-  { name = "rubocop"; version = "1.81.7"; }
-  { name = "rubocop-ast"; version = "1.48.0"; }
-  { name = "rubocop-capybara"; version = "2.22.1"; }
-  { name = "rubocop-discourse"; version = "3.13.3"; }
-  { name = "rubocop-factory_bot"; version = "2.28.0"; }
-  { name = "rubocop-rails"; version = "2.33.4"; }
-  { name = "rubocop-rspec"; version = "3.8.0"; }
-  { name = "rubocop-rspec_rails"; version = "2.32.0"; }
-  { name = "ruby-lsp"; version = "0.26.4"; }
-  { name = "ruby-lsp-rails"; version = "0.4.8"; }
-  { name = "ruby-lsp-rspec"; version = "0.1.28"; }
-  { name = "ruby-prof"; version = "1.7.2"; }
-  { name = "ruby-progressbar"; version = "1.13.0"; }
-  { name = "ruby-rc4"; version = "0.1.5"; }
-  { name = "ruby-readability"; version = "0.7.2"; }
-  { name = "ruby2_keywords"; version = "0.0.5"; }
-  { name = "rubyzip"; version = "2.4.1"; }
-  { name = "sanitize"; version = "7.0.0"; }
-  { name = "sass-embedded"; version = "1.91.0"; }
-  { name = "sassc-embedded"; version = "1.80.5"; }
-  { name = "sawyer"; version = "0.9.3"; }
-  { name = "securerandom"; version = "0.4.1"; }
-  { name = "shoulda-matchers"; version = "7.0.1"; }
-  { name = "sidekiq"; version = "7.3.9"; }
-  { name = "simplecov"; version = "0.22.0"; }
-  { name = "simplecov-html"; version = "0.13.2"; }
-  { name = "simplecov_json_formatter"; version = "0.1.4"; }
-  { name = "simpleidn"; version = "0.2.3"; }
-  { name = "snaky_hash"; version = "2.0.3"; }
-  { name = "sqlite3"; version = "2.8.1"; }
-  { name = "sshkey"; version = "3.0.0"; }
-  { name = "stackprof"; version = "0.2.27"; }
-  { name = "stringio"; version = "3.1.9"; }
-  { name = "stripe"; version = "11.1.0"; }
-  { name = "syntax_tree"; version = "6.3.0"; }
-  { name = "test-prof"; version = "1.5.0"; }
-  { name = "thor"; version = "1.4.0"; }
-  { name = "tiktoken_ruby"; version = "0.0.15.1"; }
-  { name = "timeout"; version = "0.5.0"; }
-  { name = "tokenizers"; version = "0.6.3"; }
-  { name = "trilogy"; version = "2.9.0"; }
-  { name = "tsort"; version = "0.2.0"; }
-  { name = "ttfunk"; version = "1.8.0"; }
-  { name = "tty-color"; version = "0.6.0"; }
-  { name = "tty-cursor"; version = "0.7.1"; }
-  { name = "tty-prompt"; version = "0.23.1"; }
-  { name = "tty-reader"; version = "0.9.0"; }
-  { name = "tty-screen"; version = "0.8.2"; }
-  { name = "tzinfo"; version = "2.0.6"; }
-  { name = "tzinfo-data"; version = "1.2025.2"; }
-  { name = "unf"; version = "0.2.0"; }
-  { name = "unicode-display_width"; version = "3.2.0"; }
-  { name = "unicode-emoji"; version = "4.1.0"; }
-  { name = "unicorn"; version = "6.1.0"; }
-  { name = "uniform_notifier"; version = "1.18.0"; }
-  { name = "uri"; version = "1.1.1"; }
-  { name = "useragent"; version = "0.16.11"; }
-  { name = "version_gem"; version = "1.1.9"; }
-  { name = "web-push"; version = "3.0.1"; }
-  { name = "webmock"; version = "3.25.1"; }
-  { name = "webrick"; version = "1.9.2"; }
-  { name = "wisper"; version = "2.0.1"; }
-  { name = "xpath"; version = "3.2.0"; }
-  { name = "yaml-lint"; version = "0.1.2"; }
-  { name = "yard"; version = "0.9.38"; }
-  { name = "zeitwerk"; version = "2.7.3"; }
-  { name = "zendesk_api"; version = "1.38.0.rc1"; }
+  {
+    name = "Ascii85";
+    version = "2.0.1";
+  }
+  {
+    name = "actionmailer";
+    version = "8.0.4";
+  }
+  {
+    name = "actionpack";
+    version = "8.0.4";
+  }
+  {
+    name = "actionview";
+    version = "8.0.4";
+  }
+  {
+    name = "actionview_precompiler";
+    version = "0.4.0";
+  }
+  {
+    name = "active_model_serializers";
+    version = "0.8.4";
+  }
+  {
+    name = "activejob";
+    version = "8.0.4";
+  }
+  {
+    name = "activemodel";
+    version = "8.0.4";
+  }
+  {
+    name = "activerecord";
+    version = "8.0.4";
+  }
+  {
+    name = "activesupport";
+    version = "8.0.4";
+  }
+  {
+    name = "addressable";
+    version = "2.8.8";
+  }
+  {
+    name = "afm";
+    version = "1.0.0";
+  }
+  {
+    name = "annotaterb";
+    version = "4.20.0";
+  }
+  {
+    name = "ast";
+    version = "2.4.3";
+  }
+  {
+    name = "aws-eventstream";
+    version = "1.4.0";
+  }
+  {
+    name = "aws-partitions";
+    version = "1.1134.0";
+  }
+  {
+    name = "aws-sdk-core";
+    version = "3.227.0";
+  }
+  {
+    name = "aws-sdk-kms";
+    version = "1.99.0";
+  }
+  {
+    name = "aws-sdk-mediaconvert";
+    version = "1.165.0";
+  }
+  {
+    name = "aws-sdk-s3";
+    version = "1.182.0";
+  }
+  {
+    name = "aws-sdk-sns";
+    version = "1.96.0";
+  }
+  {
+    name = "aws-sigv4";
+    version = "1.12.1";
+  }
+  {
+    name = "base64";
+    version = "0.3.0";
+  }
+  {
+    name = "benchmark";
+    version = "0.5.0";
+  }
+  {
+    name = "better_errors";
+    version = "2.10.1";
+  }
+  {
+    name = "bigdecimal";
+    version = "3.3.1";
+  }
+  {
+    name = "binding_of_caller";
+    version = "1.0.1";
+  }
+  {
+    name = "bootsnap";
+    version = "1.19.0";
+  }
+  {
+    name = "builder";
+    version = "3.3.0";
+  }
+  {
+    name = "bullet";
+    version = "8.1.0";
+  }
+  {
+    name = "capybara";
+    version = "3.40.0";
+  }
+  {
+    name = "capybara-playwright-driver";
+    version = "0.5.7";
+  }
+  {
+    name = "cbor";
+    version = "0.5.10.1";
+  }
+  {
+    name = "certified";
+    version = "1.0.0";
+  }
+  {
+    name = "cgi";
+    version = "0.5.0";
+  }
+  {
+    name = "chunky_png";
+    version = "1.4.0";
+  }
+  {
+    name = "coderay";
+    version = "1.1.3";
+  }
+  {
+    name = "colored2";
+    version = "4.0.3";
+  }
+  {
+    name = "concurrent-ruby";
+    version = "1.3.5";
+  }
+  {
+    name = "connection_pool";
+    version = "2.5.5";
+  }
+  {
+    name = "cose";
+    version = "1.3.1";
+  }
+  {
+    name = "cppjieba_rb";
+    version = "0.4.4";
+  }
+  {
+    name = "crack";
+    version = "1.0.1";
+  }
+  {
+    name = "crass";
+    version = "1.0.6";
+  }
+  {
+    name = "css_parser";
+    version = "1.21.1";
+  }
+  {
+    name = "csv";
+    version = "3.3.5";
+  }
+  {
+    name = "date";
+    version = "3.5.0";
+  }
+  {
+    name = "debug";
+    version = "1.11.0";
+  }
+  {
+    name = "debug_inspector";
+    version = "1.2.0";
+  }
+  {
+    name = "diff-lcs";
+    version = "1.6.2";
+  }
+  {
+    name = "diffy";
+    version = "3.4.4";
+  }
+  {
+    name = "digest";
+    version = "3.2.1";
+  }
+  {
+    name = "digest-xxhash";
+    version = "0.2.9";
+  }
+  {
+    name = "discourse-emojis";
+    version = "1.0.44";
+  }
+  {
+    name = "discourse-fonts";
+    version = "0.0.19";
+  }
+  {
+    name = "discourse-seed-fu";
+    version = "2.3.12";
+  }
+  {
+    name = "discourse_ai-tokenizers";
+    version = "0.4";
+  }
+  {
+    name = "discourse_dev_assets";
+    version = "0.0.6";
+  }
+  {
+    name = "discourse_math_bundle";
+    version = "1.0.1";
+  }
+  {
+    name = "docile";
+    version = "1.4.1";
+  }
+  {
+    name = "drb";
+    version = "2.2.3";
+  }
+  {
+    name = "dry-initializer";
+    version = "3.2.0";
+  }
+  {
+    name = "ed25519";
+    version = "1.4.0";
+  }
+  {
+    name = "email_reply_trimmer";
+    version = "0.2.0";
+  }
+  {
+    name = "erb";
+    version = "6.0.0";
+  }
+  {
+    name = "erubi";
+    version = "1.13.1";
+  }
+  {
+    name = "excon";
+    version = "1.3.2";
+  }
+  {
+    name = "exifr";
+    version = "1.4.1";
+  }
+  {
+    name = "extralite-bundle";
+    version = "2.13";
+  }
+  {
+    name = "fabrication";
+    version = "3.0.0";
+  }
+  {
+    name = "faker";
+    version = "3.5.3";
+  }
+  {
+    name = "faraday";
+    version = "2.14.0";
+  }
+  {
+    name = "faraday-multipart";
+    version = "1.1.1";
+  }
+  {
+    name = "faraday-net_http";
+    version = "3.4.2";
+  }
+  {
+    name = "faraday-retry";
+    version = "2.3.2";
+  }
+  {
+    name = "fast_blank";
+    version = "1.0.1";
+  }
+  {
+    name = "fastimage";
+    version = "2.3.1";
+  }
+  {
+    name = "ffi";
+    version = "1.17.2";
+  }
+  {
+    name = "fspath";
+    version = "3.1.2";
+  }
+  {
+    name = "globalid";
+    version = "1.3.0";
+  }
+  {
+    name = "goldiloader";
+    version = "6.0.0";
+  }
+  {
+    name = "google-protobuf";
+    version = "4.33.2";
+  }
+  {
+    name = "guess_html_encoding";
+    version = "0.0.11";
+  }
+  {
+    name = "hana";
+    version = "1.3.7";
+  }
+  {
+    name = "hashdiff";
+    version = "1.2.1";
+  }
+  {
+    name = "hashery";
+    version = "2.1.2";
+  }
+  {
+    name = "hashie";
+    version = "5.0.0";
+  }
+  {
+    name = "highline";
+    version = "3.1.2";
+  }
+  {
+    name = "htmlentities";
+    version = "4.4.2";
+  }
+  {
+    name = "http_accept_language";
+    version = "2.1.1";
+  }
+  {
+    name = "i18n";
+    version = "1.14.7";
+  }
+  {
+    name = "image_optim";
+    version = "0.31.4";
+  }
+  {
+    name = "image_size";
+    version = "3.4.0";
+  }
+  {
+    name = "in_threads";
+    version = "1.6.0";
+  }
+  {
+    name = "inflection";
+    version = "1.0.0";
+  }
+  {
+    name = "io-console";
+    version = "0.8.1";
+  }
+  {
+    name = "irb";
+    version = "1.15.3";
+  }
+  {
+    name = "iso8601";
+    version = "0.13.0";
+  }
+  {
+    name = "jmespath";
+    version = "1.6.2";
+  }
+  {
+    name = "json";
+    version = "2.17.1";
+  }
+  {
+    name = "json-schema";
+    version = "6.0.0";
+  }
+  {
+    name = "json_schemer";
+    version = "2.5.0";
+  }
+  {
+    name = "jwt";
+    version = "2.10.1";
+  }
+  {
+    name = "kgio";
+    version = "2.11.4";
+  }
+  {
+    name = "language_server-protocol";
+    version = "3.17.0.5";
+  }
+  {
+    name = "libv8-node";
+    version = "24.1.0.0";
+  }
+  {
+    name = "lint_roller";
+    version = "1.1.0";
+  }
+  {
+    name = "listen";
+    version = "3.9.0";
+  }
+  {
+    name = "literate_randomizer";
+    version = "0.4.0";
+  }
+  {
+    name = "logger";
+    version = "1.7.0";
+  }
+  {
+    name = "lograge";
+    version = "0.14.0";
+  }
+  {
+    name = "logstash-event";
+    version = "1.2.02";
+  }
+  {
+    name = "logster";
+    version = "2.20.1";
+  }
+  {
+    name = "loofah";
+    version = "2.24.1";
+  }
+  {
+    name = "lru_redux";
+    version = "1.1.0";
+  }
+  {
+    name = "lz4-ruby";
+    version = "0.3.3";
+  }
+  {
+    name = "mail";
+    version = "2.9.0";
+  }
+  {
+    name = "matrix";
+    version = "0.4.3";
+  }
+  {
+    name = "maxminddb";
+    version = "0.1.22";
+  }
+  {
+    name = "memory_profiler";
+    version = "1.1.0";
+  }
+  {
+    name = "message_bus";
+    version = "4.4.1";
+  }
+  {
+    name = "messageformat-wrapper";
+    version = "1.1.0";
+  }
+  {
+    name = "method_source";
+    version = "1.1.0";
+  }
+  {
+    name = "mime-types";
+    version = "3.7.0";
+  }
+  {
+    name = "mime-types-data";
+    version = "3.2025.0924";
+  }
+  {
+    name = "mini_mime";
+    version = "1.1.5";
+  }
+  {
+    name = "mini_racer";
+    version = "0.19.1";
+  }
+  {
+    name = "mini_scheduler";
+    version = "0.18.0";
+  }
+  {
+    name = "mini_sql";
+    version = "1.6.0";
+  }
+  {
+    name = "mini_suffix";
+    version = "0.3.3";
+  }
+  {
+    name = "minio_runner";
+    version = "1.0.0";
+  }
+  {
+    name = "minitest";
+    version = "5.26.2";
+  }
+  {
+    name = "mocha";
+    version = "2.8.2";
+  }
+  {
+    name = "msgpack";
+    version = "1.8.0";
+  }
+  {
+    name = "multi_json";
+    version = "1.18.0";
+  }
+  {
+    name = "multi_xml";
+    version = "0.7.2";
+  }
+  {
+    name = "multipart-post";
+    version = "2.4.1";
+  }
+  {
+    name = "mustache";
+    version = "1.1.1";
+  }
+  {
+    name = "net-http";
+    version = "0.8.0";
+  }
+  {
+    name = "net-imap";
+    version = "0.5.12";
+  }
+  {
+    name = "net-pop";
+    version = "0.1.2";
+  }
+  {
+    name = "net-protocol";
+    version = "0.2.2";
+  }
+  {
+    name = "net-smtp";
+    version = "0.5.1";
+  }
+  {
+    name = "nio4r";
+    version = "2.7.5";
+  }
+  {
+    name = "nokogiri";
+    version = "1.18.10";
+  }
+  {
+    name = "oauth";
+    version = "1.1.3";
+  }
+  {
+    name = "oauth-tty";
+    version = "1.0.6";
+  }
+  {
+    name = "oauth2";
+    version = "1.4.11";
+  }
+  {
+    name = "octokit";
+    version = "5.6.1";
+  }
+  {
+    name = "oj";
+    version = "3.16.12";
+  }
+  {
+    name = "omniauth";
+    version = "2.1.2";
+  }
+  {
+    name = "omniauth-facebook";
+    version = "9.0.0";
+  }
+  {
+    name = "omniauth-github";
+    version = "2.0.0";
+  }
+  {
+    name = "omniauth-google-oauth2";
+    version = "1.0.1";
+  }
+  {
+    name = "omniauth-oauth";
+    version = "1.2.1";
+  }
+  {
+    name = "omniauth-oauth2";
+    version = "1.7.3";
+  }
+  {
+    name = "omniauth-twitter";
+    version = "1.4.0";
+  }
+  {
+    name = "openssl";
+    version = "3.3.2";
+  }
+  {
+    name = "openssl-signature_algorithm";
+    version = "1.3.0";
+  }
+  {
+    name = "optimist";
+    version = "3.2.1";
+  }
+  {
+    name = "ostruct";
+    version = "0.6.3";
+  }
+  {
+    name = "parallel";
+    version = "1.27.0";
+  }
+  {
+    name = "parallel_tests";
+    version = "5.5.0";
+  }
+  {
+    name = "parser";
+    version = "3.3.10.0";
+  }
+  {
+    name = "pastel";
+    version = "0.8.0";
+  }
+  {
+    name = "pdf-reader";
+    version = "2.15.0";
+  }
+  {
+    name = "pg";
+    version = "1.6.2";
+  }
+  {
+    name = "pitchfork";
+    version = "0.18.1";
+  }
+  {
+    name = "playwright-ruby-client";
+    version = "1.57.0";
+  }
+  {
+    name = "pp";
+    version = "0.6.3";
+  }
+  {
+    name = "prettier_print";
+    version = "1.2.1";
+  }
+  {
+    name = "prettyprint";
+    version = "0.2.0";
+  }
+  {
+    name = "prism";
+    version = "1.6.0";
+  }
+  {
+    name = "progress";
+    version = "3.6.0";
+  }
+  {
+    name = "propshaft";
+    version = "1.3.1";
+  }
+  {
+    name = "pry";
+    version = "0.15.2";
+  }
+  {
+    name = "pry-rails";
+    version = "0.3.11";
+  }
+  {
+    name = "pry-stack_explorer";
+    version = "0.6.1";
+  }
+  {
+    name = "psych";
+    version = "5.2.6";
+  }
+  {
+    name = "public_suffix";
+    version = "7.0.0";
+  }
+  {
+    name = "puma";
+    version = "7.1.0";
+  }
+  {
+    name = "racc";
+    version = "1.8.1";
+  }
+  {
+    name = "rack";
+    version = "2.2.21";
+  }
+  {
+    name = "rack-mini-profiler";
+    version = "4.0.1";
+  }
+  {
+    name = "rack-protection";
+    version = "3.2.0";
+  }
+  {
+    name = "rack-session";
+    version = "1.0.2";
+  }
+  {
+    name = "rack-test";
+    version = "2.2.0";
+  }
+  {
+    name = "rackup";
+    version = "1.0.1";
+  }
+  {
+    name = "rails-dom-testing";
+    version = "2.3.0";
+  }
+  {
+    name = "rails-html-sanitizer";
+    version = "1.6.2";
+  }
+  {
+    name = "rails_failover";
+    version = "2.3.0";
+  }
+  {
+    name = "rails_multisite";
+    version = "7.0.0";
+  }
+  {
+    name = "railties";
+    version = "8.0.4";
+  }
+  {
+    name = "rainbow";
+    version = "3.1.1";
+  }
+  {
+    name = "raindrops";
+    version = "0.20.1";
+  }
+  {
+    name = "rake";
+    version = "13.3.1";
+  }
+  {
+    name = "rake-compiler-dock";
+    version = "1.10.0";
+  }
+  {
+    name = "rb-fsevent";
+    version = "0.11.2";
+  }
+  {
+    name = "rb-inotify";
+    version = "0.11.1";
+  }
+  {
+    name = "rb_sys";
+    version = "0.9.119";
+  }
+  {
+    name = "rbs";
+    version = "3.9.5";
+  }
+  {
+    name = "rbtrace";
+    version = "0.5.3";
+  }
+  {
+    name = "rchardet";
+    version = "1.10.0";
+  }
+  {
+    name = "rdoc";
+    version = "6.17.0";
+  }
+  {
+    name = "redcarpet";
+    version = "3.6.1";
+  }
+  {
+    name = "redis";
+    version = "5.4.0";
+  }
+  {
+    name = "redis-client";
+    version = "0.26.1";
+  }
+  {
+    name = "redis-namespace";
+    version = "1.11.0";
+  }
+  {
+    name = "regexp_parser";
+    version = "2.11.3";
+  }
+  {
+    name = "reline";
+    version = "0.6.3";
+  }
+  {
+    name = "request_store";
+    version = "1.7.0";
+  }
+  {
+    name = "rexml";
+    version = "3.4.4";
+  }
+  {
+    name = "rinku";
+    version = "2.0.6";
+  }
+  {
+    name = "rotp";
+    version = "6.3.0";
+  }
+  {
+    name = "rouge";
+    version = "4.7.0";
+  }
+  {
+    name = "rqrcode";
+    version = "3.1.1";
+  }
+  {
+    name = "rqrcode_core";
+    version = "2.0.1";
+  }
+  {
+    name = "rrule";
+    version = "0.7.0";
+  }
+  {
+    name = "rspec";
+    version = "3.13.2";
+  }
+  {
+    name = "rspec-core";
+    version = "3.13.6";
+  }
+  {
+    name = "rspec-expectations";
+    version = "3.13.5";
+  }
+  {
+    name = "rspec-html-matchers";
+    version = "0.10.0";
+  }
+  {
+    name = "rspec-mocks";
+    version = "3.13.7";
+  }
+  {
+    name = "rspec-multi-mock";
+    version = "0.3.1";
+  }
+  {
+    name = "rspec-rails";
+    version = "8.0.2";
+  }
+  {
+    name = "rspec-support";
+    version = "3.13.6";
+  }
+  {
+    name = "rss";
+    version = "0.3.1";
+  }
+  {
+    name = "rswag-specs";
+    version = "2.17.0";
+  }
+  {
+    name = "rtlcss";
+    version = "0.2.1";
+  }
+  {
+    name = "rubocop";
+    version = "1.81.7";
+  }
+  {
+    name = "rubocop-ast";
+    version = "1.48.0";
+  }
+  {
+    name = "rubocop-capybara";
+    version = "2.22.1";
+  }
+  {
+    name = "rubocop-discourse";
+    version = "3.13.3";
+  }
+  {
+    name = "rubocop-factory_bot";
+    version = "2.28.0";
+  }
+  {
+    name = "rubocop-rails";
+    version = "2.33.4";
+  }
+  {
+    name = "rubocop-rspec";
+    version = "3.8.0";
+  }
+  {
+    name = "rubocop-rspec_rails";
+    version = "2.32.0";
+  }
+  {
+    name = "ruby-lsp";
+    version = "0.26.4";
+  }
+  {
+    name = "ruby-lsp-rails";
+    version = "0.4.8";
+  }
+  {
+    name = "ruby-lsp-rspec";
+    version = "0.1.28";
+  }
+  {
+    name = "ruby-prof";
+    version = "1.7.2";
+  }
+  {
+    name = "ruby-progressbar";
+    version = "1.13.0";
+  }
+  {
+    name = "ruby-rc4";
+    version = "0.1.5";
+  }
+  {
+    name = "ruby-readability";
+    version = "0.7.2";
+  }
+  {
+    name = "ruby2_keywords";
+    version = "0.0.5";
+  }
+  {
+    name = "rubyzip";
+    version = "2.4.1";
+  }
+  {
+    name = "sanitize";
+    version = "7.0.0";
+  }
+  {
+    name = "sass-embedded";
+    version = "1.91.0";
+  }
+  {
+    name = "sassc-embedded";
+    version = "1.80.5";
+  }
+  {
+    name = "sawyer";
+    version = "0.9.3";
+  }
+  {
+    name = "securerandom";
+    version = "0.4.1";
+  }
+  {
+    name = "shoulda-matchers";
+    version = "7.0.1";
+  }
+  {
+    name = "sidekiq";
+    version = "7.3.9";
+  }
+  {
+    name = "simplecov";
+    version = "0.22.0";
+  }
+  {
+    name = "simplecov-html";
+    version = "0.13.2";
+  }
+  {
+    name = "simplecov_json_formatter";
+    version = "0.1.4";
+  }
+  {
+    name = "simpleidn";
+    version = "0.2.3";
+  }
+  {
+    name = "snaky_hash";
+    version = "2.0.3";
+  }
+  {
+    name = "sqlite3";
+    version = "2.8.1";
+  }
+  {
+    name = "sshkey";
+    version = "3.0.0";
+  }
+  {
+    name = "stackprof";
+    version = "0.2.27";
+  }
+  {
+    name = "stringio";
+    version = "3.1.9";
+  }
+  {
+    name = "stripe";
+    version = "11.1.0";
+  }
+  {
+    name = "syntax_tree";
+    version = "6.3.0";
+  }
+  {
+    name = "test-prof";
+    version = "1.5.0";
+  }
+  {
+    name = "thor";
+    version = "1.4.0";
+  }
+  {
+    name = "tiktoken_ruby";
+    version = "0.0.15.1";
+  }
+  {
+    name = "timeout";
+    version = "0.5.0";
+  }
+  {
+    name = "tokenizers";
+    version = "0.6.3";
+  }
+  {
+    name = "trilogy";
+    version = "2.9.0";
+  }
+  {
+    name = "tsort";
+    version = "0.2.0";
+  }
+  {
+    name = "ttfunk";
+    version = "1.8.0";
+  }
+  {
+    name = "tty-color";
+    version = "0.6.0";
+  }
+  {
+    name = "tty-cursor";
+    version = "0.7.1";
+  }
+  {
+    name = "tty-prompt";
+    version = "0.23.1";
+  }
+  {
+    name = "tty-reader";
+    version = "0.9.0";
+  }
+  {
+    name = "tty-screen";
+    version = "0.8.2";
+  }
+  {
+    name = "tzinfo";
+    version = "2.0.6";
+  }
+  {
+    name = "tzinfo-data";
+    version = "1.2025.2";
+  }
+  {
+    name = "unf";
+    version = "0.2.0";
+  }
+  {
+    name = "unicode-display_width";
+    version = "3.2.0";
+  }
+  {
+    name = "unicode-emoji";
+    version = "4.1.0";
+  }
+  {
+    name = "unicorn";
+    version = "6.1.0";
+  }
+  {
+    name = "uniform_notifier";
+    version = "1.18.0";
+  }
+  {
+    name = "uri";
+    version = "1.1.1";
+  }
+  {
+    name = "useragent";
+    version = "0.16.11";
+  }
+  {
+    name = "version_gem";
+    version = "1.1.9";
+  }
+  {
+    name = "web-push";
+    version = "3.0.1";
+  }
+  {
+    name = "webmock";
+    version = "3.25.1";
+  }
+  {
+    name = "webrick";
+    version = "1.9.2";
+  }
+  {
+    name = "wisper";
+    version = "2.0.1";
+  }
+  {
+    name = "xpath";
+    version = "3.2.0";
+  }
+  {
+    name = "yaml-lint";
+    version = "0.1.2";
+  }
+  {
+    name = "yard";
+    version = "0.9.38";
+  }
+  {
+    name = "zeitwerk";
+    version = "2.7.3";
+  }
+  {
+    name = "zendesk_api";
+    version = "1.38.0.rc1";
+  }
 ]

@@ -271,6 +271,7 @@ just lint [app]     # default: fizzy
 | `nix-eval` | Every `.nix` file in `nix/` parses without error |
 | `dep-completeness` | Every gem in `Gemfile.lock` has a derivation |
 | `source-clean` | No pre-built `.so/.bundle/.dylib` leaked into sources |
+| `secrets` | No leaked keys, passwords, tokens in repo or gem sources |
 | `require-paths-vs-gem-metadata` | Generated `require_paths` match `.gem` YAML metadata |
 | `gemspec-deps` | Gemspec runtime deps resolve within the gemset |
 | `require-paths` | Every `require_path` directory exists on disk |
