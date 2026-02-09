@@ -1441,4 +1441,7 @@ in
   "zip_kit" = args: gem "zip_kit" args;
   "zlib" = args: gem "zlib" args;
   "zonebie" = args: gem "zonebie" args;
+  "azure-storage-ruby" = args: gem "azure-storage-ruby" args;
+  "devise-secure_password" = args: gem "devise-secure_password" args;
+  "acts_as_follower" = args: gem "acts_as_follower" args;
 }
