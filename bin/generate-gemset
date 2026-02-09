@@ -88,31 +88,18 @@ nix << "#\n"
 nix << "# #{project.upcase} — #{rubygem_specs.size + git_specs.size} gems\n"
 nix << "# Generated from #{File.basename(lockfile)}\n"
 nix << "#\n"
-nix << "{ pkgs, ruby }:\n\n"
-nix << "let\n"
-nix << "  inherit (pkgs) lib stdenv;\n"
-nix << "  gem = name: args: pkgs.callPackage (../gem + \"/\${name}\") ({ inherit lib stdenv ruby; } // args);\n"
-nix << "in\n"
-nix << "{\n"
+nix << "[\n"
 
 rubygem_specs.sort_by(&:name).each do |spec|
-  has_overlay = overlays.key?(spec.name)
-  if has_overlay
-    nix << "  #{spec.name.inspect} = gem #{spec.name.inspect} {\n"
-    nix << "    version = #{spec.version.to_s.inspect};\n"
-    nix << "    pkgs = pkgs;\n"
-    nix << "  };\n"
-  else
-    nix << "  #{spec.name.inspect} = gem #{spec.name.inspect} { version = #{spec.version.to_s.inspect}; };\n"
-  end
+  nix << "  { name = #{spec.name.inspect}; version = #{spec.version.to_s.inspect}; }\n"
 end
 
-git_repos.each do |repo_key, repo|
-  nix << "\n  # git: #{repo[:base]} @ #{repo[:shortrev]}\n"
-  nix << "  #{repo_key.inspect} = gem #{repo[:base].inspect} { git.rev = #{repo[:shortrev].inspect}; };\n"
+git_repos.each do |_repo_key, repo|
+  nix << "  # git: #{repo[:base]} @ #{repo[:shortrev]}\n"
+  nix << "  { name = #{repo[:base].inspect}; git.rev = #{repo[:shortrev].inspect}; }\n"
 end
 
-nix << "}\n"
+nix << "]\n"
 
 FileUtils.mkdir_p(output_dir)
 app_dir = File.join(output_dir, "..", "app")

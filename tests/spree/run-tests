@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run spree smoke test inside its nix devshell.
+# Verifies core library loads under installed dependencies.
+#
+# Usage:
+#   tests/spree/run-tests
+
+dir="$(cd "$(dirname "$0")" && pwd)"
+app_dir="$HOME/src/ruby-tests/spree"
+
+cd "$app_dir"
+
+exec nix-shell "$dir/devshell.nix" --run "
+  bundle exec ruby -e 'require \"spree/core\"; puts(1 + 1)'
+  echo 'spree: require OK'
+"

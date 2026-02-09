@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run discourse smoke test inside its nix devshell.
+# Uses Discourse's own CI pattern to avoid DB/Redis requirements.
+#
+# Usage:
+#   tests/discourse/run-tests
+
+dir="$(cd "$(dirname "$0")" && pwd)"
+app_dir="$HOME/src/ruby-tests/discourse"
+
+cd "$app_dir"
+rm -rf tmp/cache/bootsnap 2>/dev/null || true
+
+exec nix-shell "$dir/devshell.nix" --run "
+  SKIP_DB_AND_REDIS=1 DISCOURSE_DEV_DB=nonexist bin/rails runner 'puts(1 + 1)'
+  echo 'discourse: rails runner OK'
+"

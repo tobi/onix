@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run fizzy's full test suite inside its nix devshell.
+#
+# Usage:
+#   tests/fizzy/run-tests
+
+dir="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$dir/../.." && pwd)"
+app_dir="$HOME/src/ruby-tests/fizzy"
+
+cd "$app_dir"
+rm -rf tmp/cache/bootsnap 2>/dev/null || true
+
+exec nix-shell "$dir/devshell.nix" --run "
+  RAILS_ENV=test bin/rails db:prepare
+  bin/rails test
+"

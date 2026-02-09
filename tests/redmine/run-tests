@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run redmine smoke test inside its nix devshell.
+#
+# Usage:
+#   tests/redmine/run-tests
+
+dir="$(cd "$(dirname "$0")" && pwd)"
+app_dir="$HOME/src/ruby-tests/redmine"
+
+cd "$app_dir"
+rm -rf tmp/cache/bootsnap 2>/dev/null || true
+
+exec nix-shell "$dir/devshell.nix" --run "
+  bin/rails --help >/dev/null
+  echo 'redmine: rails boot OK'
+"

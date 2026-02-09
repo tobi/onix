@@ -1,11 +1,11 @@
 # scint-to-nix — Justfile
 #
 # Usage:
-#   just build fizzy            # build all gems + bundle-path
+#   just build                   # build every gem derivation
+#   just build fizzy             # build all gems for an app + bundle-path
 #   just test fizzy              # run app test suite
+
 #   just lint fizzy              # run lint suite
-#   just generate                # regenerate nix/ from cache
-#   just fetch                   # populate cache from .gems manifests
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
@@ -13,31 +13,49 @@ ruby := "ruby_3_4"
 
 # ── Build ──────────────────────────────────────────────────────────
 
-# Build all gems for an app + assemble the bundle-path
-build app:
+# Build every gem derivation in the tree
+[group('build')]
+build app="":
     #!/usr/bin/env bash
-    echo "Building all gems for {{app}}..."
-    out=$(nix-build --no-out-link --keep-going -E '
-        let pkgs = import <nixpkgs> {};
-            ruby = pkgs.{{ruby}};
-            gems = import ./nix/app/{{app}}.nix { inherit pkgs ruby; };
-        in pkgs.buildEnv {
-            name = "{{app}}-bundle-path";
-            paths = builtins.attrValues gems;
-        }
-    ')
-    n=$(nix-build --no-out-link -E '
-        let pkgs = import <nixpkgs> {};
-            ruby = pkgs.{{ruby}};
-            gems = import ./nix/app/{{app}}.nix { inherit pkgs ruby; };
-        in builtins.attrValues gems
-    ' 2>/dev/null | wc -l)
-    echo "$n gems → $out"
+    if [[ -n "{{app}}" ]]; then
+        echo "Building all gems for {{app}}..."
+        paths=$(nix-build --no-out-link --keep-going -E '
+            let pkgs = import <nixpkgs> {};
+                ruby = pkgs.{{ruby}};
+                resolve = import ./nix/modules/resolve.nix;
+                gems = resolve { inherit pkgs ruby; gemset = import ./nix/app/{{app}}.nix; };
+            in builtins.attrValues gems
+        ')
+        n=$(echo "$paths" | wc -l)
+        echo "$n gems built for {{app}}."
+    else
+        total=$(find nix/gem -mindepth 2 -maxdepth 2 -type d | wc -l)
+        echo "Building $total gem derivations..."
+        err=$(mktemp)
+        nix-build --no-out-link --keep-going -E '
+            let pkgs = import <nixpkgs> {};
+                ruby = pkgs.{{ruby}};
+                lib = pkgs.lib;
+                dirs = builtins.attrNames (builtins.readDir ./nix/gem);
+                versionsOf = name:
+                    let entries = builtins.readDir (./nix/gem + "/${name}");
+                        subdirs = lib.filterAttrs (k: v: v == "directory") entries;
+                    in map (v: pkgs.callPackage (./nix/gem + "/${name}/${v}") { inherit ruby; })
+                           (builtins.attrNames subdirs);
+            in lib.concatMap versionsOf dirs
+        ' >/dev/null 2>"$err" || true
+        failed=$(grep -oP "'/nix/store/[^']+'" "$err" | sort -u | wc -l || echo 0)
+        echo "$((total - failed))/$total built, $failed failed."
+        if [[ $failed -gt 0 ]]; then
+            grep 'nix log' "$err" >&2 || true
+        fi
+        rm -f "$err"
+    fi
 
-# Build individual gems (for debugging failures)
+# Build a single gem (for debugging failures)
 [group('build')]
 build-gem app gem:
-    nix-build --no-out-link -E 'let pkgs = import <nixpkgs> {}; ruby = pkgs.{{ruby}}; gems = import ./nix/app/{{app}}.nix { inherit pkgs ruby; }; in gems."{{gem}}"'
+    nix-build --no-out-link -E 'let pkgs = import <nixpkgs> {}; ruby = pkgs.{{ruby}}; resolve = import ./nix/modules/resolve.nix; gems = resolve { inherit pkgs ruby; gemset = import ./nix/app/{{app}}.nix; }; in gems."{{gem}}"'
 
 # ── Fetch & Generate ──────────────────────────────────────────────
 

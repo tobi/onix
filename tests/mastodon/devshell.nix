@@ -1,7 +1,7 @@
-# Chatwoot dev/test shell — PostgreSQL + Redis via local tmpdir services.
+# Mastodon dev/test shell — PostgreSQL + Redis via local tmpdir services.
 #
 # Usage:
-#   cd ~/src/ruby-tests/chatwoot && nix-shell ../../tries/2026-02-07-scint/scint-to-nix/tests/chatwoot/devshell.nix
+#   cd ~/src/ruby-tests/mastodon && nix-shell ../../tries/2026-02-07-scint/scint-to-nix/tests/mastodon/devshell.nix
 #
 { pkgs ? import <nixpkgs> {}
 , ruby ? pkgs.ruby_3_4
@@ -9,13 +9,13 @@
 
 let
   resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; gemset = import ../../nix/app/chatwoot.nix; };
+  gems = resolve { inherit pkgs ruby; gemset = import ../../nix/app/mastodon.nix; };
   bundlePath = pkgs.buildEnv {
-    name = "chatwoot-bundle-path";
+    name = "mastodon-bundle-path";
     paths = builtins.attrValues gems;
   };
 in pkgs.mkShell {
-  name = "chatwoot-devshell";
+  name = "mastodon-devshell";
 
   buildInputs = [
     ruby
@@ -51,17 +51,11 @@ in pkgs.mkShell {
     pg_ctl -D "$PGDATA" -l "$TMPDIR/pg.log" -o "-k $PGDATA" -w start >/dev/null 2>&1 || true
     redis-server --daemonize yes --port 6380 --dir "$TMPDIR" --logfile "$TMPDIR/redis.log" >/dev/null 2>&1 || true
 
-    export POSTGRES_HOST="$PGDATA"
-    export POSTGRES_PORT="$PGPORT"
-    export POSTGRES_USERNAME="postgres"
-    export POSTGRES_PASSWORD=""
     export RAILS_ENV="test"
-    export SECRET_KEY_BASE="test-secret-key-base-for-nix-shell"
-    export FRONTEND_URL="http://localhost:3000"
 
     rm -rf tmp/cache/bootsnap 2>/dev/null
 
-    echo "chatwoot devshell ready — ${bundlePath}"
+    echo "mastodon devshell ready — ${bundlePath}"
     echo "  ruby: $(ruby --version)"
     echo "  gems: $(ls ${bundlePath}/ruby/3.4.0/gems 2>/dev/null | wc -l)"
   '';

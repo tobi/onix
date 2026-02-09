@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run tests for all projects (or a subset).
+#
+# Usage:
+#   tests/run-all                     # all projects
+#   tests/run-all fizzy liquid rails  # specific projects
+
+dir="$(cd "$(dirname "$0")" && pwd)"
+
+all_projects=(fizzy chatwoot discourse forem liquid mastodon rails redmine solidus spree)
+
+if [ $# -gt 0 ]; then
+  projects=("$@")
+else
+  projects=("${all_projects[@]}")
+fi
+
+passed=0
+failed=0
+failures=()
+
+for project in "${projects[@]}"; do
+  script="$dir/$project/run-tests"
+  if [ ! -x "$script" ]; then
+    echo "=== $project === SKIP (no run-tests script)"
+    continue
+  fi
+
+  echo "=== $project ==="
+  if "$script" 2>&1; then
+    passed=$((passed + 1))
+    echo "=== $project === PASS"
+  else
+    failed=$((failed + 1))
+    failures+=("$project")
+    echo "=== $project === FAIL"
+  fi
+  echo
+done
+
+echo "================================"
+echo "$passed passed, $failed failed"
+if [ "$failed" -gt 0 ]; then
+  echo "Failures: ${failures[*]}"
+  exit 1
+fi

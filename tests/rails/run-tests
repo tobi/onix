@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run rails framework smoke test inside its nix devshell.
+# Verifies the gem loads under installed dependencies.
+#
+# Usage:
+#   tests/rails/run-tests
+
+dir="$(cd "$(dirname "$0")" && pwd)"
+app_dir="$HOME/src/ruby-tests/rails"
+
+cd "$app_dir"
+
+exec nix-shell "$dir/devshell.nix" --run "
+  bundle exec ruby -e 'require \"rails\"; puts(1 + 1)'
+  echo 'rails: require OK'
+"
