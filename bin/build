@@ -33,6 +33,7 @@ collect_failure_logs() {
         trap - EXIT  # keep the log file
         echo ""
         echo "Full build log: $log"
+        echo "Fix with: /nix-build skill — refer to $log"
         grep 'nix log' "$log" >&2 || true
     fi
 }
