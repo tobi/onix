@@ -1,0 +1,66 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Lint: verify every gem marked needs_compilation has .so files in the nix store output.
+# Also verify no scint-cache .so files leaked through (different hash = recompiled).
+
+require "json"
+require "open3"
+
+gems_dir = ARGV[0] || "out/gems"
+gems_dir = File.expand_path(gems_dir)
+
+SCINT_LIB = File.expand_path("../../scint/lib", File.dirname(__dir__))
+$LOAD_PATH.unshift(SCINT_LIB)
+require "scint/cache/layout"
+require "scint/platform"
+
+cache = Scint::Cache::Layout.new
+abi = Scint::Platform.abi_key
+
+gemset = JSON.parse(File.read(File.join(gems_dir, "gemset.json")))
+errors = []
+checked = 0
+
+gemset.select { |g| g["needs_compilation"] }.each do |g|
+  attr = g["nix_attr"]
+  store_path, status = Open3.capture2("nix-build", "-E",
+    "(import ./default.nix {}).\"#{attr}\"", "--no-out-link", chdir: gems_dir)
+  unless status.success?
+    errors << "#{attr}: nix-build failed"
+    next
+  end
+  store_path = store_path.strip.lines.last.strip
+
+  # Check for .so in lib/ (the installed location)
+  lib_sos = Dir.glob(File.join(store_path, "gems", "#{g["name"]}-#{g["version"]}", "lib", "**", "*.so"))
+  if lib_sos.empty?
+    errors << "#{attr}: no .so files found in lib/"
+    next
+  end
+
+  # Compare against scint cache to verify we actually recompiled
+  spec = { name: g["name"], version: g["version"], platform: g["platform"] || "ruby" }
+  cached_dir = cache.cached_path(spec, abi)
+  lib_sos.each do |nix_so|
+    relative = nix_so.sub(%r{.*/gems/#{Regexp.escape(g["name"])}-#{Regexp.escape(g["version"])}/}, "")
+    cached_so = File.join(cached_dir, relative)
+    if File.exist?(cached_so)
+      nix_md5 = `md5sum #{nix_so} 2>/dev/null`.split.first
+      cached_md5 = `md5sum #{cached_so} 2>/dev/null`.split.first
+      if nix_md5 == cached_md5
+        errors << "#{attr}: #{relative} identical to scint cache (not recompiled!)"
+      end
+    end
+  end
+
+  checked += 1
+end
+
+if errors.empty?
+  puts "OK: #{checked} native gems verified — all have .so files, all recompiled"
+else
+  puts "CHECKED: #{checked} native gems"
+  errors.each { |e| $stderr.puts "FAIL: #{e}" }
+  exit 1
+end

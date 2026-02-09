@@ -1,0 +1,122 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# scint-to-nix build
+#
+# Builds all gem derivations with parallelism, respecting dependency order.
+# Idempotent: nix-build is a no-op for derivations already in the nix store.
+# Stops on first failure.
+#
+# Usage:
+#   build --gems-dir out/gems/ [-j N]
+
+require "json"
+require "open3"
+require "etc"
+
+gems_dir = nil
+jobs     = [Etc.nprocessors, 32].min
+
+i = 0
+while i < ARGV.length
+  case ARGV[i]
+  when "--gems-dir", "-g" then gems_dir = ARGV[i += 1]
+  when "-j"               then jobs = ARGV[i += 1].to_i
+  when "--help", "-h"
+    $stderr.puts "Usage: build -g out/gems/ [-j N]"
+    exit 0
+  else abort "Unknown option: #{ARGV[i]}"
+  end
+  i += 1
+end
+
+abort "Missing --gems-dir" unless gems_dir
+gems_dir = File.expand_path(gems_dir)
+
+gemset = JSON.parse(File.read(File.join(gems_dir, "gemset.json")))
+by_name = {}
+gemset.each { |g| by_name[g["name"]] = g }
+total = gemset.size
+
+# State
+mutex     = Mutex.new
+cond      = ConditionVariable.new
+done      = {}   # nix_attr => true
+pending   = {}   # nix_attr => gem
+failed    = nil  # { attr:, output: }
+counter   = 0
+in_flight = 0
+
+gemset.each { |g| pending[g["nix_attr"]] = g }
+
+def deps_done?(g, done, by_name)
+  g["deps"].all? { |d| by_name[d].nil? || done.key?(by_name[d]["nix_attr"]) }
+end
+
+$stdout.puts "Building #{total} gems (#{jobs} workers)..."
+$stdout.flush
+
+threads = []
+
+while true
+  # Grab the next batch of ready work
+  to_launch = []
+
+  mutex.synchronize do
+    # Wait until there's something to do or we're done
+    while !failed && !pending.empty? && (in_flight >= jobs || pending.none? { |_, g| deps_done?(g, done, by_name) })
+      cond.wait(mutex, 0.5)
+    end
+
+    break if failed
+    break if pending.empty? && in_flight == 0
+
+    pending.each do |attr, g|
+      break if to_launch.size >= (jobs - in_flight)
+      to_launch << g if deps_done?(g, done, by_name)
+    end
+
+    to_launch.each do |g|
+      pending.delete(g["nix_attr"])
+      in_flight += 1
+    end
+  end
+
+  break if to_launch.empty? && mutex.synchronize { pending.empty? && in_flight == 0 }
+  break if failed
+
+  to_launch.each do |g|
+    threads << Thread.new do
+      attr = g["nix_attr"]
+      expr = "(import ./default.nix {}).\"#{attr}\""
+      out, status = Open3.capture2e("nix-build", "-E", expr, "--no-out-link", chdir: gems_dir)
+
+      mutex.synchronize do
+        in_flight -= 1
+
+        if status.success?
+          done[attr] = true
+          counter += 1
+          store_path = out.strip.lines.last&.strip
+          $stdout.puts "[#{counter}/#{total}] OK  #{attr} -> #{store_path}"
+          $stdout.flush
+        else
+          failed = { attr: attr, output: out.strip }
+        end
+
+        cond.broadcast
+      end
+    end
+  end
+end
+
+threads.each { |t| t.join rescue nil }
+
+if failed
+  $stderr.puts "\nFAIL #{failed[:attr]}"
+  $stderr.puts failed[:output]
+  $stderr.puts "\nFix #{gems_dir}/#{failed[:attr]}/default.nix and re-run."
+  exit 1
+end
+
+$stdout.puts "\nAll #{total} gems built successfully."

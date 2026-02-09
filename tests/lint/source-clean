@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Lint: verify no pre-built .so/.bundle files leaked into source/ directories
+# of gems that need compilation. These would be from scint's cache and linked
+# against the wrong Ruby.
+
+require "json"
+
+gems_dir = ARGV[0] || "out/gems"
+gems_dir = File.expand_path(gems_dir)
+
+gemset = JSON.parse(File.read(File.join(gems_dir, "gemset.json")))
+errors = []
+
+gemset.select { |g| g["needs_compilation"] }.each do |g|
+  source_lib = File.join(gems_dir, g["nix_attr"], "source", "lib")
+  next unless Dir.exist?(source_lib)
+
+  leaked = Dir.glob(File.join(source_lib, "**", "*.{so,bundle}"))
+  leaked.each do |f|
+    errors << "#{g["nix_attr"]}: pre-built binary leaked: #{f.sub(gems_dir + "/", "")}"
+  end
+end
+
+if errors.empty?
+  puts "OK: no pre-built .so/.bundle in source/ of #{gemset.count { |g| g["needs_compilation"] }} native gems"
+else
+  errors.each { |e| $stderr.puts "FAIL: #{e}" }
+  exit 1
+end

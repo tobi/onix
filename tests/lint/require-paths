@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Lint: verify every gem's require_paths actually exist on disk in the bundle path.
+# Catches gems where spec.marshal couldn't be read and we fell back to ["lib"].
+
+require "json"
+require "yaml"
+require "open3"
+
+gems_dir = ARGV[0] || "out/gems"
+gems_dir = File.expand_path(gems_dir)
+
+bundle_out, status = Open3.capture2("nix-build", File.join(gems_dir, "bundle-path.nix"), "--no-out-link")
+unless status.success?
+  abort "Failed to build bundle-path"
+end
+bundle = bundle_out.strip.lines.last.strip
+
+gemset = JSON.parse(File.read(File.join(gems_dir, "gemset.json")))
+errors = []
+
+gemset.each do |g|
+  gem_dir = File.join(bundle, "gems", "#{g["name"]}-#{g["version"]}")
+  next unless Dir.exist?(gem_dir)
+
+  g["require_paths"].each do |rp|
+    full = File.join(gem_dir, rp)
+    unless Dir.exist?(full)
+      errors << "#{g["nix_attr"]}: require_path '#{rp}' does not exist (#{full})"
+    end
+  end
+end
+
+if errors.empty?
+  puts "OK: all #{gemset.size} gems have valid require_paths"
+else
+  errors.each { |e| $stderr.puts "FAIL: #{e}" }
+  exit 1
+end

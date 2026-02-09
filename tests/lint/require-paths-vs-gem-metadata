@@ -1,0 +1,78 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Lint: compare generated require_paths against the authoritative YAML metadata
+# inside each .gem file. Catches cases where spec.marshal couldn't be loaded and
+# the fallback to ["lib"] was wrong.
+
+require "json"
+require "yaml"
+require "stringio"
+require "zlib"
+require "rubygems/package"
+
+SCINT_LIB = File.expand_path("../../scint/lib", File.dirname(__dir__))
+$LOAD_PATH.unshift(SCINT_LIB)
+require "scint/cache/layout"
+require "scint/platform"
+
+gems_dir = ARGV[0] || "out/gems"
+gems_dir = File.expand_path(gems_dir)
+
+cache = Scint::Cache::Layout.new
+gemset = JSON.parse(File.read(File.join(gems_dir, "gemset.json")))
+errors = []
+checked = 0
+
+gemset.each do |g|
+  spec = { name: g["name"], version: g["version"], platform: g["platform"] || "ruby" }
+  gem_path = cache.inbound_path(spec)
+  next unless File.exist?(gem_path)
+
+  # Read require_paths from .gem YAML metadata
+  begin
+    metadata_yaml = nil
+    File.open(gem_path, "rb") do |io|
+      Gem::Package::TarReader.new(io) do |tar|
+        tar.each do |entry|
+          if entry.full_name == "metadata.gz"
+            require "zlib"
+            metadata_yaml = Zlib::GzipReader.new(StringIO.new(entry.read)).read
+            break
+          end
+        end
+      end
+    end
+    next unless metadata_yaml
+
+    metadata = YAML.safe_load(metadata_yaml, permitted_classes: [Gem::Specification, Gem::Version, Gem::Requirement, Gem::Dependency, Symbol, Time])
+    real_paths = metadata.require_paths rescue nil
+    real_paths ||= metadata["require_paths"] rescue nil
+    next unless real_paths
+
+    # Filter out absolute paths — these are host-specific extension dirs
+    # (e.g. /home/.../.local/share/mise/.../extensions/...) that don't apply in Nix.
+    real_paths_relative = real_paths.reject { |p| p.start_with?("/") }
+
+    generated_paths = g["require_paths"]
+
+    # If generated is empty (meta-gem, no lib/ on disk), that's a valid override
+    # of a declared but non-existent require_path. Skip.
+    next if generated_paths.empty? && real_paths_relative == ["lib"]
+
+    if generated_paths.sort != real_paths_relative.sort
+      errors << "#{g["nix_attr"]}: generated=#{generated_paths.inspect} actual=#{real_paths_relative.inspect} (full: #{real_paths.inspect})"
+    end
+    checked += 1
+  rescue => e
+    $stderr.puts "WARN: #{g["nix_attr"]}: #{e.message}"
+  end
+end
+
+if errors.empty?
+  puts "OK: #{checked} gems checked, all require_paths match .gem metadata"
+else
+  puts "CHECKED: #{checked} gems"
+  errors.each { |e| $stderr.puts "FAIL: #{e}" }
+  exit 1
+end

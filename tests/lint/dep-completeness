@@ -1,0 +1,30 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Lint: verify every dependency referenced in gemset.json actually exists
+# as a gem in the gemset. Catches dangling dep references.
+
+require "json"
+
+gems_dir = ARGV[0] || "out/gems"
+gems_dir = File.expand_path(gems_dir)
+
+gemset = JSON.parse(File.read(File.join(gems_dir, "gemset.json")))
+known = gemset.map { |g| g["name"] }.to_set
+errors = []
+
+gemset.each do |g|
+  (g["deps"] || []).each do |dep|
+    unless known.include?(dep)
+      errors << "#{g["nix_attr"]}: depends on '#{dep}' which is not in gemset"
+    end
+  end
+end
+
+if errors.empty?
+  total_deps = gemset.sum { |g| (g["deps"] || []).size }
+  puts "OK: #{total_deps} dependency references across #{gemset.size} gems, all resolve"
+else
+  errors.each { |e| $stderr.puts "FAIL: #{e}" }
+  exit 1
+end

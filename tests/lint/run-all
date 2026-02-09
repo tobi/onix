@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Run all lint checks. Exits non-zero on first failure.
+
+set -euo pipefail
+
+dir="$(cd "$(dirname "$0")" && pwd)"
+gems_dir="${1:-out/gems}"
+
+checks=(
+  nix-eval
+  dep-completeness
+  source-clean
+  gemspec-deps
+  require-paths
+  require-paths-vs-gem-metadata
+  native-extensions
+)
+
+passed=0
+failed=0
+failures=()
+
+for check in "${checks[@]}"; do
+  script="$dir/$check"
+  echo "=== $check ==="
+  if "$script" "$gems_dir"; then
+    passed=$((passed + 1))
+  else
+    failed=$((failed + 1))
+    failures+=("$check")
+  fi
+  echo
+done
+
+echo "================================"
+echo "$passed passed, $failed failed"
+if [ "$failed" -gt 0 ]; then
+  echo "Failures: ${failures[*]}"
+  exit 1
+fi

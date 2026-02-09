@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Lint: verify all nix files parse without errors.
+
+set -euo pipefail
+
+gems_dir="${1:-out/gems}"
+errors=0
+checked=0
+
+for f in "$gems_dir"/default.nix "$gems_dir"/bundle-path.nix "$gems_dir"/*/default.nix; do
+  if ! nix-instantiate --parse "$f" > /dev/null 2>&1; then
+    echo "FAIL: $f does not parse"
+    nix-instantiate --parse "$f" 2>&1 | head -5
+    errors=$((errors + 1))
+  fi
+  checked=$((checked + 1))
+done
+
+# Also check compile.nix files
+for f in "$gems_dir"/*/compile.nix; do
+  [ -f "$f" ] || continue
+  if ! nix-instantiate --parse "$f" > /dev/null 2>&1; then
+    echo "FAIL: $f does not parse"
+    nix-instantiate --parse "$f" 2>&1 | head -5
+    errors=$((errors + 1))
+  fi
+  checked=$((checked + 1))
+done
+
+if [ "$errors" -eq 0 ]; then
+  echo "OK: $checked nix files parse cleanly"
+else
+  echo "FAIL: $errors/$checked nix files have parse errors"
+  exit 1
+fi

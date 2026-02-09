@@ -1,0 +1,83 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Lint: in the nix-shell, try to require every gem that has a simple
+# require name (gem name == require name). Reports which gems fail to load.
+
+require "json"
+require "open3"
+
+gems_dir = ARGV[0] || "out/gems"
+gems_dir = File.expand_path(gems_dir)
+
+bundle_out, status = Open3.capture2("nix-build", File.join(gems_dir, "bundle-path.nix"), "--no-out-link")
+abort "Failed to build bundle-path" unless status.success?
+bundle = bundle_out.strip.lines.last.strip
+
+nix_ruby_out, _ = Open3.capture2("nix-build", "<nixpkgs>", "-A", "ruby", "--no-out-link")
+nix_ruby = File.join(nix_ruby_out.strip, "bin", "ruby")
+
+gemset = JSON.parse(File.read(File.join(gems_dir, "gemset.json")))
+
+# Gems where the require name differs from gem name, or are meta-gems
+SKIP = %w[
+  rails rubocop-rails-omakase activerecord activejob actionmailer
+  actionmailbox actiontext actioncable activestorage railties
+].freeze
+
+# Common gem-name to require-name mappings
+REQUIRE_MAP = {
+  "concurrent-ruby" => "concurrent",
+  "io-console" => "io/console",
+  "ruby-vips" => "vips",
+  "action_text-trix" => "action_text/trix",
+  "activemodel" => "active_model",
+  "activesupport" => "active_support",
+  "actionview" => "action_view",
+  "actionpack" => "action_dispatch",
+  "activerecord" => "active_record",
+}.freeze
+
+errors = []
+ok = 0
+skipped = 0
+
+gemset.each do |g|
+  name = g["name"]
+  if SKIP.include?(name)
+    skipped += 1
+    next
+  end
+
+  require_name = REQUIRE_MAP[name] || name.tr("-", "/")
+
+  # Quick test: does the require path resolve?
+  out, status = Open3.capture2e(
+    { "GEM_PATH" => bundle, "GEM_HOME" => bundle },
+    nix_ruby, "-e", "require '#{require_name}'"
+  )
+
+  if status.success?
+    ok += 1
+  else
+    # Try underscore variant
+    underscore_name = name.tr("-", "_")
+    out2, status2 = Open3.capture2e(
+      { "GEM_PATH" => bundle, "GEM_HOME" => bundle },
+      nix_ruby, "-e", "require '#{underscore_name}'"
+    )
+    if status2.success?
+      ok += 1
+    else
+      first_line = out.strip.lines.grep(/LoadError|cannot load/).first&.strip || out.strip.lines.last&.strip
+      errors << "#{g["nix_attr"]}: require '#{require_name}' failed — #{first_line}"
+    end
+  end
+end
+
+puts "#{ok} OK, #{skipped} skipped, #{errors.size} failed (#{gemset.size} total)"
+if errors.any?
+  puts
+  errors.each { |e| $stderr.puts "FAIL: #{e}" }
+  exit 1
+end
