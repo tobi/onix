@@ -31,6 +31,7 @@ All customization lives in `overlays/`.
    - Missing native deps → write an overlay.
 4. Test with `just build`, `just lint`, and `just test <app>`.
 5. **Always link against system libraries from nixpkgs.** Never use vendored/bundled copies of libraries that a gem ships in its source tree. If a gem bundles libxml2, sqlite, openssl, etc. — the overlay must pass flags like `--use-system-libraries` or `--enable-system-libraries` to `extconf.rb` so it links against the nixpkgs version. This is the whole point of hermetic builds: every shared library comes from a known nix store path, not from some tarball the gem author downloaded at release time. If the gem has no flag for system libraries, patch `extconf.rb` or provide the right `pkg-config` / header paths via environment variables so it finds the nix versions.
+6. **Prefer generating into `default.nix` over config files or overlays.** If build requirements are knowable from gem metadata or `extconf.rb` analysis at generate time (e.g., `pkg_config('libffi')` → needs `pkgs.libffi`), teach `bin/generate` to detect and inline them directly into the generated derivation. No overlay file, no config file, no indirection. Overlays are for cases that can't be inferred automatically.
 
 ## Writing overlays
 
