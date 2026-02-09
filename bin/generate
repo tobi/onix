@@ -499,4 +499,20 @@ File.write(File.join(output_dir, "gemset.json"), JSON.pretty_generate(
   }
 ))
 
+# -- <name>.deps.nix (always regenerated) ----------------------------------
+# A flat list of all gem derivations, importable as a dependency list.
+
+project_name = File.basename(File.dirname(File.expand_path(lockfile_path)))
+nix = header
+nix << "# All #{gems.size} gems from #{project_name}/Gemfile.lock\n"
+nix << "{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby }:\n\n"
+nix << "let\n"
+nix << "  gems = import ./default.nix { inherit pkgs ruby; };\n"
+nix << "in [\n"
+gems.sort_by { |g| g[:name] }.each do |g|
+  nix << "  gems.\"#{g[:nix_attr]}\"\n"
+end
+nix << "]\n"
+File.write(File.join(output_dir, "#{project_name}.deps.nix"), nix)
+
 $stdout.puts "#{generated} generated (#{copied} sources copied). #{gems.size} total."
