@@ -7,6 +7,7 @@
 
 let
   bundlePath = import ../../out/chatwoot/bundle-path.nix { inherit pkgs ruby; };
+  gemDeps = import ../../out/chatwoot/chatwoot.deps.nix { inherit pkgs ruby; };
   rubyApiVersion = "${builtins.toString ruby.version.major}.${builtins.toString ruby.version.minor}.0";
 in pkgs.mkShell {
   buildInputs = [
@@ -19,7 +20,7 @@ in pkgs.mkShell {
     pkgs.imagemagick
     pkgs.pkg-config
     pkgs.git
-  ];
+  ] ++ gemDeps;
 
   BUNDLE_PATH = "${bundlePath}";
   BUNDLE_GEMFILE = builtins.toPath ~/src/ruby-tests/chatwoot/Gemfile;
@@ -55,7 +56,7 @@ in pkgs.mkShell {
     export FRONTEND_URL="http://localhost:3000"
 
     # LD_LIBRARY_PATH for FFI gems (libvips etc.)
-    export LD_LIBRARY_PATH="${pkgs.libvips}/lib:${pkgs.imagemagick}/lib:''${LD_LIBRARY_PATH:-}"
+    export LD_LIBRARY_PATH="${pkgs.vips}/lib:${pkgs.imagemagick}/lib:''${LD_LIBRARY_PATH:-}"
 
     echo "Chatwoot devshell ready (Ruby ${ruby.version}, PostgreSQL on :$PGPORT, Redis on :6380)"
     echo "Bundle path: ${bundlePath}"
