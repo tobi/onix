@@ -20,22 +20,48 @@ trap 'rm -f "$buildlog"' EXIT
 
 collect_failure_logs() {
     local log="$1"
-    if grep -q 'nix log' "$log" 2>/dev/null; then
-        echo ""
-        echo "Collecting failure logs..."
-        echo "" >> "$log"
-        echo "=== FAILURE LOGS ===" >> "$log"
-        grep -oP '/nix/store/\S+\.drv' "$log" | sort -u | while read -r drv; do
-            echo "" >> "$log"
-            echo "--- nix log $drv ---" >> "$log"
-            nix log "$drv" >> "$log" 2>&1 || true
-        done
-        trap - EXIT  # keep the log file
-        echo ""
-        echo "Full build log: $log"
-        echo "Fix with: /nix-build skill — refer to $log"
-        grep 'nix log' "$log" >&2 || true
+    if ! grep -q 'nix log' "$log" 2>/dev/null; then
+        return
     fi
+
+    echo ""
+    echo "" >> "$log"
+    echo "=== FAILURE LOGS ===" >> "$log"
+
+    # Collect drv paths and extract gem name + version from each
+    local drvs=()
+    while IFS= read -r drv; do
+        drvs+=("$drv")
+        echo "" >> "$log"
+        echo "--- nix log $drv ---" >> "$log"
+        nix log "$drv" >> "$log" 2>&1 || true
+    done < <(grep -oP '/nix/store/\S+\.drv' "$log" | sort -u)
+
+    trap - EXIT  # keep the log file
+
+    echo ""
+    echo "Failed gems:"
+    echo ""
+    for drv in "${drvs[@]}"; do
+        # Extract gem name + version from drv path: /nix/store/<hash>-<name>-<version>.drv
+        local basename
+        basename=$(echo "$drv" | sed 's|.*/[a-z0-9]*-||; s|\.drv$||')
+        # Split into name and version: last segment starting with a digit is the version
+        local gem_name gem_version overlay_path
+        gem_name=$(echo "$basename" | sed 's/-[0-9][0-9.]*$//')
+        gem_version=$(echo "$basename" | grep -oP '[0-9][0-9.]*$' || echo "unknown")
+        overlay_path="overlays/${gem_name}.nix"
+
+        if [[ -f "$root/$overlay_path" ]]; then
+            echo "  ✗ ${gem_name} ${gem_version}  →  edit ${overlay_path}"
+        else
+            echo "  ✗ ${gem_name} ${gem_version}  →  create ${overlay_path}"
+        fi
+    done
+
+    echo ""
+    echo "Build log: $log"
+    echo "Use /nix-build skill to fix — read $log for error details"
 }
 
 if [[ -n "$gem" && -n "$app" ]]; then
