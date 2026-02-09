@@ -1,7 +1,7 @@
 #
-# ╔═══════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/import to refresh ║
-# ╚═══════════════════════════════════════════════════════╝
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate-gemset to refresh  ║
+# ╚══════════════════════════════════════════════════════════════════╝
 #
 # FIZZY — 161 gems
 # Generated from Gemfile.lock
@@ -154,9 +154,28 @@
   { name = "zeitwerk"; version = "2.7.4"; }
   { name = "zip_kit"; version = "6.3.4"; }
   # git: rails @ 60d92e4e7dfe
-  { name = "rails"; git.rev = "60d92e4e7dfe"; }
+  {
+    name = "rails";
+    git = {
+      rev = "60d92e4e7dfe";
+      url = "https://github.com/rails/rails.git";
+      branch = "main";
+    };
+  }
   # git: lexxy @ 4f0fc4d5773b
-  { name = "lexxy"; git.rev = "4f0fc4d5773b"; }
+  {
+    name = "lexxy";
+    git = {
+      rev = "4f0fc4d5773b";
+      url = "https://github.com/basecamp/lexxy";
+    };
+  }
   # git: useragent @ 433ca320a42d
-  { name = "useragent"; git.rev = "433ca320a42d"; }
+  {
+    name = "useragent";
+    git = {
+      rev = "433ca320a42d";
+      url = "https://github.com/basecamp/useragent";
+    };
+  }
 ]

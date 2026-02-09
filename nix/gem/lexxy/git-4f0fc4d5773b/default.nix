@@ -1,7 +1,7 @@
 #
-# ╔═══════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/import to refresh ║
-# ╚═══════════════════════════════════════════════════════╝
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate-gemset to refresh  ║
+# ╚══════════════════════════════════════════════════════════════════╝
 #
 # Git: lexxy @ 4f0fc4d5773b
 # URI: https://github.com/basecamp/lexxy
@@ -19,9 +19,10 @@ in
 stdenv.mkDerivation {
   pname = "lexxy";
   version = "4f0fc4d5773b";
-  src = builtins.path {
-    path = ./source;
-    name = "lexxy-4f0fc4d5773b-source";
+  src = builtins.fetchGit {
+    url = "https://github.com/basecamp/lexxy";
+    rev = "4f0fc4d5773bc6892de70f175440c259974c12a7";
+    allRefs = true;
   };
 
   dontBuild = true;
@@ -33,5 +34,6 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}/bundler/gems/lexxy-4f0fc4d5773b
     mkdir -p $dest
     cp -r . $dest/
+    rm -rf $dest/.git
   '';
 }

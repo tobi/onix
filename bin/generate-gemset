@@ -4,8 +4,11 @@
 # generate-gemset — produce a project .nix gemset from its Gemfile.lock
 #
 # Produces: nix/app/<project>.nix
-# Returns an attrset of all gem derivations. Use with:
-#   builtins.attrValues gems  -> list of all derivations for buildEnv
+# Returns a list of gem entries. Use with resolve.nix:
+#   resolve { inherit pkgs ruby; gemset = import ./nix/app/<project>.nix; }
+#
+# Git gems use builtins.fetchGit at nix eval time — no pre-fetch needed.
+# The gemset carries full git info: url, rev, branch.
 #
 # Usage:
 #   generate-gemset fizzy ../fizzy/Gemfile.lock
@@ -43,8 +46,14 @@ lf.specs.each do |spec|
   case src
   when Bundler::Source::Git
     base = File.basename(src.uri, ".git")
-    git_specs << { spec: spec, uri: src.uri, rev: src.revision,
-                   base: base, shortrev: src.revision[0, 12] }
+    git_specs << {
+      spec: spec,
+      uri: src.uri,
+      rev: src.revision,
+      branch: src.branch,
+      base: base,
+      shortrev: src.revision[0, 12],
+    }
   when Bundler::Source::Path
     next
   else
@@ -62,15 +71,14 @@ git_repos = {}
 git_specs.each do |gs|
   key = "#{gs[:base]}-#{gs[:shortrev]}"
   unless git_repos[key]
-    uri = gs[:uri]
-    input = if %r{^\w+://(\w+@)?}.match?(uri)
-              URI.parse(uri).normalize.to_s.sub(%r{/$}, "")
-            else
-              uri
-            end
-    uri_hash = Digest::SHA1.hexdigest(input)
-    git_repos[key] = { uri: gs[:uri], rev: gs[:rev], base: gs[:base],
-                        shortrev: gs[:shortrev], uri_hash: uri_hash, gems: [] }
+    git_repos[key] = {
+      uri: gs[:uri],
+      rev: gs[:rev],
+      branch: gs[:branch],
+      base: gs[:base],
+      shortrev: gs[:shortrev],
+      gems: [],
+    }
   end
   git_repos[key][:gems] << gs[:spec] unless git_repos[key][:gems].any? { |e| e.name == gs[:spec].name }
 end
@@ -96,7 +104,16 @@ end
 
 git_repos.each do |_repo_key, repo|
   nix << "  # git: #{repo[:base]} @ #{repo[:shortrev]}\n"
-  nix << "  { name = #{repo[:base].inspect}; git.rev = #{repo[:shortrev].inspect}; }\n"
+  git_attrs = []
+  git_attrs << "rev = #{repo[:shortrev].inspect}"
+  git_attrs << "url = #{repo[:uri].inspect}"
+  git_attrs << "branch = #{repo[:branch].inspect}" if repo[:branch]
+  nix << "  {\n"
+  nix << "    name = #{repo[:base].inspect};\n"
+  nix << "    git = {\n"
+  git_attrs.each { |a| nix << "      #{a};\n" }
+  nix << "    };\n"
+  nix << "  }\n"
 end
 
 nix << "]\n"
@@ -113,6 +130,10 @@ SH = "        "  # 8 spaces — shell commands (nixfmt heredoc style)
 HD = "    "      # 4 spaces — heredoc body / terminator
 
 git_repos.each do |repo_key, repo|
+  git_dir = File.join(output_dir, repo[:base], "git-#{repo[:shortrev]}")
+  FileUtils.mkdir_p(git_dir)
+
+  # Check for cached source (optional — for checking gemspecs)
   source_dir = nil
   repo[:gems].each do |spec|
     candidate = File.join(__dir__, "..", "cache", "sources", "#{spec.name}-#{spec.version}")
@@ -122,19 +143,17 @@ git_repos.each do |repo_key, repo|
     end
   end
 
-  unless source_dir
-    $stderr.puts "  WARN: no source for git repo #{repo_key}"
-    next
-  end
-
-  git_dir = File.join(output_dir, repo[:base], "git-#{repo[:shortrev]}")
-  FileUtils.mkdir_p(git_dir)
-  FileUtils.ln_sf(source_dir, File.join(git_dir, "source"))
-
-  # Check which gems need a generated gemspec
-  missing_gemspecs = repo[:gems].select do |spec|
-    !File.exist?(File.join(source_dir, "#{spec.name}.gemspec")) &&
-      !File.exist?(File.join(source_dir, spec.name, "#{spec.name}.gemspec"))
+  # Determine which gems need a generated gemspec
+  missing_gemspecs = if source_dir
+    repo[:gems].select do |spec|
+      !File.exist?(File.join(source_dir, "#{spec.name}.gemspec")) &&
+        !File.exist?(File.join(source_dir, spec.name, "#{spec.name}.gemspec"))
+    end
+  else
+    # No cached source — generate gemspecs for all gems to be safe.
+    # builtins.fetchGit will provide the real source at build time;
+    # if real gemspecs exist in the repo the conditional below skips them.
+    repo[:gems]
   end
 
   has_heredoc = !missing_gemspecs.empty?
@@ -162,10 +181,15 @@ git_repos.each do |repo_key, repo|
   gnix << "stdenv.mkDerivation {\n"
   gnix << "  pname = #{repo[:base].inspect};\n"
   gnix << "  version = #{repo[:shortrev].inspect};\n"
-  gnix << "  src = builtins.path {\n"
-  gnix << "    path = ./source;\n"
-  gnix << "    name = \"#{repo_key}-source\";\n"
+
+  # Use builtins.fetchGit — nix fetches the repo at eval time, pinned to rev.
+  # allRefs = true lets nix find the rev without knowing which branch it's on.
+  gnix << "  src = builtins.fetchGit {\n"
+  gnix << "    url = #{repo[:uri].inspect};\n"
+  gnix << "    rev = #{repo[:rev].inspect};\n"
+  gnix << "    allRefs = true;\n"
   gnix << "  };\n\n"
+
   gnix << "  dontBuild = true;\n"
   gnix << "  dontConfigure = true;\n\n"
   gnix << "  passthru = { inherit prefix; };\n\n"
@@ -174,9 +198,12 @@ git_repos.each do |repo_key, repo|
   gnix << "#{si}local dest=$out/${prefix}/bundler/gems/#{repo_key}\n"
   gnix << "#{si}mkdir -p $dest\n"
   gnix << "#{si}cp -r . $dest/\n"
+  gnix << "#{si}rm -rf $dest/.git\n"
 
   missing_gemspecs.each do |spec|
-    gnix << "#{si}cat > $dest/#{spec.name}.gemspec <<'EOF'\n"
+    # Only write gemspec if the repo doesn't already have one
+    gnix << "#{si}if [ ! -f $dest/#{spec.name}.gemspec ] && [ ! -f $dest/#{spec.name}/#{spec.name}.gemspec ]; then\n"
+    gnix << "#{si}  cat > $dest/#{spec.name}.gemspec <<'EOF'\n"
     gnix << "#{HD}Gem::Specification.new do |s|\n"
     gnix << "#{HD}  s.name = #{spec.name.inspect}\n"
     gnix << "#{HD}  s.version = #{spec.version.to_s.inspect}\n"
@@ -185,6 +212,7 @@ git_repos.each do |repo_key, repo|
     gnix << "#{HD}  s.files = []\n"
     gnix << "#{HD}end\n"
     gnix << "#{HD}EOF\n"
+    gnix << "#{si}fi\n"
   end
 
   gnix << "  '';\n"
@@ -192,6 +220,10 @@ git_repos.each do |repo_key, repo|
 
   File.write(File.join(git_dir, "default.nix"), gnix)
   $stderr.puts "  -> nix/gem/#{repo[:base]}/git-#{repo[:shortrev]}/"
+
+  # Remove stale source symlink (no longer needed — using fetchGit)
+  source_link = File.join(git_dir, "source")
+  File.delete(source_link) if File.symlink?(source_link)
 
   # Patch the git rev into the selector's gitRevs attrset
   selector_path = File.join(output_dir, repo[:base], "default.nix")
@@ -243,7 +275,7 @@ git_repos.each do |repo_key, repo|
     FileUtils.mkdir_p(File.dirname(selector_path))
     File.write(selector_path, sel)
 
-    # Also add git-only gem to the top-level nix/gem/default.nix
+    # Also add git-only gem to the top-level catalogue
     top_path = File.join(output_dir, "..", "modules", "gem.nix")
     if File.exist?(top_path)
       top = File.read(top_path, encoding: "UTF-8")

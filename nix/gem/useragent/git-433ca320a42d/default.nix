@@ -1,7 +1,7 @@
 #
-# ╔═══════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/import to refresh ║
-# ╚═══════════════════════════════════════════════════════╝
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate-gemset to refresh  ║
+# ╚══════════════════════════════════════════════════════════════════╝
 #
 # Git: useragent @ 433ca320a42d
 # URI: https://github.com/basecamp/useragent
@@ -19,9 +19,10 @@ in
 stdenv.mkDerivation {
   pname = "useragent";
   version = "433ca320a42d";
-  src = builtins.path {
-    path = ./source;
-    name = "useragent-433ca320a42d-source";
+  src = builtins.fetchGit {
+    url = "https://github.com/basecamp/useragent";
+    rev = "433ca320a42db1266c4b89df74d0abdb9a880c5e";
+    allRefs = true;
   };
 
   dontBuild = true;
@@ -33,7 +34,9 @@ stdenv.mkDerivation {
         local dest=$out/${prefix}/bundler/gems/useragent-433ca320a42d
         mkdir -p $dest
         cp -r . $dest/
-        cat > $dest/useragent.gemspec <<'EOF'
+        rm -rf $dest/.git
+        if [ ! -f $dest/useragent.gemspec ] && [ ! -f $dest/useragent/useragent.gemspec ]; then
+          cat > $dest/useragent.gemspec <<'EOF'
     Gem::Specification.new do |s|
       s.name = "useragent"
       s.version = "0.16.11"
@@ -42,5 +45,6 @@ stdenv.mkDerivation {
       s.files = []
     end
     EOF
+        fi
   '';
 }
