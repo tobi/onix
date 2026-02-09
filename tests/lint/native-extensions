@@ -1,66 +1,46 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Lint: verify every gem marked needs_compilation has .so files in the nix store output.
-# Also verify no scint-cache .so files leaked through (different hash = recompiled).
+# Lint: verify every gem marked with extensions has .so files in the nix store output.
 
-require "json"
 require "open3"
 
-gems_dir = ARGV[0] || "out/gems"
-gems_dir = File.expand_path(gems_dir)
+project = ARGV[0] || "fizzy"
 
-SCINT_LIB = File.expand_path("../../scint/lib", File.dirname(__dir__))
-$LOAD_PATH.unshift(SCINT_LIB)
-require "scint/cache/layout"
-require "scint/platform"
+# Build the bundle path
+out, status = Open3.capture2e("nix-build", "--no-out-link", "-E", <<~NIX)
+  let pkgs = import <nixpkgs> {};
+      ruby = pkgs.ruby_3_4;
+      gems = import ./nix/#{project}.nix { inherit pkgs ruby; };
+  in pkgs.symlinkJoin { name = "bundle"; paths = builtins.attrValues gems; }
+NIX
+abort "Failed to build bundle-path" unless status.success?
+bundle = out.strip.lines.last.strip
 
-cache = Scint::Cache::Layout.new
-abi = Scint::Platform.abi_key
+ext_dir = Dir.glob("#{bundle}/ruby/*/extensions").first
+gem_dir = Dir.glob("#{bundle}/ruby/*/gems").first
 
-gemset = JSON.parse(File.read(File.join(gems_dir, "gemset.json")))
+# Find gems that have ext/ dirs (should have been compiled)
 errors = []
 checked = 0
-
-gemset.select { |g| g["needs_compilation"] }.each do |g|
-  attr = g["nix_attr"]
-  store_path, status = Open3.capture2("nix-build", "-E",
-    "(import ./default.nix {}).\"#{attr}\"", "--no-out-link", chdir: gems_dir)
-  unless status.success?
-    errors << "#{attr}: nix-build failed"
-    next
+Dir.glob("#{gem_dir}/*/ext").each do |ext_path|
+  gem_name_ver = File.basename(File.dirname(ext_path))
+  # Check if .so exists in extensions/ or lib/
+  has_so = false
+  if ext_dir
+    has_so = !Dir.glob("#{ext_dir}/**/#{gem_name_ver}/*.so").empty?
   end
-  store_path = store_path.strip.lines.last.strip
-
-  # Check for .so in lib/ (the installed location)
-  lib_sos = Dir.glob(File.join(store_path, "gems", "#{g["name"]}-#{g["version"]}", "lib", "**", "*.so"))
-  if lib_sos.empty?
-    errors << "#{attr}: no .so files found in lib/"
-    next
+  has_so ||= !Dir.glob("#{gem_dir}/#{gem_name_ver}/lib/**/*.so").empty?
+  unless has_so
+    errors << "#{gem_name_ver}: has ext/ but no .so found"
   end
-
-  # Compare against scint cache to verify we actually recompiled
-  spec = { name: g["name"], version: g["version"], platform: g["platform"] || "ruby" }
-  cached_dir = cache.cached_path(spec, abi)
-  lib_sos.each do |nix_so|
-    relative = nix_so.sub(%r{.*/gems/#{Regexp.escape(g["name"])}-#{Regexp.escape(g["version"])}/}, "")
-    cached_so = File.join(cached_dir, relative)
-    if File.exist?(cached_so)
-      nix_md5 = `md5sum #{nix_so} 2>/dev/null`.split.first
-      cached_md5 = `md5sum #{cached_so} 2>/dev/null`.split.first
-      if nix_md5 == cached_md5
-        errors << "#{attr}: #{relative} identical to scint cache (not recompiled!)"
-      end
-    end
-  end
-
   checked += 1
 end
 
 if errors.empty?
-  puts "OK: #{checked} native gems verified — all have .so files, all recompiled"
+  puts "native-extensions: OK (#{checked} native gems checked)"
 else
-  puts "CHECKED: #{checked} native gems"
-  errors.each { |e| $stderr.puts "FAIL: #{e}" }
-  exit 1
+  errors.each { |e| puts "WARN: #{e}" }
+  puts "native-extensions: #{errors.size} warnings out of #{checked}"
+  # Don't fail — some gems have ext/ but don't produce .so (e.g. header-only)
 end

@@ -40,12 +40,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/unf_ext-0.0.8.2
     cp -r . $dest/gems/unf_ext-0.0.8.2/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/unf_ext-0.0.8.2
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s unf_ext-0.0.8.2 $dest/gems/unf_ext-0.0.8.2-$gp
+    ln -s unf_ext-0.0.8.2 $dest/extensions/${arch}/${rubyVersion}/unf_ext-0.0.8.2-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/unf_ext-0.0.8.2.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -56,5 +61,15 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/unf_ext-0.0.8.2-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "unf_ext"
+  s.version = "0.0.8.2"
+  s.platform = "$gp"
+  s.summary = "unf_ext"
+  s.require_paths = ["lib"]
+  s.files = []
+end
+PLATSPEC
   '';
 }

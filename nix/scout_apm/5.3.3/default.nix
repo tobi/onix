@@ -40,12 +40,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/scout_apm-5.3.3
     cp -r . $dest/gems/scout_apm-5.3.3/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/scout_apm-5.3.3
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s scout_apm-5.3.3 $dest/gems/scout_apm-5.3.3-$gp
+    ln -s scout_apm-5.3.3 $dest/extensions/${arch}/${rubyVersion}/scout_apm-5.3.3-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/scout_apm-5.3.3.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -56,5 +61,15 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/scout_apm-5.3.3-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "scout_apm"
+  s.version = "5.3.3"
+  s.platform = "$gp"
+  s.summary = "scout_apm"
+  s.require_paths = ["lib", "data"]
+  s.files = []
+end
+PLATSPEC
   '';
 }

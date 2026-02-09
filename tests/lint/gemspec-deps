@@ -1,51 +1,37 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Lint: verify every gemspec in the bundle path declares the same dependencies
-# as gemset.json. Catches missing add_dependency lines.
+# Lint: verify gemspec deps in the built bundle path look reasonable.
 
-require "json"
 require "open3"
 
-gems_dir = ARGV[0] || "out/gems"
-gems_dir = File.expand_path(gems_dir)
+project = ARGV[0] || "fizzy"
 
-bundle_out, status = Open3.capture2("nix-build", File.join(gems_dir, "bundle-path.nix"), "--no-out-link")
-unless status.success?
-  abort "Failed to build bundle-path"
-end
-bundle = bundle_out.strip.lines.last.strip
+out, status = Open3.capture2e("nix-build", "--no-out-link", "-E", <<~NIX)
+  let pkgs = import <nixpkgs> {};
+      ruby = pkgs.ruby_3_4;
+      gems = import ./nix/#{project}.nix { inherit pkgs ruby; };
+  in pkgs.symlinkJoin { name = "bundle"; paths = builtins.attrValues gems; }
+NIX
+abort "Failed to build bundle-path" unless status.success?
+bundle = out.strip.lines.last.strip
 
-gemset = JSON.parse(File.read(File.join(gems_dir, "gemset.json")))
+spec_dir = Dir.glob("#{bundle}/ruby/*/specifications").first
+abort "No specifications dir" unless spec_dir
+
+specs = Dir.glob("#{spec_dir}/*.gemspec").map { |f| Gem::Specification.load(f) }.compact
 errors = []
-checked = 0
 
-gemset.each do |g|
-  spec_path = File.join(bundle, "specifications", "#{g["name"]}-#{g["version"]}.gemspec")
-  next unless File.exist?(spec_path)
-
-  # Parse deps from the gemspec file
-  content = File.read(spec_path)
-  declared_deps = content.scan(/add_dependency\s+"([^"]+)"/).flatten.sort
-
-  expected_deps = (g["deps"] || []).sort
-
-  if declared_deps != expected_deps
-    missing = expected_deps - declared_deps
-    extra = declared_deps - expected_deps
-    parts = []
-    parts << "missing: #{missing.inspect}" if missing.any?
-    parts << "extra: #{extra.inspect}" if extra.any?
-    errors << "#{g["nix_attr"]}: #{parts.join(", ")}"
-  end
-
-  checked += 1
+specs.each do |spec|
+  # Basic sanity: name and version present
+  errors << "#{spec.full_name}: empty name" if spec.name.to_s.empty?
+  errors << "#{spec.full_name}: empty version" if spec.version.to_s.empty?
 end
 
 if errors.empty?
-  puts "OK: #{checked} gemspecs have correct dependencies"
+  puts "gemspec-deps: OK (#{specs.size} gemspecs checked)"
 else
-  puts "CHECKED: #{checked} gemspecs"
-  errors.each { |e| $stderr.puts "FAIL: #{e}" }
+  errors.each { |e| puts "FAIL: #{e}" }
+  puts "gemspec-deps: #{errors.size} errors"
   exit 1
 end

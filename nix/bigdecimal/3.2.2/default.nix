@@ -40,12 +40,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/bigdecimal-3.2.2
     cp -r . $dest/gems/bigdecimal-3.2.2/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/bigdecimal-3.2.2
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s bigdecimal-3.2.2 $dest/gems/bigdecimal-3.2.2-$gp
+    ln -s bigdecimal-3.2.2 $dest/extensions/${arch}/${rubyVersion}/bigdecimal-3.2.2-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/bigdecimal-3.2.2.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -56,5 +61,15 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/bigdecimal-3.2.2-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "bigdecimal"
+  s.version = "3.2.2"
+  s.platform = "$gp"
+  s.summary = "bigdecimal"
+  s.require_paths = ["lib"]
+  s.files = []
+end
+PLATSPEC
   '';
 }

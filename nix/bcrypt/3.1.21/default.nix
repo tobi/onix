@@ -40,12 +40,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/bcrypt-3.1.21
     cp -r . $dest/gems/bcrypt-3.1.21/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/bcrypt-3.1.21
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s bcrypt-3.1.21 $dest/gems/bcrypt-3.1.21-$gp
+    ln -s bcrypt-3.1.21 $dest/extensions/${arch}/${rubyVersion}/bcrypt-3.1.21-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/bcrypt-3.1.21.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -56,5 +61,15 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/bcrypt-3.1.21-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "bcrypt"
+  s.version = "3.1.21"
+  s.platform = "$gp"
+  s.summary = "bcrypt"
+  s.require_paths = ["lib"]
+  s.files = []
+end
+PLATSPEC
   '';
 }

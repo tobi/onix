@@ -40,12 +40,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/io-console-0.6.0
     cp -r . $dest/gems/io-console-0.6.0/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/io-console-0.6.0
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s io-console-0.6.0 $dest/gems/io-console-0.6.0-$gp
+    ln -s io-console-0.6.0 $dest/extensions/${arch}/${rubyVersion}/io-console-0.6.0-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/io-console-0.6.0.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -56,5 +61,15 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/io-console-0.6.0-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "io-console"
+  s.version = "0.6.0"
+  s.platform = "$gp"
+  s.summary = "io-console"
+  s.require_paths = ["lib"]
+  s.files = []
+end
+PLATSPEC
   '';
 }

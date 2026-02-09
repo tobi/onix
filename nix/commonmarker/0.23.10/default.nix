@@ -40,12 +40,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/commonmarker-0.23.10
     cp -r . $dest/gems/commonmarker-0.23.10/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/commonmarker-0.23.10
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s commonmarker-0.23.10 $dest/gems/commonmarker-0.23.10-$gp
+    ln -s commonmarker-0.23.10 $dest/extensions/${arch}/${rubyVersion}/commonmarker-0.23.10-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/commonmarker-0.23.10.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -58,6 +63,18 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/commonmarker-0.23.10-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "commonmarker"
+  s.version = "0.23.10"
+  s.platform = "$gp"
+  s.summary = "commonmarker"
+  s.require_paths = ["lib", "ext"]
+  s.bindir = "bin"
+  s.executables = ["commonmarker"]
+  s.files = []
+end
+PLATSPEC
     mkdir -p $dest/bin
     cat > $dest/bin/commonmarker <<'BINSTUB'
 #!/usr/bin/env ruby

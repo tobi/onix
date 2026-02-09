@@ -3,21 +3,12 @@
 
 set -euo pipefail
 
-gems_dir="${1:-out/gems}"
+nix_dir="${1:-nix}"
 errors=0
 checked=0
 
-for f in "$gems_dir"/default.nix "$gems_dir"/bundle-path.nix "$gems_dir"/*/default.nix; do
-  if ! nix-instantiate --parse "$f" > /dev/null 2>&1; then
-    echo "FAIL: $f does not parse"
-    nix-instantiate --parse "$f" 2>&1 | head -5
-    errors=$((errors + 1))
-  fi
-  checked=$((checked + 1))
-done
-
-# Also check compile.nix files
-for f in "$gems_dir"/*/compile.nix; do
+# Per-gem derivations
+for f in "$nix_dir"/*/default.nix "$nix_dir"/*/*/default.nix "$nix_dir"/git/*/default.nix; do
   [ -f "$f" ] || continue
   if ! nix-instantiate --parse "$f" > /dev/null 2>&1; then
     echo "FAIL: $f does not parse"
@@ -27,9 +18,27 @@ for f in "$gems_dir"/*/compile.nix; do
   checked=$((checked + 1))
 done
 
-if [ "$errors" -eq 0 ]; then
-  echo "OK: $checked nix files parse cleanly"
-else
-  echo "FAIL: $errors/$checked nix files have parse errors"
-  exit 1
-fi
+# Project gemset files
+for f in "$nix_dir"/*.nix; do
+  [ -f "$f" ] || continue
+  if ! nix-instantiate --parse "$f" > /dev/null 2>&1; then
+    echo "FAIL: $f does not parse"
+    nix-instantiate --parse "$f" 2>&1 | head -5
+    errors=$((errors + 1))
+  fi
+  checked=$((checked + 1))
+done
+
+# Overlay files
+for f in overlays/*.nix; do
+  [ -f "$f" ] || continue
+  if ! nix-instantiate --parse "$f" > /dev/null 2>&1; then
+    echo "FAIL: $f does not parse"
+    nix-instantiate --parse "$f" 2>&1 | head -5
+    errors=$((errors + 1))
+  fi
+  checked=$((checked + 1))
+done
+
+echo "nix-eval: $checked checked, $errors errors"
+[ "$errors" -eq 0 ]

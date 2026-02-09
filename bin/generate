@@ -7,6 +7,10 @@
 # If overlays/<name>.nix exists, it's imported for extra nativeBuildInputs
 # and optional buildPhase override.
 #
+# All gems use plain names (e.g. sqlite3-2.8.0). Platform-qualified aliases
+# (e.g. sqlite3-2.8.0-x86_64-linux-gnu) are created by the gemset generator
+# for gems that need them.
+#
 # Usage:
 #   generate              — generate from all cached gems
 #   generate -o nix/      — custom output dir
@@ -84,24 +88,22 @@ meta_by_key.each_value do |meta|
   nix = +""
   nix << "# #{name} #{version}\n"
 
+  args = ["lib", "stdenv", "ruby"]
+  args << "pkgs" if has_overlay
+  nix << "{ #{args.join(", ")} }:\n\n"
+
+  nix << "let\n"
+  nix << "  rubyVersion = \"${ruby.version.majMin}.0\";\n"
+  nix << "  arch = stdenv.hostPlatform.system;\n"
+  nix << "  prefix = \"ruby/${rubyVersion}\";\n"
+
   if has_overlay
-    nix << "{ lib, stdenv, ruby, pkgs }:\n\n"
-    nix << "let\n"
-    nix << "  rubyVersion = \"${ruby.version.majMin}.0\";\n"
-    nix << "  arch = stdenv.hostPlatform.system;\n"
-    nix << "  prefix = \"ruby/${rubyVersion}\";\n"
     nix << "  overlay = import ../../../overlays/#{name}.nix { inherit pkgs ruby; };\n"
     nix << "  overlayDeps = if builtins.isList overlay then overlay else overlay.deps or [];\n"
     nix << "  overlayBuildPhase = if builtins.isAttrs overlay && overlay ? buildPhase then overlay.buildPhase else null;\n"
-    nix << "in\n\n"
-  else
-    nix << "{ lib, stdenv, ruby }:\n\n"
-    nix << "let\n"
-    nix << "  rubyVersion = \"${ruby.version.majMin}.0\";\n"
-    nix << "  arch = stdenv.hostPlatform.system;\n"
-    nix << "  prefix = \"ruby/${rubyVersion}\";\n"
-    nix << "in\n\n"
   end
+
+  nix << "in\n\n"
 
   nix << "stdenv.mkDerivation {\n"
   nix << "  pname = \"#{name}\";\n"
@@ -145,12 +147,18 @@ meta_by_key.each_value do |meta|
   nix << "    cp -r . $dest/gems/#{key}/\n"
 
   if has_ext
-    nix << "    # Install compiled extensions\n"
     nix << "    local extdir=$dest/extensions/${arch}/${rubyVersion}/#{key}\n"
     nix << "    mkdir -p $extdir\n"
     nix << "    find . -name '*.so' -path '*/lib/*' | while read so; do\n"
     nix << "      cp \"$so\" \"$extdir/\"\n"
     nix << "    done\n"
+    # Platform symlink: e.g. sqlite3-2.8.0-x86_64-linux-gnu -> sqlite3-2.8.0
+    nix << "    local gp=\"${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}\"\n"
+    nix << "    if [ \"${stdenv.hostPlatform.parsed.abi.name}\" != \"unknown\" ]; then\n"
+    nix << "      gp=\"$gp-${stdenv.hostPlatform.parsed.abi.name}\"\n"
+    nix << "    fi\n"
+    nix << "    ln -s #{key} $dest/gems/#{key}-$gp\n"
+    nix << "    ln -s #{key} $dest/extensions/${arch}/${rubyVersion}/#{key}-$gp\n"
   end
 
   nix << "    mkdir -p $dest/specifications\n"
@@ -167,6 +175,25 @@ meta_by_key.each_value do |meta|
   nix << "  s.files = []\n"
   nix << "end\n"
   nix << "EOF\n"
+
+  if has_ext
+    # Platform-qualified gemspec with s.platform set
+    rp_str = require_paths.map { |p| "\"#{p}\"" }.join(", ")
+    nix << "    cat > $dest/specifications/#{key}-$gp.gemspec <<PLATSPEC\n"
+    nix << "Gem::Specification.new do |s|\n"
+    nix << "  s.name = \"#{name}\"\n"
+    nix << "  s.version = \"#{version}\"\n"
+    nix << "  s.platform = \"$gp\"\n"
+    nix << "  s.summary = \"#{name}\"\n"
+    nix << "  s.require_paths = [#{rp_str}]\n"
+    unless executables.empty?
+      nix << "  s.bindir = \"#{bindir}\"\n"
+      nix << "  s.executables = [#{executables.map { |e| "\"#{e}\"" }.join(", ")}]\n"
+    end
+    nix << "  s.files = []\n"
+    nix << "end\n"
+    nix << "PLATSPEC\n"
+  end
 
   unless executables.empty?
     nix << "    mkdir -p $dest/bin\n"

@@ -40,12 +40,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/stringio-3.2.0
     cp -r . $dest/gems/stringio-3.2.0/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/stringio-3.2.0
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s stringio-3.2.0 $dest/gems/stringio-3.2.0-$gp
+    ln -s stringio-3.2.0 $dest/extensions/${arch}/${rubyVersion}/stringio-3.2.0-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/stringio-3.2.0.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -56,5 +61,15 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/stringio-3.2.0-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "stringio"
+  s.version = "3.2.0"
+  s.platform = "$gp"
+  s.summary = "stringio"
+  s.require_paths = ["/home/tobi/.local/share/mise/installs/ruby/3.4.7/lib/ruby/gems/3.4.0/extensions/x86_64-linux/3.4.0-static/stringio-3.2.0", "lib"]
+  s.files = []
+end
+PLATSPEC
   '';
 }

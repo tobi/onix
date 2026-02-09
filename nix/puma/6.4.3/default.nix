@@ -43,12 +43,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/puma-6.4.3
     cp -r . $dest/gems/puma-6.4.3/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/puma-6.4.3
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s puma-6.4.3 $dest/gems/puma-6.4.3-$gp
+    ln -s puma-6.4.3 $dest/extensions/${arch}/${rubyVersion}/puma-6.4.3-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/puma-6.4.3.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -61,6 +66,18 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/puma-6.4.3-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "puma"
+  s.version = "6.4.3"
+  s.platform = "$gp"
+  s.summary = "puma"
+  s.require_paths = ["lib"]
+  s.bindir = "bin"
+  s.executables = ["puma", "pumactl"]
+  s.files = []
+end
+PLATSPEC
     mkdir -p $dest/bin
     cat > $dest/bin/puma <<'BINSTUB'
 #!/usr/bin/env ruby

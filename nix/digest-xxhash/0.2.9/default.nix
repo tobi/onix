@@ -40,12 +40,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/digest-xxhash-0.2.9
     cp -r . $dest/gems/digest-xxhash-0.2.9/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/digest-xxhash-0.2.9
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s digest-xxhash-0.2.9 $dest/gems/digest-xxhash-0.2.9-$gp
+    ln -s digest-xxhash-0.2.9 $dest/extensions/${arch}/${rubyVersion}/digest-xxhash-0.2.9-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/digest-xxhash-0.2.9.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -56,5 +61,15 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/digest-xxhash-0.2.9-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "digest-xxhash"
+  s.version = "0.2.9"
+  s.platform = "$gp"
+  s.summary = "digest-xxhash"
+  s.require_paths = ["lib"]
+  s.files = []
+end
+PLATSPEC
   '';
 }

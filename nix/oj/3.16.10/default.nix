@@ -40,12 +40,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/oj-3.16.10
     cp -r . $dest/gems/oj-3.16.10/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/oj-3.16.10
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s oj-3.16.10 $dest/gems/oj-3.16.10-$gp
+    ln -s oj-3.16.10 $dest/extensions/${arch}/${rubyVersion}/oj-3.16.10-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/oj-3.16.10.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -56,5 +61,15 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/oj-3.16.10-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "oj"
+  s.version = "3.16.10"
+  s.platform = "$gp"
+  s.summary = "oj"
+  s.require_paths = ["lib"]
+  s.files = []
+end
+PLATSPEC
   '';
 }

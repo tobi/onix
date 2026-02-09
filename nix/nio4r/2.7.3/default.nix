@@ -40,12 +40,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/nio4r-2.7.3
     cp -r . $dest/gems/nio4r-2.7.3/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/nio4r-2.7.3
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s nio4r-2.7.3 $dest/gems/nio4r-2.7.3-$gp
+    ln -s nio4r-2.7.3 $dest/extensions/${arch}/${rubyVersion}/nio4r-2.7.3-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/nio4r-2.7.3.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -56,5 +61,15 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/nio4r-2.7.3-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "nio4r"
+  s.version = "2.7.3"
+  s.platform = "$gp"
+  s.summary = "nio4r"
+  s.require_paths = ["lib"]
+  s.files = []
+end
+PLATSPEC
   '';
 }

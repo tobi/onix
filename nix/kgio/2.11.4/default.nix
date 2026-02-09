@@ -40,12 +40,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/kgio-2.11.4
     cp -r . $dest/gems/kgio-2.11.4/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/kgio-2.11.4
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s kgio-2.11.4 $dest/gems/kgio-2.11.4-$gp
+    ln -s kgio-2.11.4 $dest/extensions/${arch}/${rubyVersion}/kgio-2.11.4-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/kgio-2.11.4.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -56,5 +61,15 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/kgio-2.11.4-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "kgio"
+  s.version = "2.11.4"
+  s.platform = "$gp"
+  s.summary = "kgio"
+  s.require_paths = ["lib"]
+  s.files = []
+end
+PLATSPEC
   '';
 }

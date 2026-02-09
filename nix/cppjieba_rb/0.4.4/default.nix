@@ -40,12 +40,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/cppjieba_rb-0.4.4
     cp -r . $dest/gems/cppjieba_rb-0.4.4/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/cppjieba_rb-0.4.4
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s cppjieba_rb-0.4.4 $dest/gems/cppjieba_rb-0.4.4-$gp
+    ln -s cppjieba_rb-0.4.4 $dest/extensions/${arch}/${rubyVersion}/cppjieba_rb-0.4.4-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/cppjieba_rb-0.4.4.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -56,5 +61,15 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/cppjieba_rb-0.4.4-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "cppjieba_rb"
+  s.version = "0.4.4"
+  s.platform = "$gp"
+  s.summary = "cppjieba_rb"
+  s.require_paths = ["lib"]
+  s.files = []
+end
+PLATSPEC
   '';
 }

@@ -40,12 +40,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/ruby-prof-1.7.2
     cp -r . $dest/gems/ruby-prof-1.7.2/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/ruby-prof-1.7.2
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s ruby-prof-1.7.2 $dest/gems/ruby-prof-1.7.2-$gp
+    ln -s ruby-prof-1.7.2 $dest/extensions/${arch}/${rubyVersion}/ruby-prof-1.7.2-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/ruby-prof-1.7.2.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -58,6 +63,18 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/ruby-prof-1.7.2-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "ruby-prof"
+  s.version = "1.7.2"
+  s.platform = "$gp"
+  s.summary = "ruby-prof"
+  s.require_paths = ["lib"]
+  s.bindir = "bin"
+  s.executables = ["ruby-prof", "ruby-prof-check-trace"]
+  s.files = []
+end
+PLATSPEC
     mkdir -p $dest/bin
     cat > $dest/bin/ruby-prof <<'BINSTUB'
 #!/usr/bin/env ruby

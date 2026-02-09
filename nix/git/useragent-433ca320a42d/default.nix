@@ -22,5 +22,14 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}/bundler/gems/useragent-433ca320a42d
     mkdir -p $dest
     cp -r . $dest/
+    cat > $dest/useragent.gemspec <<'EOF'
+Gem::Specification.new do |s|
+  s.name = "useragent"
+  s.version = "0.16.11"
+  s.summary = "useragent"
+  s.require_paths = ["lib"]
+  s.files = []
+end
+EOF
   '';
 }

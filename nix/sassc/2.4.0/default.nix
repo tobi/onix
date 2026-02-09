@@ -40,12 +40,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/sassc-2.4.0
     cp -r . $dest/gems/sassc-2.4.0/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/sassc-2.4.0
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s sassc-2.4.0 $dest/gems/sassc-2.4.0-$gp
+    ln -s sassc-2.4.0 $dest/extensions/${arch}/${rubyVersion}/sassc-2.4.0-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/sassc-2.4.0.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -56,5 +61,15 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/sassc-2.4.0-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "sassc"
+  s.version = "2.4.0"
+  s.platform = "$gp"
+  s.summary = "sassc"
+  s.require_paths = ["lib"]
+  s.files = []
+end
+PLATSPEC
   '';
 }

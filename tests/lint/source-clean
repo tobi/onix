@@ -1,31 +1,26 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Lint: verify no pre-built .so/.bundle files leaked into source/ directories
-# of gems that need compilation. These would be from scint's cache and linked
-# against the wrong Ruby.
+# Lint: verify no pre-built .so/.bundle files leaked into source/ directories.
+# These would be from gem cache and linked against the wrong Ruby.
 
-require "json"
-
-gems_dir = ARGV[0] || "out/gems"
-gems_dir = File.expand_path(gems_dir)
-
-gemset = JSON.parse(File.read(File.join(gems_dir, "gemset.json")))
+nix_dir = ARGV[0] || "nix"
+nix_dir = File.expand_path(nix_dir)
 errors = []
 
-gemset.select { |g| g["needs_compilation"] }.each do |g|
-  source_lib = File.join(gems_dir, g["nix_attr"], "source", "lib")
-  next unless Dir.exist?(source_lib)
+Dir.glob(File.join(nix_dir, "*", "*", "source")).each do |source_dir|
+  next unless Dir.exist?(File.join(source_dir, "ext"))
 
-  leaked = Dir.glob(File.join(source_lib, "**", "*.{so,bundle}"))
+  leaked = Dir.glob(File.join(source_dir, "lib", "**", "*.{so,bundle}"))
   leaked.each do |f|
-    errors << "#{g["nix_attr"]}: pre-built binary leaked: #{f.sub(gems_dir + "/", "")}"
+    errors << "#{f.sub(nix_dir + "/", "")}"
   end
 end
 
 if errors.empty?
-  puts "OK: no pre-built .so/.bundle in source/ of #{gemset.count { |g| g["needs_compilation"] }} native gems"
+  puts "source-clean: OK (no leaked .so files)"
 else
-  errors.each { |e| $stderr.puts "FAIL: #{e}" }
+  errors.each { |e| puts "LEAK: #{e}" }
+  puts "source-clean: #{errors.size} leaked files"
   exit 1
 end

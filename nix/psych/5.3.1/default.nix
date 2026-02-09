@@ -43,12 +43,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/psych-5.3.1
     cp -r . $dest/gems/psych-5.3.1/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/psych-5.3.1
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s psych-5.3.1 $dest/gems/psych-5.3.1-$gp
+    ln -s psych-5.3.1 $dest/extensions/${arch}/${rubyVersion}/psych-5.3.1-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/psych-5.3.1.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -59,5 +64,15 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/psych-5.3.1-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "psych"
+  s.version = "5.3.1"
+  s.platform = "$gp"
+  s.summary = "psych"
+  s.require_paths = ["lib"]
+  s.files = []
+end
+PLATSPEC
   '';
 }

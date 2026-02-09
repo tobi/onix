@@ -40,12 +40,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/grpc-1.72.0
     cp -r . $dest/gems/grpc-1.72.0/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/grpc-1.72.0
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s grpc-1.72.0 $dest/gems/grpc-1.72.0-$gp
+    ln -s grpc-1.72.0 $dest/extensions/${arch}/${rubyVersion}/grpc-1.72.0-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/grpc-1.72.0.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -56,5 +61,15 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/grpc-1.72.0-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "grpc"
+  s.version = "1.72.0"
+  s.platform = "$gp"
+  s.summary = "grpc"
+  s.require_paths = ["src/ruby/lib", "src/ruby/bin", "src/ruby/pb"]
+  s.files = []
+end
+PLATSPEC
   '';
 }

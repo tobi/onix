@@ -43,12 +43,17 @@ stdenv.mkDerivation {
     local dest=$out/${prefix}
     mkdir -p $dest/gems/openssl-4.0.0
     cp -r . $dest/gems/openssl-4.0.0/
-    # Install compiled extensions
     local extdir=$dest/extensions/${arch}/${rubyVersion}/openssl-4.0.0
     mkdir -p $extdir
     find . -name '*.so' -path '*/lib/*' | while read so; do
       cp "$so" "$extdir/"
     done
+    local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+    if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
+      gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
+    fi
+    ln -s openssl-4.0.0 $dest/gems/openssl-4.0.0-$gp
+    ln -s openssl-4.0.0 $dest/extensions/${arch}/${rubyVersion}/openssl-4.0.0-$gp
     mkdir -p $dest/specifications
     cat > $dest/specifications/openssl-4.0.0.gemspec <<'EOF'
 Gem::Specification.new do |s|
@@ -59,5 +64,15 @@ Gem::Specification.new do |s|
   s.files = []
 end
 EOF
+    cat > $dest/specifications/openssl-4.0.0-$gp.gemspec <<PLATSPEC
+Gem::Specification.new do |s|
+  s.name = "openssl"
+  s.version = "4.0.0"
+  s.platform = "$gp"
+  s.summary = "openssl"
+  s.require_paths = ["lib"]
+  s.files = []
+end
+PLATSPEC
   '';
 }

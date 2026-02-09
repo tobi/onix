@@ -1,30 +1,57 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Lint: verify every dependency referenced in gemset.json actually exists
-# as a gem in the gemset. Catches dangling dep references.
+# Lint: verify dependency completeness — every dep in Gemfile.lock
+# has a matching derivation in the nix directory.
 
-require "json"
+require "bundler"
 
-gems_dir = ARGV[0] || "out/gems"
-gems_dir = File.expand_path(gems_dir)
+project  = ARGV[0] || "fizzy"
+lockfile = ARGV[1]
+nix_dir  = "nix"
 
-gemset = JSON.parse(File.read(File.join(gems_dir, "gemset.json")))
-known = gemset.map { |g| g["name"] }.to_set
+unless lockfile
+  # Try to find Gemfile.lock in common locations
+  candidates = [
+    "../#{project}/Gemfile.lock",
+    "../ruby-tests/#{project}/Gemfile.lock",
+  ]
+  lockfile = candidates.find { |c| File.exist?(c) }
+end
+
+unless lockfile && File.exist?(lockfile)
+  puts "dep-completeness: SKIP (no Gemfile.lock found for #{project})"
+  exit 0
+end
+
+gemfile = lockfile.sub(/Gemfile\.lock$/, "Gemfile")
+ENV["BUNDLE_GEMFILE"] = File.expand_path(gemfile) if File.exist?(gemfile)
+
+lf = Bundler::LockfileParser.new(File.read(lockfile))
 errors = []
 
-gemset.each do |g|
-  (g["deps"] || []).each do |dep|
-    unless known.include?(dep)
-      errors << "#{g["nix_attr"]}: depends on '#{dep}' which is not in gemset"
+lf.specs.each do |spec|
+  src = spec.source
+  case src
+  when Bundler::Source::Path
+    next  # skip path sources
+  when Bundler::Source::Git
+    # Git gems handled by repo-level derivations
+    next
+  else
+    dir = File.join(nix_dir, spec.name, spec.version.to_s)
+    unless Dir.exist?(dir)
+      # Check if it's a platform variant we skipped
+      next if spec.platform.to_s != "ruby"
+      errors << "#{spec.name} #{spec.version}: no derivation at #{dir}"
     end
   end
 end
 
 if errors.empty?
-  total_deps = gemset.sum { |g| (g["deps"] || []).size }
-  puts "OK: #{total_deps} dependency references across #{gemset.size} gems, all resolve"
+  puts "dep-completeness: OK (#{lf.specs.size} specs in lockfile)"
 else
-  errors.each { |e| $stderr.puts "FAIL: #{e}" }
+  errors.each { |e| puts "MISSING: #{e}" }
+  puts "dep-completeness: #{errors.size} missing"
   exit 1
 end

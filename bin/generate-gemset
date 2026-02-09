@@ -11,7 +11,9 @@
 #   generate-gemset fizzy ../fizzy/Gemfile.lock
 
 require "bundler"
+require "digest"
 require "fileutils"
+require "uri"
 
 OVERLAYS_DIR = File.join(__dir__, "..", "overlays")
 
@@ -44,7 +46,7 @@ lf.specs.each do |spec|
     git_specs << { spec: spec, uri: src.uri, rev: src.revision,
                    base: base, shortrev: src.revision[0, 12] }
   when Bundler::Source::Path
-    next  # skip path sources
+    next
   else
     existing = rubygem_specs.find { |s| s.name == spec.name }
     if existing
@@ -59,8 +61,17 @@ end
 git_repos = {}
 git_specs.each do |gs|
   key = "#{gs[:base]}-#{gs[:shortrev]}"
-  git_repos[key] ||= { uri: gs[:uri], rev: gs[:rev], base: gs[:base],
-                        shortrev: gs[:shortrev], gems: [] }
+  unless git_repos[key]
+    uri = gs[:uri]
+    input = if %r{^\w+://(\w+@)?}.match?(uri)
+              URI.parse(uri).normalize.to_s.sub(%r{/$}, "")
+            else
+              uri
+            end
+    uri_hash = Digest::SHA1.hexdigest(input)
+    git_repos[key] = { uri: gs[:uri], rev: gs[:rev], base: gs[:base],
+                        shortrev: gs[:shortrev], uri_hash: uri_hash, gems: [] }
+  end
   git_repos[key][:gems] << gs[:spec] unless git_repos[key][:gems].any? { |e| e.name == gs[:spec].name }
 end
 
@@ -130,10 +141,29 @@ git_repos.each do |repo_key, repo|
   gnix << "  dontBuild = true;\n"
   gnix << "  dontConfigure = true;\n\n"
   gnix << "  passthru = { inherit prefix; };\n\n"
+  # Check which gems need a generated gemspec
+  missing_gemspecs = repo[:gems].select do |spec|
+    !File.exist?(File.join(source_dir, "#{spec.name}.gemspec")) &&
+      !File.exist?(File.join(source_dir, spec.name, "#{spec.name}.gemspec"))
+  end
+
   gnix << "  installPhase = ''\n"
   gnix << "    local dest=$out/${prefix}/bundler/gems/#{repo_key}\n"
   gnix << "    mkdir -p $dest\n"
   gnix << "    cp -r . $dest/\n"
+
+  missing_gemspecs.each do |spec|
+    gnix << "    cat > $dest/#{spec.name}.gemspec <<'EOF'\n"
+    gnix << "Gem::Specification.new do |s|\n"
+    gnix << "  s.name = \"#{spec.name}\"\n"
+    gnix << "  s.version = \"#{spec.version}\"\n"
+    gnix << "  s.summary = \"#{spec.name}\"\n"
+    gnix << "  s.require_paths = [\"lib\"]\n"
+    gnix << "  s.files = []\n"
+    gnix << "end\n"
+    gnix << "EOF\n"
+  end
+
   gnix << "  '';\n"
   gnix << "}\n"
 
