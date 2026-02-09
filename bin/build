@@ -98,10 +98,11 @@ while true
           done[attr] = true
           counter += 1
           store_path = out.strip.lines.last&.strip
-          $stdout.puts "[#{counter}/#{total}] OK  #{attr} -> #{store_path}"
+          full_name = g["full_name"] || attr
+          $stdout.puts "[#{counter}/#{total}] OK  #{full_name} -> #{store_path}"
           $stdout.flush
         else
-          failed = { attr: attr, output: out.strip }
+          failed = { attr: attr, full_name: g["full_name"] || attr, output: out.strip }
         end
 
         cond.broadcast
@@ -113,9 +114,9 @@ end
 threads.each { |t| t.join rescue nil }
 
 if failed
-  $stderr.puts "\nFAIL #{failed[:attr]}"
+  $stderr.puts "\nFAIL #{failed[:full_name] || failed[:attr]}"
   $stderr.puts failed[:output]
-  $stderr.puts "\nFix #{gems_dir}/#{failed[:attr]}/default.nix and re-run."
+  $stderr.puts "\nFix #{gems_dir}/#{failed[:full_name] || failed[:attr]}/default.nix and re-run."
   exit 1
 end
 

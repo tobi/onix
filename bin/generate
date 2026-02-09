@@ -219,7 +219,7 @@ gems = by_name.values.map do |spec|
   executables ||= []
   bindir ||= "exe"
 
-  nix_attr = full_name
+  nix_attr = name  # Use gem name as nix attribute (idiomatic)
 
   # Detect git source
   git_source = nil
@@ -274,7 +274,7 @@ generated = 0
 copied    = 0
 
 gems.each do |g|
-  dir = File.join(output_dir, g[:nix_attr])
+  dir = File.join(output_dir, g[:full_name])
   source_dir = File.join(dir, "source")
 
   # Always copy source if missing
@@ -330,7 +330,7 @@ gems.each do |g|
   if g[:needs_compilation]
     args = %w[lib stdenv ruby]
     args.concat(g[:native_deps])
-    args << "scintGemDeps ? {}"
+    args << "gemDeps ? {}"
     nix << "{ #{args.join(", ")} }:\n\n"
     nix << "let\n"
     nix << "  compile = import ./compile.nix;\n"
@@ -364,7 +364,7 @@ gems.each do |g|
     nix << "  '';\n\n"
   else
     args = %w[lib stdenv ruby]
-    args << "scintGemDeps ? {}"
+    args << "gemDeps ? {}"
     nix << "{ #{args.join(", ")} }:\n\n"
     nix << "stdenv.mkDerivation {\n"
     nix << "  pname = \"#{name}\";\n"
@@ -377,7 +377,7 @@ gems.each do |g|
 
   unless g[:deps].empty?
     nix << "  propagatedBuildInputs = [\n"
-    g[:deps].each { |d| nix << "    (scintGemDeps.\"#{d}\" or null)\n" }
+    g[:deps].each { |d| nix << "    (gemDeps.\"#{d}\" or null)\n" }
     nix << "  ];\n\n"
   end
 
@@ -420,26 +420,21 @@ end
 # -- top-level default.nix (always regenerated) ----------------------------
 
 nix = header
-nix << "{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby }:\n\nlet\n  scintGems = {\n"
+nix << "{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby }:\n\nlet\n  gems = {\n"
 
 gems.each do |g|
-  nix << "\n    \"#{g[:nix_attr]}\" = pkgs.callPackage ./#{g[:nix_attr]} {\n"
+  nix << "\n    \"#{g[:nix_attr]}\" = pkgs.callPackage ./#{g[:full_name]} {\n"
   nix << "      inherit ruby;\n"
-  dep_entries = g[:deps].filter_map do |d|
-    attr = name_to_attr[d]
-    attr ? "          { name = \"#{d}\"; value = scintGems.\"#{attr}\" or null; }" : nil
-  end
-  unless dep_entries.empty?
-    nix << "      scintGemDeps = builtins.listToAttrs (\n"
-    nix << "        builtins.filter (x: x.value != null) [\n"
-    nix << dep_entries.join("\n") << "\n"
-    nix << "        ]\n"
-    nix << "      );\n"
+  valid_deps = g[:deps].select { |d| name_to_attr[d] }
+  unless valid_deps.empty?
+    nix << "      gemDeps = { inherit (gems)"
+    valid_deps.each { |d| nix << " \"#{d}\"" }
+    nix << "; };\n"
   end
   nix << "    };\n"
 end
 
-nix << "\n  };\nin scintGems\n"
+nix << "\n  };\nin gems\n"
 File.write(File.join(output_dir, "default.nix"), nix)
 
 # -- Git checkout derivations (for monorepo git sources) -------------------
@@ -496,7 +491,7 @@ end
 # -- bundle-path.nix (always regenerated) ---------------------------------
 nix = header
 nix << "{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby }:\n\nlet\n"
-nix << "  scintGems = import ./default.nix { inherit pkgs ruby; };\n"
+nix << "  gems = import ./default.nix { inherit pkgs ruby; };\n"
 nix << "  rubyApiVersion = ruby.version.major + \".\" + ruby.version.minor + \".0\";\n"
 
 # Import git checkout derivations
@@ -505,7 +500,7 @@ git_checkouts.each do |checkout_dir, _|
 end
 
 nix << "in pkgs.stdenv.mkDerivation {\n"
-nix << "  pname = \"scint-bundle-path\";\n"
+nix << "  pname = \"bundle-path\";\n"
 nix << "  version = \"0.0.1\";\n"
 nix << "  dontUnpack = true;\n  dontBuild = true;\n  dontConfigure = true;\n\n"
 nix << "  installPhase = ''\n"
@@ -516,8 +511,8 @@ nix << "    mkdir -p $prefix/gems $prefix/specifications $prefix/bundler/gems\n\
 nix << "    # Rubygems-sourced gems\n"
 rubygems_gems.each do |g|
   full = g[:platform] == "ruby" ? "#{g[:name]}-#{g[:version]}" : "#{g[:name]}-#{g[:version]}-#{g[:platform]}"
-  nix << "    ln -s ${scintGems.\"#{g[:nix_attr]}\"}/gems/#{full} $prefix/gems/#{full}\n"
-  nix << "    ln -s ${scintGems.\"#{g[:nix_attr]}\"}/specifications/#{full}.gemspec $prefix/specifications/#{full}.gemspec\n"
+  nix << "    ln -s ${gems.\"#{g[:nix_attr]}\"}/gems/#{full} $prefix/gems/#{full}\n"
+  nix << "    ln -s ${gems.\"#{g[:nix_attr]}\"}/specifications/#{full}.gemspec $prefix/specifications/#{full}.gemspec\n"
 end
 
 # Git-sourced: symlink full checkout dirs at ruby/<ver>/bundler/gems/<base>-<shortref>/
@@ -546,7 +541,7 @@ unless gems_with_exes.empty?
           nix << "    ln -sf ${#{nix_var}}/#{g[:bindir]}/#{exe} $prefix/bin/#{exe}\n"
         end
       else
-        nix << "    ln -sf ${scintGems.\"#{g[:nix_attr]}\"}/gems/#{full}/#{g[:bindir]}/#{exe} $prefix/bin/#{exe}\n"
+        nix << "    ln -sf ${gems.\"#{g[:nix_attr]}\"}/gems/#{full}/#{g[:bindir]}/#{exe} $prefix/bin/#{exe}\n"
       end
     end
   end
@@ -560,7 +555,7 @@ File.write(File.join(output_dir, "bundle-path.nix"), nix)
 File.write(File.join(output_dir, "gemset.json"), JSON.pretty_generate(
   gems.map { |g|
     h = { name: g[:name], version: g[:version], platform: g[:platform],
-          nix_attr: g[:nix_attr], deps: g[:deps],
+          full_name: g[:full_name], nix_attr: g[:nix_attr], deps: g[:deps],
           needs_compilation: g[:needs_compilation], native_deps: g[:native_deps],
           require_paths: g[:require_paths] }
     h[:source_subdir] = g[:source_subdir] if g[:source_subdir]
