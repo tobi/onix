@@ -7,7 +7,7 @@
 # or a path to a Gemfile or Gemfile.lock.
 #
 # Produces:
-#   gems/<name>.gems       — gem manifest (for bin/fetch)
+#   gemsets/<name>.gemset  — gem manifest (for bin/fetch)
 #   nix/app/<name>.nix     — gemset (for nix-build / devshell)
 #   nix/gem/<repo>/git-*/  — git repo derivations (if any)
 #
@@ -24,7 +24,7 @@ require "uri"
 
 ROOT         = File.expand_path(File.join(__dir__, ".."))
 OVERLAYS_DIR = File.join(ROOT, "overlays")
-GEMS_DIR     = File.join(ROOT, "gems")
+GEMS_DIR     = File.join(ROOT, "gemsets")
 OUTPUT_DIR   = File.join(ROOT, "nix", "gem")
 APP_DIR      = File.join(ROOT, "nix", "app")
 
@@ -46,7 +46,7 @@ while i < ARGV.length
         import <path/to/Gemfile>           # finds Gemfile.lock next to it
         import --name <name> <path>        # explicit name override
 
-      Produces gems/<name>.gems + nix/app/<name>.nix
+      Produces gemsets/<name>.gemset + nix/app/<name>.nix
     USAGE
     exit 0
   else
@@ -119,9 +119,9 @@ gems_lines = by_name.values.sort_by { |e| e[:spec].name }.map do |entry|
 end
 
 FileUtils.mkdir_p(GEMS_DIR)
-gems_path = File.join(GEMS_DIR, "#{project}.gems")
+gems_path = File.join(GEMS_DIR, "#{project}.gemset")
 File.write(gems_path, gems_lines.join("\n") + "\n")
-$stderr.puts "  -> gems/#{project}.gems (#{by_name.size} gems)"
+$stderr.puts "  -> gemsets/#{project}.gemset (#{by_name.size} gems)"
 
 # -- Which gems have overlays? ----------------------------------------------
 

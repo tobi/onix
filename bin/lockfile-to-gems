@@ -5,7 +5,7 @@
 #
 # Usage:
 #   lockfile-to-gems path/to/Gemfile.lock > project.gems
-#   lockfile-to-gems path/to/Gemfile.lock -o gems/project.gems
+#   lockfile-to-gems path/to/Gemfile.lock -o gemsets/project.gemset
 
 require "fileutils"
 require "bundler"

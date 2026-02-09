@@ -22,12 +22,15 @@ let
   };
 in
 {
-  deps = with pkgs; [ rustPlatform.rust.cargo rustPlatform.rust.rustc pkg-config ];
+  deps = with pkgs; [ rustPlatform.rust.cargo rustPlatform.rust.rustc pkg-config llvmPackages.libclang ];
   beforeBuild = ''
     export GEM_PATH=${rb_sys}/${rb_sys.prefix}
 
     # Point cargo at the vendored dependencies
     mkdir -p .cargo
     sed "s|@vendor@|${cargoDeps}|" ${cargoDeps}/.cargo/config.toml > .cargo/config.toml
+
+    # bindgen needs libclang
+    export LIBCLANG_PATH="${pkgs.llvmPackages.libclang.lib}/lib"
   '';
 }

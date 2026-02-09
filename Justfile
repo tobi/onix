@@ -4,7 +4,7 @@
 #   just build                   # build every gem derivation
 #   just build fizzy             # build all gems for an app
 #   just test fizzy              # run app test suite
-
+#   just test-all                # run all app test suites
 #   just lint fizzy              # run lint suite
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
@@ -62,7 +62,7 @@ build-gem app gem:
 # Fetch all gem sources into cache/
 [group('generate')]
 fetch:
-    bin/fetch gems/
+    bin/fetch gemsets/
 
 # Recreate source symlinks (after fresh clone)
 [group('generate')]
@@ -96,20 +96,26 @@ import *args:
 # Full pipeline: fetch + generate + import
 [group('generate')]
 regenerate app lockfile:
-    bin/fetch gems/
+    bin/fetch gemsets/
     bin/generate
     bin/import {{lockfile}} --name {{app}}
 
 # ── Test & Lint ────────────────────────────────────────────────────
 
-# Run the app's test suite via its devshell
+# Run an app's test suite via tests/<app>/run-tests
 [group('test')]
-test app *args:
+test app:
+    tests/{{app}}/run-tests
+
+# Run all app test suites
+[group('test')]
+test-all *apps:
     #!/usr/bin/env bash
-    cd ../{{app}}
-    rm -rf tmp/cache/bootsnap 2>/dev/null || true
-    nix-shell ../scint-to-nix/tests/{{app}}/devshell.nix \
-        --run "RAILS_ENV=test bundle exec rails test {{args}}"
+    if [ $# -gt 0 ]; then
+      tests/run-all "$@"
+    else
+      tests/run-all
+    fi
 
 # Run lint suite
 [group('test')]

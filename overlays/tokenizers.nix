@@ -24,6 +24,7 @@ in
     rustPlatform.rust.cargo
     rustPlatform.rust.rustc
     pkg-config
+    llvmPackages.libclang
     oniguruma   # system oniguruma for the onig_sys crate
   ];
   beforeBuild = ''
@@ -32,6 +33,9 @@ in
     # Point cargo at the vendored dependencies
     mkdir -p .cargo
     sed "s|@vendor@|${cargoDeps}|" ${cargoDeps}/.cargo/config.toml > .cargo/config.toml
+
+    # bindgen needs libclang
+    export LIBCLANG_PATH="${pkgs.llvmPackages.libclang.lib}/lib"
 
     # Tell onig_sys to use system oniguruma instead of bundling its own
     export RUSTONIG_SYSTEM_LIBONIG=1

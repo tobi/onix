@@ -1,245 +1,54 @@
-#!/usr/bin/env ruby
-# frozen_string_literal: true
+#!/usr/bin/env bash
+set -euo pipefail
 
-# fetch — read .gems files, fetch all gem sources in parallel
+# fetch — fetch all gems from .gemset files into cache/
+#
+# Reads .gemset files (one "name version [git:uri@rev]" per line),
+# dedupes, and fetches each gem in parallel via bin/fetch-gem.
 #
 # Usage:
-#   fetch gems/           — fetch all gems from .gems files in directory
-#   fetch gems/fizzy.gems — fetch gems from a single file
-#
-# Fetches the ruby-platform .gem (source with ext/) for every gem,
-# unpacks it, and extracts metadata. Results go into cache/.
+#   fetch                          # all gemsets/*.gemset
+#   fetch gemsets/fizzy.gemset     # single file
+#   fetch gemsets/                 # all files in directory
+#   cat gemsets/*.gemset | fetch - # from stdin
 
-require "fileutils"
-require "json"
-require "open3"
-require "yaml"
-require "rubygems/package"
-require "stringio"
-require "zlib"
+dir="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$dir/.." && pwd)"
+fetch_gem="$dir/fetch-gem"
+jobs="${JOBS:-20}"
 
-CACHE_DIR   = File.join(__dir__, "..", "cache")
-GEM_DIR     = File.join(CACHE_DIR, "gems")
-SOURCE_DIR  = File.join(CACHE_DIR, "sources")
-META_DIR    = File.join(CACHE_DIR, "meta")
+# Resolve input to a stream of lines
+if [ $# -eq 0 ]; then
+  input="$root/gemsets"
+fi
+input="${input:-${1}}"
 
-PARALLEL = (ENV["JOBS"] || 20).to_i
-
-def parse_gems_files(paths)
-  gems = {}  # "name-version" => { name:, version:, git: }
-
-  paths.each do |path|
-    File.readlines(path).each do |line|
-      line = line.strip
-      next if line.empty? || line.start_with?("#")
-
-      parts = line.split
-      name = parts[0]
-      version = parts[1]
-      git = nil
-
-      if parts[2] && parts[2].start_with?("git:")
-        git = parts[2].sub("git:", "")
-      end
-
-      key = "#{name}-#{version}"
-      gems[key] ||= { name: name, version: version, git: git }
-    end
-  end
-
-  gems.values
-end
-
-def fetch_gem(name, version)
-  gem_file = File.join(GEM_DIR, "#{name}-#{version}.gem")
-  return gem_file if File.exist?(gem_file)
-
-  # Fetch ruby platform (source with ext/)
-  out, err, status = Open3.capture3(
-    "gem", "fetch", name, "-v", version, "--platform", "ruby",
-    chdir: GEM_DIR
-  )
-
-  unless status.success?
-    # Some gems only exist as "ruby" platform, retry without flag
-    out, err, status = Open3.capture3(
-      "gem", "fetch", name, "-v", version,
-      chdir: GEM_DIR
-    )
-  end
-
-  unless status.success?
-    return nil
-  end
-
-  # Find the downloaded file (may have platform suffix)
-  candidates = Dir.glob(File.join(GEM_DIR, "#{name}-#{version}*.gem")).sort
-  candidates.first
-end
-
-def unpack_gem(gem_file, name, version)
-  target = File.join(SOURCE_DIR, "#{name}-#{version}")
-  return target if Dir.exist?(target)
-
-  out, err, status = Open3.capture3(
-    "gem", "unpack", gem_file, "--target", SOURCE_DIR
-  )
-
-  unless status.success?
-    $stderr.puts "ERROR: unpack #{name}-#{version}: #{err.strip}"
-    return nil
-  end
-
-  # gem unpack may create dir with platform suffix — normalize
-  unpacked = Dir.glob(File.join(SOURCE_DIR, "#{name}-#{version}*")).first
-  if unpacked && unpacked != target
-    FileUtils.mv(unpacked, target)
-  end
-
-  # Strip prebuilt .so/.bundle/.dylib — we compile from source in Nix
-  Dir.glob(File.join(target, "lib", "**", "*.{so,bundle,dylib}")).each do |f|
-    File.delete(f)
-  end
-
-  target
-end
-
-def extract_metadata(gem_file, name, version)
-  meta_file = File.join(META_DIR, "#{name}-#{version}.json")
-  return JSON.parse(File.read(meta_file)) if File.exist?(meta_file)
-
-  meta = nil
-  begin
-    File.open(gem_file, "rb") do |io|
-      Gem::Package::TarReader.new(io) do |tar|
-        tar.each do |entry|
-          if entry.full_name == "metadata.gz"
-            yaml = Zlib::GzipReader.new(StringIO.new(entry.read)).read
-            meta = YAML.safe_load(yaml,
-              permitted_classes: [Gem::Specification, Gem::Version, Gem::Requirement,
-                                 Gem::Dependency, Symbol, Time])
-            break
-          end
-        end
-      end
-    end
-  rescue => e
-    $stderr.puts "WARN: metadata #{name}-#{version}: #{e.message}"
-  end
-
-  return nil unless meta
-
-  # Check for extensions in source
-  source_dir = File.join(SOURCE_DIR, "#{name}-#{version}")
-  has_extensions = if meta.respond_to?(:extensions) && !meta.extensions.empty?
-    true
-  elsif Dir.exist?(source_dir)
-    !Dir.glob(File.join(source_dir, "ext", "**", "extconf.rb")).empty?
-  else
-    false
-  end
-
-  result = {
-    "name" => name,
-    "version" => version,
-    "require_paths" => meta.require_paths || ["lib"],
-    "executables" => meta.executables || [],
-    "bindir" => meta.bindir || "exe",
-    "has_extensions" => has_extensions,
-    "dependencies" => (meta.dependencies || [])
-      .select { |d| d.type == :runtime }
-      .map { |d| { "name" => d.name, "requirement" => d.requirement.to_s } },
-  }
-
-  File.write(meta_file, JSON.pretty_generate(result))
-  result
-end
-
-def clone_git_gem(name, version, git_ref)
-  target = File.join(SOURCE_DIR, "#{name}-#{version}")
-  return target if Dir.exist?(target)
-
-  uri, rev = git_ref.split("@", 2)
-  clone_dir = File.join(CACHE_DIR, "git-clones", File.basename(uri, ".git"))
-
-  unless Dir.exist?(clone_dir)
-    FileUtils.mkdir_p(File.dirname(clone_dir))
-    system("git", "clone", "--quiet", uri, clone_dir)
-  end
-
-  system("git", "-C", clone_dir, "fetch", "--quiet", "origin", err: "/dev/null")
-  system("git", "-C", clone_dir, "checkout", "--quiet", "--force", rev)
-
-  FileUtils.cp_r(clone_dir, target)
-  FileUtils.rm_rf(File.join(target, ".git"))
-  target
-end
-
-# -- Main ------------------------------------------------------------------
-
-input = ARGV[0] || "gems"
-abort "Usage: fetch <gems-dir-or-file>" unless input
-
-paths = if File.directory?(input)
-  Dir.glob(File.join(input, "*.gems")).sort
+if [ "$input" = "-" ]; then
+  # Read from stdin
+  lines=$(cat)
+elif [ -d "$input" ]; then
+  lines=$(cat "$input"/*.gemset 2>/dev/null)
+elif [ -f "$input" ]; then
+  lines=$(cat "$input")
 else
-  [input]
-end
+  echo "Usage: fetch [gemsets/ | file.gemset | -]" >&2
+  exit 1
+fi
 
-abort "No .gems files found in #{input}" if paths.empty?
+# Dedupe: sort by name+version, keep unique
+sorted=$(echo "$lines" | grep -v '^\s*#' | grep -v '^\s*$' | sort -u -k1,2)
+total=$(echo "$sorted" | wc -l)
 
-all_gems = parse_gems_files(paths)
-$stderr.puts "#{all_gems.size} unique gem+version pairs from #{paths.size} file(s)"
+echo "$total unique gems to fetch (jobs=$jobs)" >&2
 
-[GEM_DIR, SOURCE_DIR, META_DIR].each { |d| FileUtils.mkdir_p(d) }
-
-# Separate git vs rubygems
-git_gems = all_gems.select { |g| g[:git] }
-rubygems = all_gems.reject { |g| g[:git] }
-
-# Fetch rubygems in parallel
-queue = Queue.new
-rubygems.each { |g| queue << g }
-
-results = []
-mutex = Mutex.new
-fetched = 0
-failed = []
-
-workers = PARALLEL.times.map do
-  Thread.new do
-    while (gem = queue.pop(true) rescue nil)
-      name, version = gem[:name], gem[:version]
-
-      gem_file = fetch_gem(name, version)
-      unless gem_file
-        mutex.synchronize { failed << "#{name}-#{version}" }
-        next
-      end
-
-      source = unpack_gem(gem_file, name, version)
-      meta = extract_metadata(gem_file, name, version)
-
-      mutex.synchronize do
-        fetched += 1
-        $stderr.print "\r  [#{fetched}/#{rubygems.size}] #{name}-#{version}    " if $stderr.tty?
-      end
-    end
-  end
-end
-
-workers.each(&:join)
-$stderr.puts "\r  #{fetched}/#{rubygems.size} rubygems fetched" + (failed.any? ? " (#{failed.size} failed)" : "")
-
-# Clone git gems sequentially
-git_gems.each do |gem|
-  clone_git_gem(gem[:name], gem[:version], gem[:git])
-  $stderr.puts "  git: #{gem[:name]}-#{gem[:version]}"
-end
-
-if failed.any?
-  $stderr.puts "\nFailed:"
-  failed.each { |f| $stderr.puts "  #{f}" }
-end
-
-$stderr.puts "\nDone. #{fetched + git_gems.size} gems in cache/"
+# Feed into parallel fetch-gem
+echo "$sorted" | xargs -P "$jobs" -I {} "$fetch_gem" "{}" 2>&1 | \
+  awk -v total="$total" '
+    /^FAIL:/ { fails++; print > "/dev/stderr"; next }
+    { done++; if (done % 50 == 0 || done == total) printf "\r  %d/%d fetched", done, total > "/dev/stderr" }
+    END {
+      printf "\r  %d/%d fetched", done, total > "/dev/stderr"
+      if (fails > 0) printf " (%d failed)", fails > "/dev/stderr"
+      print "" > "/dev/stderr"
+    }
+  '
