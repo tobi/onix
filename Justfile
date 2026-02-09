@@ -1,11 +1,4 @@
 # gemset2nix — Justfile
-#
-# Usage:
-#   just build                   # build every gem derivation
-#   just build fizzy             # build all gems for an app
-#   just test fizzy              # run app test suite
-#   just test-all                # run all app test suites
-#   just lint fizzy              # run lint suite
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
@@ -13,162 +6,12 @@ ruby := "ruby_3_4"
 
 # ── Build ──────────────────────────────────────────────────────────
 
-# Build every gem derivation in the tree
+# Build gems: all, by app, or a single gem
 [group('build')]
-build app="":
-    #!/usr/bin/env bash
-    buildlog=$(mktemp /tmp/gem-build-XXXXXX.log)
-    if [[ -n "{{app}}" ]]; then
-        echo "Building all gems for {{app}}..."
-        echo "=== gem build log ({{app}}) — $(date -Iseconds) ===" > "$buildlog"
-        paths=$(nix-build --no-out-link --keep-going -E '
-            let pkgs = import <nixpkgs> {};
-                ruby = pkgs.{{ruby}};
-                resolve = import ./nix/modules/resolve.nix;
-                gems = resolve { inherit pkgs ruby; gemset = import ./nix/app/{{app}}.nix; };
-            in builtins.attrValues gems
-        ' 2> >(tee -a "$buildlog" >&2)) || true
-        n=$(echo "$paths" | grep -c '/nix/store/' || echo 0)
-        echo "$n gems built for {{app}}."
-        if grep -q 'nix log' "$buildlog" 2>/dev/null; then
-            echo ""
-            echo "Build failures detected. Collecting logs into $buildlog ..."
-            echo "" >> "$buildlog"
-            echo "=== FAILURE LOGS ===" >> "$buildlog"
-            grep -oP '/nix/store/\S+\.drv' "$buildlog" | sort -u | while read -r drv; do
-                echo "" >> "$buildlog"
-                echo "--- nix log $drv ---" >> "$buildlog"
-                nix log "$drv" >> "$buildlog" 2>&1 || true
-            done
-            echo ""
-            echo "Full build log with failure details: $buildlog"
-            echo "Fix with: /nix-build skill — refer to $buildlog"
-            grep 'nix log' "$buildlog" >&2 || true
-        else
-            rm -f "$buildlog"
-        fi
-    else
-        total=$(find nix/gem -mindepth 2 -maxdepth 2 -type d | wc -l)
-        echo "Building $total gem derivations..."
-        echo "=== gem build log (all) — $(date -Iseconds) ===" > "$buildlog"
-        nix-build --no-out-link --keep-going -E '
-            let pkgs = import <nixpkgs> {};
-                ruby = pkgs.{{ruby}};
-                lib = pkgs.lib;
-                dirs = builtins.attrNames (builtins.readDir ./nix/gem);
-                versionsOf = name:
-                    let entries = builtins.readDir (./nix/gem + "/${name}");
-                        subdirs = lib.filterAttrs (k: v: v == "directory") entries;
-                    in map (v: pkgs.callPackage (./nix/gem + "/${name}/${v}") { inherit ruby; })
-                           (builtins.attrNames subdirs);
-            in lib.concatMap versionsOf dirs
-        ' >/dev/null 2> >(tee -a "$buildlog" >&2) || true
-        failed=$(grep -oP "'/nix/store/[^']+'" "$buildlog" | sort -u | wc -l || echo 0)
-        echo "$((total - failed))/$total built, $failed failed."
-        if [[ $failed -gt 0 ]]; then
-            echo "" >> "$buildlog"
-            echo "=== FAILURE LOGS ===" >> "$buildlog"
-            grep -oP '/nix/store/\S+\.drv' "$buildlog" | sort -u | while read -r drv; do
-                echo "" >> "$buildlog"
-                echo "--- nix log $drv ---" >> "$buildlog"
-                nix log "$drv" >> "$buildlog" 2>&1 || true
-            done
-            echo ""
-            echo "Full build log with failure details: $buildlog"
-            echo "Fix with: /nix-build skill — refer to $buildlog"
-            grep 'nix log' "$buildlog" >&2 || true
-        else
-            rm -f "$buildlog"
-        fi
-    fi
-
-# Build a single gem (for debugging failures)
-[group('build')]
-build-gem app gem:
-    nix-build --no-out-link -E 'let pkgs = import <nixpkgs> {}; ruby = pkgs.{{ruby}}; resolve = import ./nix/modules/resolve.nix; gems = resolve { inherit pkgs ruby; gemset = import ./nix/app/{{app}}.nix; }; in gems."{{gem}}"'
-
-# ── Fetch & Generate ──────────────────────────────────────────────
-
-# Fetch all gem sources into cache/
-[group('generate')]
-fetch:
-    bin/fetch imports/
-
-# Recreate source symlinks (after fresh clone)
-[group('generate')]
-link:
-    #!/usr/bin/env bash
-    n=0
-    for d in nix/gem/*/*/; do
-        [[ -d "$d" ]] || continue
-        [[ "$(basename "$d")" == git-* ]] && continue
-        name=$(basename "$(dirname "$d")")
-        version=$(basename "$d")
-        target="cache/sources/${name}-${version}"
-        link="${d}source"
-        if [[ -d "$target" && ! -e "$link" ]]; then
-            ln -sf "$(cd "$target" && pwd)" "$link"
-            n=$((n + 1))
-        fi
-    done
-    echo "Linked $n source directories."
-
-# Regenerate all gem derivations + selectors from cache
-[group('generate')]
-generate:
-    bin/generate
-
-# Import a project (name or path to Gemfile.lock)
-[group('generate')]
-import *args:
-    bin/import {{args}}
-
-# Full pipeline: fetch + generate + import
-[group('generate')]
-regenerate app lockfile:
-    bin/fetch imports/
-    bin/generate
-    bin/import {{lockfile}} --name {{app}}
-
-# ── Test & Lint ────────────────────────────────────────────────────
-
-# Run an app's test suite via tests/<app>/run-tests
-[group('test')]
-test app:
-    tests/{{app}}/run-tests
-
-# Run all app test suites
-[group('test')]
-test-all *apps:
-    #!/usr/bin/env bash
-    if [ $# -gt 0 ]; then
-      tests/run-all "$@"
-    else
-      tests/run-all
-    fi
-
-# Run lint suite
-[group('test')]
-lint app="fizzy":
-    tests/lint/run-all {{app}}
-
-# Verify all generated nix files pass nixfmt
-[group('test')]
-fmt-check:
-    find nix/ -name '*.nix' | xargs nixfmt --check
-
-# Run statix linter on all nix files
-[group('test')]
-statix:
-    nix-shell -p statix --run "statix check nix/"
-
-# ── Matrix ─────────────────────────────────────────────────────────
+build app="" gem="":
+    RUBY={{ruby}} bin/build {{app}} {{gem}}
 
 # Build across ruby versions
-# just matrix                          # full matrix (all rubies × all apps)
-# just matrix fizzy                    # fizzy on all rubies
-# just matrix fizzy ruby_3_3           # fizzy on ruby 3.3 only
-# just matrix "" ruby_3_3              # all apps on ruby 3.3
 [group('build')]
 matrix app="" rubyver="":
     #!/usr/bin/env bash
@@ -189,3 +32,51 @@ matrix app="" rubyver="":
         echo "Building full matrix..."
         nix-build nix/matrix.nix --no-out-link --keep-going
     fi
+
+# ── Generate ───────────────────────────────────────────────────────
+
+# Fetch all gem sources into cache/
+[group('generate')]
+fetch:
+    bin/fetch imports/
+
+# Regenerate all gem derivations + selectors from cache
+[group('generate')]
+generate:
+    bin/generate
+
+# Import a project (name or path to Gemfile.lock)
+[group('generate')]
+import *args:
+    bin/import {{args}}
+
+# Recreate source symlinks (after fresh clone)
+[group('generate')]
+link:
+    #!/usr/bin/env bash
+    n=0
+    for d in nix/gem/*/*/; do
+        [[ -d "$d" ]] || continue
+        [[ "$(basename "$d")" == git-* ]] && continue
+        name=$(basename "$(dirname "$d")")
+        version=$(basename "$d")
+        target="cache/sources/${name}-${version}"
+        link="${d}source"
+        if [[ -d "$target" && ! -e "$link" ]]; then
+            ln -sf "$(cd "$target" && pwd)" "$link"
+            n=$((n + 1))
+        fi
+    done
+    echo "Linked $n source directories."
+
+# ── Test & Lint ────────────────────────────────────────────────────
+
+# Run lint suite (10 checks)
+[group('test')]
+lint app="fizzy":
+    tests/lint/run-all {{app}}
+
+# Run an app's test suite
+[group('test')]
+test app:
+    tests/{{app}}/run-tests

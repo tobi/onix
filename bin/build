@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# build — build gem derivations
+#
+# Usage:
+#   bin/build                   # build every gem version in the pool
+#   bin/build fizzy             # build all gems for an app
+#   bin/build fizzy rack        # build a single gem (debugging)
+
+dir="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$dir/.." && pwd)"
+
+app="${1:-}"
+gem="${2:-}"
+ruby="${RUBY:-ruby_3_4}"
+
+buildlog=$(mktemp /tmp/gem-build-XXXXXX.log)
+trap 'rm -f "$buildlog"' EXIT
+
+collect_failure_logs() {
+    local log="$1"
+    if grep -q 'nix log' "$log" 2>/dev/null; then
+        echo ""
+        echo "Collecting failure logs..."
+        echo "" >> "$log"
+        echo "=== FAILURE LOGS ===" >> "$log"
+        grep -oP '/nix/store/\S+\.drv' "$log" | sort -u | while read -r drv; do
+            echo "" >> "$log"
+            echo "--- nix log $drv ---" >> "$log"
+            nix log "$drv" >> "$log" 2>&1 || true
+        done
+        trap - EXIT  # keep the log file
+        echo ""
+        echo "Full build log: $log"
+        grep 'nix log' "$log" >&2 || true
+    fi
+}
+
+if [[ -n "$gem" && -n "$app" ]]; then
+    # Single gem
+    echo "Building $gem from $app..."
+    exec nix-build --no-out-link -E \
+        "let pkgs = import <nixpkgs> {};
+             ruby = pkgs.${ruby};
+             resolve = import ${root}/nix/modules/resolve.nix;
+             gems = resolve { inherit pkgs ruby; gemset = import ${root}/nix/app/${app}.nix; };
+         in gems.\"${gem}\""
+
+elif [[ -n "$app" ]]; then
+    # All gems for an app
+    echo "Building all gems for ${app}..."
+    paths=$(nix-build --no-out-link --keep-going -E \
+        "let pkgs = import <nixpkgs> {};
+             ruby = pkgs.${ruby};
+             resolve = import ${root}/nix/modules/resolve.nix;
+             gems = resolve { inherit pkgs ruby; gemset = import ${root}/nix/app/${app}.nix; };
+         in builtins.attrValues gems" \
+        2> >(tee -a "$buildlog" >&2)) || true
+    n=$(echo "$paths" | grep -c '/nix/store/' || echo 0)
+    echo "${n} gems built for ${app}."
+    collect_failure_logs "$buildlog"
+
+else
+    # Every gem in the pool — use a nix file to avoid quoting hell
+    total=$(find "$root/nix/gem" -mindepth 2 -maxdepth 2 -type d | wc -l)
+    echo "Building ${total} gem derivations..."
+
+    nixexpr=$(mktemp /tmp/gem-build-all-XXXXXX.nix)
+    cat > "$nixexpr" <<EOF
+let
+  pkgs = import <nixpkgs> {};
+  ruby = pkgs.${ruby};
+  lib = pkgs.lib;
+  root = ${root}/nix/gem;
+  dirs = builtins.attrNames (builtins.readDir root);
+  versionsOf = name:
+    let
+      entries = builtins.readDir (root + "/\${name}");
+      subdirs = lib.filterAttrs (k: v: v == "directory") entries;
+    in
+    map (v: pkgs.callPackage (root + "/\${name}/\${v}") { inherit ruby; })
+      (builtins.attrNames subdirs);
+in
+lib.concatMap versionsOf dirs
+EOF
+
+    nix-build --no-out-link --keep-going "$nixexpr" \
+        >/dev/null 2> >(tee -a "$buildlog" >&2) || true
+    rm -f "$nixexpr"
+
+    failed=$(grep -oP "'/nix/store/[^']+'" "$buildlog" 2>/dev/null | sort -u | wc -l)
+    failed=${failed:-0}
+    failed=$((failed + 0))  # ensure numeric
+    echo "$((total - failed))/${total} built, ${failed} failed."
+    collect_failure_logs "$buildlog"
+fi
