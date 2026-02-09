@@ -3,12 +3,12 @@
 
 set -euo pipefail
 
-nix_dir="nix"
+nix_dir="nix/gem"
 errors=0
 checked=0
 
 # Per-gem derivations
-for f in "$nix_dir"/*/default.nix "$nix_dir"/*/*/default.nix "$nix_dir"/git/*/default.nix; do
+for f in "$nix_dir"/*/default.nix "$nix_dir"/*/*/default.nix ; do
   [ -f "$f" ] || continue
   if ! nix-instantiate --parse "$f" > /dev/null 2>&1; then
     echo "FAIL: $f does not parse"

@@ -5,7 +5,7 @@
 
 require "json"
 
-nix_dir  = "nix"
+nix_dir  = "nix/gem"
 meta_dir = "cache/meta"
 errors = []
 checked = 0
@@ -19,7 +19,7 @@ Dir.glob(File.join(meta_dir, "*.json")).each do |f|
   specfile = File.join(nix_dir, name, version, "default.nix")
   next unless File.exist?(specfile)
 
-  nix_content = File.read(specfile)
+  nix_content = File.read(specfile, encoding: "UTF-8")
   # Extract require_paths from the generated gemspec
   if nix_content =~ /s\.require_paths\s*=\s*\[([^\]]+)\]/
     nix_paths = $1.scan(/"([^"]+)"/).flatten.reject { |p| p.start_with?("/") }.sort

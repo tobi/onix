@@ -3,9 +3,9 @@
 
 # generate-gemset — produce a project .nix gemset from its Gemfile.lock
 #
-# Produces: nix/<project>.nix
+# Produces: nix/app/<project>.nix
 # Returns an attrset of all gem derivations. Use with:
-#   builtins.attrValues gems  -> list of all derivations for symlinkJoin
+#   builtins.attrValues gems  -> list of all derivations for buildEnv
 #
 # Usage:
 #   generate-gemset fizzy ../fizzy/Gemfile.lock
@@ -19,7 +19,7 @@ OVERLAYS_DIR = File.join(__dir__, "..", "overlays")
 
 project   = ARGV[0] or abort "Usage: generate-gemset <project> <Gemfile.lock>"
 lockfile  = ARGV[1] or abort "Usage: generate-gemset <project> <Gemfile.lock>"
-output_dir = File.join(__dir__, "..", "nix")
+output_dir = File.join(__dir__, "..", "nix", "gem")
 
 gemfile = lockfile.sub(/Gemfile\.lock$/, "Gemfile")
 ENV["BUNDLE_GEMFILE"] = File.expand_path(gemfile) if File.exist?(gemfile)
@@ -90,27 +90,40 @@ nix << "# Generated from #{File.basename(lockfile)}\n"
 nix << "#\n"
 nix << "{ pkgs, ruby }:\n\n"
 nix << "let\n"
-nix << "  call = path: pkgs.callPackage path { inherit ruby; };\n"
-nix << "  callP = path: pkgs.callPackage path { inherit ruby pkgs; };\n"
-nix << "in {\n"
+nix << "  inherit (pkgs) lib stdenv;\n"
+nix << "  gem = name: args: pkgs.callPackage (../gem + \"/\${name}\") ({ inherit lib stdenv ruby; } // args);\n"
+nix << "in\n"
+nix << "{\n"
 
 rubygem_specs.sort_by(&:name).each do |spec|
-  fn = overlays.key?(spec.name) ? "callP" : "call"
-  nix << "  \"#{spec.name}\" = #{fn} ./#{spec.name}/#{spec.version};\n"
+  has_overlay = overlays.key?(spec.name)
+  if has_overlay
+    nix << "  #{spec.name.inspect} = gem #{spec.name.inspect} {\n"
+    nix << "    version = #{spec.version.to_s.inspect};\n"
+    nix << "    pkgs = pkgs;\n"
+    nix << "  };\n"
+  else
+    nix << "  #{spec.name.inspect} = gem #{spec.name.inspect} { version = #{spec.version.to_s.inspect}; };\n"
+  end
 end
 
 git_repos.each do |repo_key, repo|
   nix << "\n  # git: #{repo[:base]} @ #{repo[:shortrev]}\n"
-  nix << "  \"#{repo_key}\" = call ./#{repo[:base]}/git-#{repo[:shortrev]};\n"
+  nix << "  #{repo_key.inspect} = gem #{repo[:base].inspect} { git.rev = #{repo[:shortrev].inspect}; };\n"
 end
 
 nix << "}\n"
 
 FileUtils.mkdir_p(output_dir)
-File.write(File.join(output_dir, "#{project}.nix"), nix)
-$stderr.puts "  -> nix/#{project}.nix"
+app_dir = File.join(output_dir, "..", "app")
+FileUtils.mkdir_p(app_dir)
+File.write(File.join(app_dir, "#{project}.nix"), nix)
+$stderr.puts "  -> nix/app/#{project}.nix"
 
 # -- Generate git repo derivations -----------------------------------------
+
+SH = "        "  # 8 spaces — shell commands (nixfmt heredoc style)
+HD = "    "      # 4 spaces — heredoc body / terminator
 
 git_repos.each do |repo_key, repo|
   source_dir = nil
@@ -131,6 +144,15 @@ git_repos.each do |repo_key, repo|
   FileUtils.mkdir_p(git_dir)
   FileUtils.ln_sf(source_dir, File.join(git_dir, "source"))
 
+  # Check which gems need a generated gemspec
+  missing_gemspecs = repo[:gems].select do |spec|
+    !File.exist?(File.join(source_dir, "#{spec.name}.gemspec")) &&
+      !File.exist?(File.join(source_dir, spec.name, "#{spec.name}.gemspec"))
+  end
+
+  has_heredoc = !missing_gemspecs.empty?
+  si = has_heredoc ? SH : "    "
+
   gnix = +""
   gnix << "#\n"
   gnix << "# ╔══════════════════════════════════════════════════════════════════╗\n"
@@ -141,44 +163,108 @@ git_repos.each do |repo_key, repo|
   gnix << "# URI: #{repo[:uri]}\n"
   gnix << "# Gems: #{repo[:gems].map(&:name).join(", ")}\n"
   gnix << "#\n"
-  gnix << "{ lib, stdenv, ruby }:\n\n"
+  gnix << "{\n"
+  gnix << "  lib,\n"
+  gnix << "  stdenv,\n"
+  gnix << "  ruby,\n"
+  gnix << "}:\n"
   gnix << "let\n"
   gnix << "  rubyVersion = \"${ruby.version.majMin}.0\";\n"
   gnix << "  prefix = \"ruby/${rubyVersion}\";\n"
-  gnix << "in\n\n"
+  gnix << "in\n"
   gnix << "stdenv.mkDerivation {\n"
-  gnix << "  pname = \"#{repo[:base]}\";\n"
-  gnix << "  version = \"#{repo[:shortrev]}\";\n"
-  gnix << "  src = builtins.path { path = ./source; name = \"#{repo_key}-source\"; };\n\n"
+  gnix << "  pname = #{repo[:base].inspect};\n"
+  gnix << "  version = #{repo[:shortrev].inspect};\n"
+  gnix << "  src = builtins.path {\n"
+  gnix << "    path = ./source;\n"
+  gnix << "    name = \"#{repo_key}-source\";\n"
+  gnix << "  };\n\n"
   gnix << "  dontBuild = true;\n"
   gnix << "  dontConfigure = true;\n\n"
   gnix << "  passthru = { inherit prefix; };\n\n"
-  # Check which gems need a generated gemspec
-  missing_gemspecs = repo[:gems].select do |spec|
-    !File.exist?(File.join(source_dir, "#{spec.name}.gemspec")) &&
-      !File.exist?(File.join(source_dir, spec.name, "#{spec.name}.gemspec"))
-  end
 
   gnix << "  installPhase = ''\n"
-  gnix << "    local dest=$out/${prefix}/bundler/gems/#{repo_key}\n"
-  gnix << "    mkdir -p $dest\n"
-  gnix << "    cp -r . $dest/\n"
+  gnix << "#{si}local dest=$out/${prefix}/bundler/gems/#{repo_key}\n"
+  gnix << "#{si}mkdir -p $dest\n"
+  gnix << "#{si}cp -r . $dest/\n"
 
   missing_gemspecs.each do |spec|
-    gnix << "    cat > $dest/#{spec.name}.gemspec <<'EOF'\n"
-    gnix << "Gem::Specification.new do |s|\n"
-    gnix << "  s.name = \"#{spec.name}\"\n"
-    gnix << "  s.version = \"#{spec.version}\"\n"
-    gnix << "  s.summary = \"#{spec.name}\"\n"
-    gnix << "  s.require_paths = [\"lib\"]\n"
-    gnix << "  s.files = []\n"
-    gnix << "end\n"
-    gnix << "EOF\n"
+    gnix << "#{si}cat > $dest/#{spec.name}.gemspec <<'EOF'\n"
+    gnix << "#{HD}Gem::Specification.new do |s|\n"
+    gnix << "#{HD}  s.name = #{spec.name.inspect}\n"
+    gnix << "#{HD}  s.version = #{spec.version.to_s.inspect}\n"
+    gnix << "#{HD}  s.summary = #{spec.name.inspect}\n"
+    gnix << "#{HD}  s.require_paths = [\"lib\"]\n"
+    gnix << "#{HD}  s.files = []\n"
+    gnix << "#{HD}end\n"
+    gnix << "#{HD}EOF\n"
   end
 
   gnix << "  '';\n"
   gnix << "}\n"
 
   File.write(File.join(git_dir, "default.nix"), gnix)
-  $stderr.puts "  -> nix/#{repo[:base]}/git-#{repo[:shortrev]}/"
+  $stderr.puts "  -> nix/gem/#{repo[:base]}/git-#{repo[:shortrev]}/"
+
+  # Patch the git rev into the selector's gitRevs attrset
+  selector_path = File.join(output_dir, repo[:base], "default.nix")
+  if File.exist?(selector_path)
+    selector = File.read(selector_path)
+    rev_line = "    #{repo[:shortrev].inspect} = import ./git-#{repo[:shortrev]} { inherit lib stdenv ruby; };\n"
+    unless selector.include?(repo[:shortrev].inspect)
+      selector.sub!("  gitRevs = {\n", "  gitRevs = {\n#{rev_line}")
+      File.write(selector_path, selector)
+    end
+  else
+    # No rubygems version exists — create a git-only selector
+    sel = +""
+    sel << "#\n"
+    sel << "# ╔══════════════════════════════════════════════════════════════╗\n"
+    sel << "# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║\n"
+    sel << "# ╚══════════════════════════════════════════════════════════════╝\n"
+    sel << "#\n"
+    sel << "# #{repo[:base]} (git only)\n"
+    sel << "#\n"
+    sel << "# Available git revs:\n"
+    sel << "#   #{repo[:shortrev]}\n"
+    sel << "#\n"
+    sel << "# Usage:\n"
+    sel << "#   #{repo[:base]} { git.rev = #{repo[:shortrev].inspect}; }\n"
+    sel << "#\n"
+    sel << "{\n"
+    sel << "  lib,\n"
+    sel << "  stdenv,\n"
+    sel << "  ruby,\n"
+    sel << "  pkgs ? null,\n"
+    sel << "  version ? null,\n"
+    sel << "  git ? { },\n"
+    sel << "}:\n"
+    sel << "let\n"
+    sel << "  versions = { };\n\n"
+    sel << "  gitRevs = {\n"
+    sel << "    #{repo[:shortrev].inspect} = import ./git-#{repo[:shortrev]} { inherit lib stdenv ruby; };\n"
+    sel << "  };\n"
+    sel << "in\n"
+    sel << "if git ? rev then\n"
+    sel << "  gitRevs.\${git.rev}\n"
+    sel << "    or (throw \"#{repo[:base]}: unknown git rev '\${git.rev}'. Available: \${builtins.concatStringsSep \", \" (builtins.attrNames gitRevs)}\")\n"
+    sel << "else if version != null then\n"
+    sel << "  throw \"#{repo[:base]}: no rubygems versions, only git revs: \${builtins.concatStringsSep \", \" (builtins.attrNames gitRevs)}\"\n"
+    sel << "else\n"
+    sel << "  throw \"#{repo[:base]}: specify git.rev — available: \${builtins.concatStringsSep \", \" (builtins.attrNames gitRevs)}\"\n"
+
+    FileUtils.mkdir_p(File.dirname(selector_path))
+    File.write(selector_path, sel)
+
+    # Also add git-only gem to the top-level nix/gem/default.nix
+    top_path = File.join(output_dir, "..", "modules", "gem.nix")
+    if File.exist?(top_path)
+      top = File.read(top_path, encoding: "UTF-8")
+      entry = "  #{repo[:base].inspect} = args: gem #{repo[:base].inspect} args;\n"
+      unless top.include?(entry)
+        top.sub!(/^}\n\z/, "#{entry}}\n")
+        File.write(top_path, top)
+      end
+    end
+  end
 end

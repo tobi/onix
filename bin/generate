@@ -3,7 +3,7 @@
 
 # generate — build per-gem Nix derivations from fetched gem cache
 #
-# Each gem: nix/<name>/<version>/default.nix
+# Each gem: nix/gem/<name>/<version>/default.nix
 # If overlays/<name>.nix exists, it's imported for extra nativeBuildInputs
 # and optional buildPhase override.
 #
@@ -13,7 +13,7 @@
 #
 # Usage:
 #   generate              — generate from all cached gems
-#   generate -o nix/      — custom output dir
+#   generate -o nix/gem/ — custom output dir
 
 require "json"
 require "fileutils"
@@ -23,14 +23,14 @@ SOURCE_DIR   = File.join(CACHE_DIR, "sources")
 META_DIR     = File.join(CACHE_DIR, "meta")
 OVERLAYS_DIR = File.join(__dir__, "..", "overlays")
 
-output_dir = File.join(__dir__, "..", "nix")
+output_dir = File.join(__dir__, "..", "nix", "gem")
 
 i = 0
 while i < ARGV.length
   case ARGV[i]
   when "-o", "--output" then output_dir = ARGV[i += 1]
   when "-h", "--help"
-    $stderr.puts "Usage: generate [-o nix/]"
+    $stderr.puts "Usage: generate [-o nix/gem/]"
     exit 0
   else abort "Unknown option: #{ARGV[i]}"
   end
@@ -58,6 +58,19 @@ end
 
 $stderr.puts "#{meta_by_key.size} gems in cache (#{overlays.size} overlays)"
 
+# -- Helper: indented heredoc content for nixfmt ---------------------------
+#
+# nixfmt wants shell lines at 4 spaces, heredoc body at 0 spaces, and
+# heredoc terminator at 0 spaces (relative to Nix ''..'' baseline).
+# Since nix strips the minimum indent, we emit:
+#   - shell lines at 8 spaces (becomes 4 in bash)
+#   - heredoc body at 4 spaces (becomes 0 in bash)
+#   - heredoc terminator at 4 spaces (becomes 0 in bash)
+#
+SH  = "        "  # 8 spaces — shell commands
+HD  = "    "      # 4 spaces — heredoc body / terminator
+CL  = "  "        # 2 spaces — '' closer
+
 # -- Per-gem derivations ---------------------------------------------------
 
 generated = 0
@@ -84,6 +97,10 @@ meta_by_key.each_value do |meta|
   FileUtils.ln_sf(source_dir, File.join(gem_dir, "source"))
 
   has_overlay = overlays.key?(name)
+  has_heredoc = true  # installPhase always has gemspec heredoc
+
+  # Pick indent: 4 spaces if no heredoc in block, 8 if heredoc present
+  si = has_heredoc ? SH : "    "
 
   nix = +""
   nix << "#\n"
@@ -96,7 +113,9 @@ meta_by_key.each_value do |meta|
 
   args = ["lib", "stdenv", "ruby"]
   args << "pkgs" if has_overlay
-  nix << "{ #{args.join(", ")} }:\n\n"
+  nix << "{\n"
+  args.each { |a| nix << "  #{a},\n" }
+  nix << "}:\n"
 
   nix << "let\n"
   nix << "  rubyVersion = \"${ruby.version.majMin}.0\";\n"
@@ -104,112 +123,122 @@ meta_by_key.each_value do |meta|
   nix << "  prefix = \"ruby/${rubyVersion}\";\n"
 
   if has_overlay
-    nix << "  overlay = import ../../../overlays/#{name}.nix { inherit pkgs ruby; };\n"
-    nix << "  overlayDeps = if builtins.isList overlay then overlay else overlay.deps or [];\n"
-    nix << "  overlayBuildPhase = if builtins.isAttrs overlay && overlay ? buildPhase then overlay.buildPhase else null;\n"
+    nix << "  overlay = import ../../../../overlays/#{name}.nix { inherit pkgs ruby; };\n"
+    nix << "  overlayDeps = if builtins.isList overlay then overlay else overlay.deps or [ ];\n"
+    nix << "  overlayBuildPhase =\n"
+    nix << "    if builtins.isAttrs overlay && overlay ? buildPhase then overlay.buildPhase else null;\n"
   end
 
-  nix << "in\n\n"
-
+  nix << "in\n"
   nix << "stdenv.mkDerivation {\n"
   nix << "  pname = \"#{name}\";\n"
   nix << "  version = \"#{version}\";\n"
-  nix << "  src = builtins.path { path = ./source; name = \"#{key}-source\"; };\n\n"
+  nix << "  src = builtins.path {\n"
+  nix << "    path = ./source;\n"
+  nix << "    name = \"#{key}-source\";\n"
+  nix << "  };\n\n"
 
   if has_ext
+    build_lines = [
+      "for extconf in $(find ext -name extconf.rb 2>/dev/null); do",
+      "  dir=$(dirname \"$extconf\")",
+      "  echo \"Building extension in $dir\"",
+      "  (cd \"$dir\" && ruby extconf.rb && make -j$NIX_BUILD_CORES)",
+      "done",
+      "for makefile in $(find ext -name Makefile 2>/dev/null); do",
+      "  dir=$(dirname \"$makefile\")",
+      "  target_name=$(sed -n 's/^TARGET = //p' \"$makefile\")",
+      "  target_prefix=$(sed -n 's/^target_prefix = //p' \"$makefile\")",
+      "  if [ -n \"$target_name\" ] && [ -f \"$dir/$target_name.so\" ]; then",
+      "    mkdir -p \"lib$target_prefix\"",
+      "    cp \"$dir/$target_name.so\" \"lib$target_prefix/$target_name.so\"",
+      "    echo \"Installed $dir/$target_name.so -> lib$target_prefix/$target_name.so\"",
+      "  fi",
+      "done",
+    ]
     if has_overlay
       nix << "  nativeBuildInputs = [ ruby ] ++ overlayDeps;\n\n"
-      nix << "  buildPhase = if overlayBuildPhase != null then overlayBuildPhase else ''\n"
+      nix << "  buildPhase =\n"
+      nix << "    if overlayBuildPhase != null then\n"
+      nix << "      overlayBuildPhase\n"
+      nix << "    else\n"
+      nix << "      ''\n"
+      build_lines.each { |l| nix << "        #{l}\n" }
+      nix << "      '';\n\n"
     else
       nix << "  nativeBuildInputs = [ ruby ];\n\n"
       nix << "  buildPhase = ''\n"
+      build_lines.each { |l| nix << "    #{l}\n" }
+      nix << "  '';\n\n"
     end
-    nix << "    for extconf in $(find ext -name extconf.rb 2>/dev/null); do\n"
-    nix << "      dir=$(dirname \"$extconf\")\n"
-    nix << "      echo \"Building extension in $dir\"\n"
-    nix << "      (cd \"$dir\" && ruby extconf.rb && make -j$NIX_BUILD_CORES)\n"
-    nix << "    done\n"
-    nix << "    for makefile in $(find ext -name Makefile 2>/dev/null); do\n"
-    nix << "      dir=$(dirname \"$makefile\")\n"
-    nix << "      target_name=$(sed -n 's/^TARGET = //p' \"$makefile\")\n"
-    nix << "      target_prefix=$(sed -n 's/^target_prefix = //p' \"$makefile\")\n"
-    nix << "      if [ -n \"$target_name\" ] && [ -f \"$dir/$target_name.so\" ]; then\n"
-    nix << "        mkdir -p \"lib$target_prefix\"\n"
-    nix << "        cp \"$dir/$target_name.so\" \"lib$target_prefix/$target_name.so\"\n"
-    nix << "        echo \"Installed $dir/$target_name.so -> lib$target_prefix/$target_name.so\"\n"
-    nix << "      fi\n"
-    nix << "    done\n"
-    nix << "  '';\n\n"
   else
     nix << "  dontBuild = true;\n"
   end
 
   nix << "  dontConfigure = true;\n\n"
-
   nix << "  passthru = { inherit prefix; };\n\n"
+
   nix << "  installPhase = ''\n"
-  nix << "    local dest=$out/${prefix}\n"
-  nix << "    mkdir -p $dest/gems/#{key}\n"
-  nix << "    cp -r . $dest/gems/#{key}/\n"
+  nix << "#{si}local dest=$out/${prefix}\n"
+  nix << "#{si}mkdir -p $dest/gems/#{key}\n"
+  nix << "#{si}cp -r . $dest/gems/#{key}/\n"
 
   if has_ext
-    nix << "    local extdir=$dest/extensions/${arch}/${rubyVersion}/#{key}\n"
-    nix << "    mkdir -p $extdir\n"
-    nix << "    find . -name '*.so' -path '*/lib/*' | while read so; do\n"
-    nix << "      cp \"$so\" \"$extdir/\"\n"
-    nix << "    done\n"
-    # Platform symlink: e.g. sqlite3-2.8.0-x86_64-linux-gnu -> sqlite3-2.8.0
-    nix << "    local gp=\"${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}\"\n"
-    nix << "    if [ \"${stdenv.hostPlatform.parsed.abi.name}\" != \"unknown\" ]; then\n"
-    nix << "      gp=\"$gp-${stdenv.hostPlatform.parsed.abi.name}\"\n"
-    nix << "    fi\n"
-    nix << "    ln -s #{key} $dest/gems/#{key}-$gp\n"
-    nix << "    ln -s #{key} $dest/extensions/${arch}/${rubyVersion}/#{key}-$gp\n"
+    nix << "#{si}local extdir=$dest/extensions/${arch}/${rubyVersion}/#{key}\n"
+    nix << "#{si}mkdir -p $extdir\n"
+    nix << "#{si}find . -name '*.so' -path '*/lib/*' | while read so; do\n"
+    nix << "#{si}  cp \"$so\" \"$extdir/\"\n"
+    nix << "#{si}done\n"
+    nix << "#{si}local gp=\"${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}\"\n"
+    nix << "#{si}if [ \"${stdenv.hostPlatform.parsed.abi.name}\" != \"unknown\" ]; then\n"
+    nix << "#{si}  gp=\"$gp-${stdenv.hostPlatform.parsed.abi.name}\"\n"
+    nix << "#{si}fi\n"
+    nix << "#{si}ln -s #{key} $dest/gems/#{key}-$gp\n"
+    nix << "#{si}ln -s #{key} $dest/extensions/${arch}/${rubyVersion}/#{key}-$gp\n"
   end
 
-  nix << "    mkdir -p $dest/specifications\n"
-  nix << "    cat > $dest/specifications/#{key}.gemspec <<'EOF'\n"
-  nix << "Gem::Specification.new do |s|\n"
-  nix << "  s.name = \"#{name}\"\n"
-  nix << "  s.version = \"#{version}\"\n"
-  nix << "  s.summary = \"#{name}\"\n"
-  nix << "  s.require_paths = [#{require_paths.map { |p| "\"#{p}\"" }.join(", ")}]\n"
+  nix << "#{si}mkdir -p $dest/specifications\n"
+  nix << "#{si}cat > $dest/specifications/#{key}.gemspec <<'EOF'\n"
+  nix << "#{HD}Gem::Specification.new do |s|\n"
+  nix << "#{HD}  s.name = \"#{name}\"\n"
+  nix << "#{HD}  s.version = \"#{version}\"\n"
+  nix << "#{HD}  s.summary = \"#{name}\"\n"
+  nix << "#{HD}  s.require_paths = [#{require_paths.map { |p| "\"#{p}\"" }.join(", ")}]\n"
   unless executables.empty?
-    nix << "  s.bindir = \"#{bindir}\"\n"
-    nix << "  s.executables = [#{executables.map { |e| "\"#{e}\"" }.join(", ")}]\n"
+    nix << "#{HD}  s.bindir = \"#{bindir}\"\n"
+    nix << "#{HD}  s.executables = [#{executables.map { |e| "\"#{e}\"" }.join(", ")}]\n"
   end
-  nix << "  s.files = []\n"
-  nix << "end\n"
-  nix << "EOF\n"
+  nix << "#{HD}  s.files = []\n"
+  nix << "#{HD}end\n"
+  nix << "#{HD}EOF\n"
 
   if has_ext
-    # Platform-qualified gemspec with s.platform set
     rp_str = require_paths.map { |p| "\"#{p}\"" }.join(", ")
-    nix << "    cat > $dest/specifications/#{key}-$gp.gemspec <<PLATSPEC\n"
-    nix << "Gem::Specification.new do |s|\n"
-    nix << "  s.name = \"#{name}\"\n"
-    nix << "  s.version = \"#{version}\"\n"
-    nix << "  s.platform = \"$gp\"\n"
-    nix << "  s.summary = \"#{name}\"\n"
-    nix << "  s.require_paths = [#{rp_str}]\n"
+    nix << "#{si}cat > $dest/specifications/#{key}-$gp.gemspec <<PLATSPEC\n"
+    nix << "#{HD}Gem::Specification.new do |s|\n"
+    nix << "#{HD}  s.name = \"#{name}\"\n"
+    nix << "#{HD}  s.version = \"#{version}\"\n"
+    nix << "#{HD}  s.platform = \"$gp\"\n"
+    nix << "#{HD}  s.summary = \"#{name}\"\n"
+    nix << "#{HD}  s.require_paths = [#{rp_str}]\n"
     unless executables.empty?
-      nix << "  s.bindir = \"#{bindir}\"\n"
-      nix << "  s.executables = [#{executables.map { |e| "\"#{e}\"" }.join(", ")}]\n"
+      nix << "#{HD}  s.bindir = \"#{bindir}\"\n"
+      nix << "#{HD}  s.executables = [#{executables.map { |e| "\"#{e}\"" }.join(", ")}]\n"
     end
-    nix << "  s.files = []\n"
-    nix << "end\n"
-    nix << "PLATSPEC\n"
+    nix << "#{HD}  s.files = []\n"
+    nix << "#{HD}end\n"
+    nix << "#{HD}PLATSPEC\n"
   end
 
   unless executables.empty?
-    nix << "    mkdir -p $dest/bin\n"
+    nix << "#{si}mkdir -p $dest/bin\n"
     executables.each do |exe|
-      nix << "    cat > $dest/bin/#{exe} <<'BINSTUB'\n"
-      nix << "#!/usr/bin/env ruby\n"
-      nix << "require \"rubygems\"\n"
-      nix << "load Gem.bin_path(\"#{name}\", \"#{exe}\", \"#{version}\")\n"
-      nix << "BINSTUB\n"
-      nix << "    chmod +x $dest/bin/#{exe}\n"
+      nix << "#{si}cat > $dest/bin/#{exe} <<'BINSTUB'\n"
+      nix << "#{HD}#!/usr/bin/env ruby\n"
+      nix << "#{HD}require \"rubygems\"\n"
+      nix << "#{HD}load Gem.bin_path(\"#{name}\", \"#{exe}\", \"#{version}\")\n"
+      nix << "#{HD}BINSTUB\n"
+      nix << "#{si}chmod +x $dest/bin/#{exe}\n"
     end
   end
 
@@ -221,3 +250,139 @@ meta_by_key.each_value do |meta|
 end
 
 $stderr.puts "#{generated} derivations"
+
+# -- Per-gem selector: nix/gem/<name>/default.nix -------------------------
+#
+# Groups all versions (and later git refs, added by generate-gemset) into a
+# selector that supports:
+#
+#   gems = import ./nix/modules/gem.nix { inherit pkgs ruby; };
+#   gems.rails { version = "7.1.5.2"; }
+#   gems.rails { git.rev = "60d92e4e7dfe"; }
+
+gems_by_name = {}
+meta_by_key.each_value do |meta|
+  name = meta[:name]
+  version = meta[:version]
+  source_dir = File.join(SOURCE_DIR, "#{name}-#{version}")
+  next unless Dir.exist?(source_dir)
+  (gems_by_name[name] ||= { versions: [], has_overlay: overlays.key?(name) })[:versions] << version
+end
+
+gems_by_name.each do |name, info|
+  versions = info[:versions].sort_by { |v| Gem::Version.new(v) }
+  has_overlay = info[:has_overlay]
+  latest = versions.last
+
+  sel = +""
+  sel << "#\n"
+  sel << "# ╔══════════════════════════════════════════════════════════════╗\n"
+  sel << "# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║\n"
+  sel << "# ╚══════════════════════════════════════════════════════════════╝\n"
+  sel << "#\n"
+  sel << "# #{name}\n"
+  sel << "#\n"
+  sel << "# Available versions:\n"
+  versions.each { |v| sel << "#   #{v}\n" }
+  sel << "#\n"
+  sel << "# Usage:\n"
+  sel << "#   #{name} { version = \"#{latest}\"; }\n"
+  sel << "#   #{name} { }  # latest (#{latest})\n"
+  sel << "#\n"
+  sel << "{\n"
+  sel << "  lib,\n"
+  sel << "  stdenv,\n"
+  sel << "  ruby,\n"
+  sel << "  pkgs ? null,\n"
+  sel << "  version ? \"#{latest}\",\n"
+  sel << "  git ? { },\n"
+  sel << "}:\n"
+  sel << "let\n"
+
+  sel << "  versions = {\n"
+  versions.each do |v|
+    if has_overlay
+      sel << "    \"#{v}\" = import ./#{v} {\n"
+      sel << "      inherit\n"
+      sel << "        lib\n"
+      sel << "        stdenv\n"
+      sel << "        ruby\n"
+      sel << "        pkgs\n"
+      sel << "        ;\n"
+      sel << "    };\n"
+    else
+      sel << "    \"#{v}\" = import ./#{v} { inherit lib stdenv ruby; };\n"
+    end
+  end
+  sel << "  };\n\n"
+
+  sel << "  gitRevs = {\n"
+  # Populated by generate-gemset
+  sel << "  };\n"
+
+  sel << "in\n"
+  sel << "if git ? rev then\n"
+  sel << "  gitRevs.\${git.rev}\n"
+  sel << "    or (throw \"#{name}: unknown git rev '\${git.rev}'. Available: \${builtins.concatStringsSep \", \" (builtins.attrNames gitRevs)}\")\n"
+  sel << "else\n"
+  sel << "  versions.\${version}\n"
+  sel << "    or (throw \"#{name}: unknown version '\${version}'. Available: \${builtins.concatStringsSep \", \" (builtins.attrNames versions)}\")\n"
+
+  File.write(File.join(output_dir, name, "default.nix"), sel)
+end
+
+$stderr.puts "#{gems_by_name.size} selectors"
+
+# -- Top-level nix/gem/default.nix ---------------------------------------
+#
+# Exposes every gem as a callable selector:
+#
+#   gems = import ./nix/modules/gem.nix { inherit pkgs ruby; };
+#   gems.rails { version = "7.1.5.2"; }
+#   gems.rails { git.rev = "60d92e4e7dfe"; }
+#   gems.sqlite3 { version = "2.8.0"; }
+#
+
+top = +""
+top << "#\n"
+top << "# ╔══════════════════════════════════════════════════════════════╗\n"
+top << "# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║\n"
+top << "# ╚══════════════════════════════════════════════════════════════╝\n"
+top << "#\n"
+top << "# #{gems_by_name.size} gems\n"
+top << "#\n"
+top << "# Usage:\n"
+top << "#   gems = import ./nix/modules/gem.nix { inherit pkgs ruby; };\n"
+top << "#   gems.rails { version = \"7.1.5.2\"; }\n"
+top << "#   gems.rails { git.rev = \"60d92e4e7dfe\"; }\n"
+top << "#   gems.rack {}  # latest\n"
+top << "#\n"
+top << "{ pkgs, ruby }:\n\n"
+top << "let\n"
+top << "  inherit (pkgs) lib stdenv;\n"
+top << "  gem =\n"
+top << "    name: args:\n"
+top << "    import (../gem + \"/\${name}\") (\n"
+top << "      {\n"
+top << "        inherit\n"
+top << "          lib\n"
+top << "          stdenv\n"
+top << "          ruby\n"
+top << "          pkgs\n"
+top << "          ;\n"
+top << "      }\n"
+top << "      // args\n"
+top << "    );\n"
+top << "in\n"
+top << "{\n"
+
+gems_by_name.keys.sort.each do |name|
+  top << "  #{name.inspect} = args: gem #{name.inspect} args;\n"
+end
+
+top << "}\n"
+
+modules_dir = File.join(output_dir, "..", "modules")
+FileUtils.mkdir_p(modules_dir)
+File.write(File.join(modules_dir, "gem.nix"), top)
+$stderr.puts "-> nix/modules/gem.nix"

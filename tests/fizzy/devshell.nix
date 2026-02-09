@@ -8,7 +8,7 @@
 }:
 
 let
-  gems = import ../../nix/fizzy.nix { inherit pkgs ruby; };
+  gems = import ../../nix/app/fizzy.nix { inherit pkgs ruby; };
   bundlePath = pkgs.buildEnv {
     name = "fizzy-bundle-path";
     paths = builtins.attrValues gems;

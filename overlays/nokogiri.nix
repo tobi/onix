@@ -1,6 +1,6 @@
 { pkgs, ruby }:
 let
-  mini_portile2 = pkgs.callPackage ../nix/mini_portile2/2.8.9 { inherit ruby; };
+  mini_portile2 = pkgs.callPackage ../nix/gem/mini_portile2/2.8.9 { inherit ruby; };
 in {
   deps = with pkgs; [ libxml2 libxslt pkg-config zlib ];
   buildPhase = ''

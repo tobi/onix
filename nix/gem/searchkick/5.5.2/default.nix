@@ -1,0 +1,46 @@
+#
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
+# searchkick 5.5.2
+#
+{
+  lib,
+  stdenv,
+  ruby,
+}:
+let
+  rubyVersion = "${ruby.version.majMin}.0";
+  arch = stdenv.hostPlatform.system;
+  prefix = "ruby/${rubyVersion}";
+in
+stdenv.mkDerivation {
+  pname = "searchkick";
+  version = "5.5.2";
+  src = builtins.path {
+    path = ./source;
+    name = "searchkick-5.5.2-source";
+  };
+
+  dontBuild = true;
+  dontConfigure = true;
+
+  passthru = { inherit prefix; };
+
+  installPhase = ''
+        local dest=$out/${prefix}
+        mkdir -p $dest/gems/searchkick-5.5.2
+        cp -r . $dest/gems/searchkick-5.5.2/
+        mkdir -p $dest/specifications
+        cat > $dest/specifications/searchkick-5.5.2.gemspec <<'EOF'
+    Gem::Specification.new do |s|
+      s.name = "searchkick"
+      s.version = "5.5.2"
+      s.summary = "searchkick"
+      s.require_paths = ["lib"]
+      s.files = []
+    end
+    EOF
+  '';
+}

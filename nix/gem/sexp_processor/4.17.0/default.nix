@@ -1,0 +1,46 @@
+#
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
+# sexp_processor 4.17.0
+#
+{
+  lib,
+  stdenv,
+  ruby,
+}:
+let
+  rubyVersion = "${ruby.version.majMin}.0";
+  arch = stdenv.hostPlatform.system;
+  prefix = "ruby/${rubyVersion}";
+in
+stdenv.mkDerivation {
+  pname = "sexp_processor";
+  version = "4.17.0";
+  src = builtins.path {
+    path = ./source;
+    name = "sexp_processor-4.17.0-source";
+  };
+
+  dontBuild = true;
+  dontConfigure = true;
+
+  passthru = { inherit prefix; };
+
+  installPhase = ''
+        local dest=$out/${prefix}
+        mkdir -p $dest/gems/sexp_processor-4.17.0
+        cp -r . $dest/gems/sexp_processor-4.17.0/
+        mkdir -p $dest/specifications
+        cat > $dest/specifications/sexp_processor-4.17.0.gemspec <<'EOF'
+    Gem::Specification.new do |s|
+      s.name = "sexp_processor"
+      s.version = "4.17.0"
+      s.summary = "sexp_processor"
+      s.require_paths = ["lib"]
+      s.files = []
+    end
+    EOF
+  '';
+}

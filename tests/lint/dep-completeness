@@ -8,7 +8,7 @@ require "bundler"
 
 project  = ARGV[0] || "fizzy"
 lockfile = ARGV[1]
-nix_dir  = "nix"
+nix_dir  = "nix/gem"
 
 unless lockfile
   # Try to find Gemfile.lock in common locations

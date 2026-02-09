@@ -4,7 +4,7 @@
 # Lint: verify no pre-built .so/.bundle files leaked into source/ directories.
 # These would be from gem cache and linked against the wrong Ruby.
 
-nix_dir = "nix"
+nix_dir = "nix/gem"
 nix_dir = File.expand_path(nix_dir)
 errors = []
 

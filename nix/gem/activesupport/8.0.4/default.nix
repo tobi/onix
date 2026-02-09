@@ -1,0 +1,46 @@
+#
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
+# activesupport 8.0.4
+#
+{
+  lib,
+  stdenv,
+  ruby,
+}:
+let
+  rubyVersion = "${ruby.version.majMin}.0";
+  arch = stdenv.hostPlatform.system;
+  prefix = "ruby/${rubyVersion}";
+in
+stdenv.mkDerivation {
+  pname = "activesupport";
+  version = "8.0.4";
+  src = builtins.path {
+    path = ./source;
+    name = "activesupport-8.0.4-source";
+  };
+
+  dontBuild = true;
+  dontConfigure = true;
+
+  passthru = { inherit prefix; };
+
+  installPhase = ''
+        local dest=$out/${prefix}
+        mkdir -p $dest/gems/activesupport-8.0.4
+        cp -r . $dest/gems/activesupport-8.0.4/
+        mkdir -p $dest/specifications
+        cat > $dest/specifications/activesupport-8.0.4.gemspec <<'EOF'
+    Gem::Specification.new do |s|
+      s.name = "activesupport"
+      s.version = "8.0.4"
+      s.summary = "activesupport"
+      s.require_paths = ["lib"]
+      s.files = []
+    end
+    EOF
+  '';
+}
