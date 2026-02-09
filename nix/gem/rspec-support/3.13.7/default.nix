@@ -13,7 +13,7 @@
 let
   rubyVersion = "${ruby.version.majMin}.0";
   arch = stdenv.hostPlatform.system;
-  prefix = "ruby/${rubyVersion}";
+  bundle_path = "ruby/${rubyVersion}";
 in
 stdenv.mkDerivation {
   pname = "rspec-support";
@@ -26,10 +26,10 @@ stdenv.mkDerivation {
   dontBuild = true;
   dontConfigure = true;
 
-  passthru = { inherit prefix; };
+  passthru = { inherit bundle_path; };
 
   installPhase = ''
-        local dest=$out/${prefix}
+        local dest=$out/${bundle_path}
         mkdir -p $dest/gems/rspec-support-3.13.7
         cp -r . $dest/gems/rspec-support-3.13.7/
         mkdir -p $dest/specifications

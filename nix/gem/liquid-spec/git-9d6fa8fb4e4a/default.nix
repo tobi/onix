@@ -14,7 +14,7 @@
 }:
 let
   rubyVersion = "${ruby.version.majMin}.0";
-  prefix = "ruby/${rubyVersion}";
+  bundle_path = "ruby/${rubyVersion}";
 in
 stdenv.mkDerivation {
   pname = "liquid-spec";
@@ -27,10 +27,10 @@ stdenv.mkDerivation {
   dontBuild = true;
   dontConfigure = true;
 
-  passthru = { inherit prefix; };
+  passthru = { inherit bundle_path; };
 
   installPhase = ''
-    local dest=$out/${prefix}/bundler/gems/liquid-spec-9d6fa8fb4e4a
+    local dest=$out/${bundle_path}/bundler/gems/liquid-spec-9d6fa8fb4e4a
     mkdir -p $dest
     cp -r . $dest/
   '';

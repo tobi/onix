@@ -13,7 +13,7 @@
 let
   rubyVersion = "${ruby.version.majMin}.0";
   arch = stdenv.hostPlatform.system;
-  prefix = "ruby/${rubyVersion}";
+  bundle_path = "ruby/${rubyVersion}";
 in
 stdenv.mkDerivation {
   pname = "license_finder";
@@ -26,10 +26,10 @@ stdenv.mkDerivation {
   dontBuild = true;
   dontConfigure = true;
 
-  passthru = { inherit prefix; };
+  passthru = { inherit bundle_path; };
 
   installPhase = ''
-        local dest=$out/${prefix}
+        local dest=$out/${bundle_path}
         mkdir -p $dest/gems/license_finder-7.2.1
         cp -r . $dest/gems/license_finder-7.2.1/
         mkdir -p $dest/specifications

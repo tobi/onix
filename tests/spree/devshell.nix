@@ -9,7 +9,7 @@
 
 let
   resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; gemset = import ../../nix/app/spree.nix; };
+  gems = resolve { inherit pkgs ruby; gemset = { gem.app.spree.enable = true; }; };
   bundlePath = pkgs.buildEnv {
     name = "spree-bundle-path";
     paths = builtins.attrValues gems;

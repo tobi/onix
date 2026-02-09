@@ -9,6 +9,6 @@ in
     pkg-config
   ];
   beforeBuild = ''
-    export GEM_PATH=${pkg-config-gem}/${pkg-config-gem.prefix}
+    export GEM_PATH=${pkg-config-gem}/${pkg-config-gem.bundle_path}
   '';
 }

@@ -9,7 +9,7 @@
 
 let
   resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; gemset = import ../../nix/app/forem.nix; };
+  gems = resolve { inherit pkgs ruby; gemset = { gem.app.forem.enable = true; }; };
   bundlePath = pkgs.buildEnv {
     name = "forem-bundle-path";
     paths = builtins.attrValues gems;

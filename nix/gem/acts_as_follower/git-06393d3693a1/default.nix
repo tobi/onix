@@ -14,7 +14,7 @@
 }:
 let
   rubyVersion = "${ruby.version.majMin}.0";
-  prefix = "ruby/${rubyVersion}";
+  bundle_path = "ruby/${rubyVersion}";
 in
 stdenv.mkDerivation {
   pname = "acts_as_follower";
@@ -27,10 +27,10 @@ stdenv.mkDerivation {
   dontBuild = true;
   dontConfigure = true;
 
-  passthru = { inherit prefix; };
+  passthru = { inherit bundle_path; };
 
   installPhase = ''
-    local dest=$out/${prefix}/bundler/gems/acts_as_follower-06393d3693a1
+    local dest=$out/${bundle_path}/bundler/gems/acts_as_follower-06393d3693a1
     mkdir -p $dest
     cp -r . $dest/
   '';

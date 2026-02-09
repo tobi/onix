@@ -13,7 +13,7 @@
 let
   rubyVersion = "${ruby.version.majMin}.0";
   arch = stdenv.hostPlatform.system;
-  prefix = "ruby/${rubyVersion}";
+  bundle_path = "ruby/${rubyVersion}";
 in
 stdenv.mkDerivation {
   pname = "ed25519";
@@ -46,10 +46,10 @@ stdenv.mkDerivation {
 
   dontConfigure = true;
 
-  passthru = { inherit prefix; };
+  passthru = { inherit bundle_path; };
 
   installPhase = ''
-        local dest=$out/${prefix}
+        local dest=$out/${bundle_path}
         mkdir -p $dest/gems/ed25519-1.2.4
         cp -r . $dest/gems/ed25519-1.2.4/
         local extdir=$dest/extensions/${arch}/${rubyVersion}/ed25519-1.2.4

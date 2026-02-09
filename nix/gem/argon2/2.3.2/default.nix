@@ -13,7 +13,7 @@
 let
   rubyVersion = "${ruby.version.majMin}.0";
   arch = stdenv.hostPlatform.system;
-  prefix = "ruby/${rubyVersion}";
+  bundle_path = "ruby/${rubyVersion}";
 in
 stdenv.mkDerivation {
   pname = "argon2";
@@ -46,10 +46,10 @@ stdenv.mkDerivation {
 
   dontConfigure = true;
 
-  passthru = { inherit prefix; };
+  passthru = { inherit bundle_path; };
 
   installPhase = ''
-        local dest=$out/${prefix}
+        local dest=$out/${bundle_path}
         mkdir -p $dest/gems/argon2-2.3.2
         cp -r . $dest/gems/argon2-2.3.2/
         local extdir=$dest/extensions/${arch}/${rubyVersion}/argon2-2.3.2

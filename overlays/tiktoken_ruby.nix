@@ -10,7 +10,7 @@ in
     libclang
   ];
   beforeBuild = ''
-    export GEM_PATH=${rb_sys}/${rb_sys.prefix}
+    export GEM_PATH=${rb_sys}/${rb_sys.bundle_path}
     export CARGO_HOME="$TMPDIR/cargo"
     mkdir -p "$CARGO_HOME"
     export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"

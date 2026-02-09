@@ -14,7 +14,7 @@
 let
   rubyVersion = "${ruby.version.majMin}.0";
   arch = stdenv.hostPlatform.system;
-  prefix = "ruby/${rubyVersion}";
+  bundle_path = "ruby/${rubyVersion}";
   overlay = import ../../../../overlays/gpgme.nix { inherit pkgs ruby; };
   overlayDeps = if builtins.isList overlay then overlay else overlay.deps or [ ];
   overlayBuildPhase =
@@ -65,10 +65,10 @@ stdenv.mkDerivation {
 
   dontConfigure = true;
 
-  passthru = { inherit prefix; };
+  passthru = { inherit bundle_path; };
 
   installPhase = ''
-        local dest=$out/${prefix}
+        local dest=$out/${bundle_path}
         mkdir -p $dest/gems/gpgme-2.0.25
         cp -r . $dest/gems/gpgme-2.0.25/
         local extdir=$dest/extensions/${arch}/${rubyVersion}/gpgme-2.0.25

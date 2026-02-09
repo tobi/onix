@@ -9,6 +9,6 @@ in
     pkg-config
   ];
   beforeBuild = ''
-    export GEM_PATH=${libyajl2}/${libyajl2.prefix}
+    export GEM_PATH=${libyajl2}/${libyajl2.bundle_path}
   '';
 }

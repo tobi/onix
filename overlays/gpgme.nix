@@ -13,7 +13,7 @@ in
   ];
   extconfFlags = "--use-system-libraries";
   beforeBuild = ''
-    export GEM_PATH=${mini_portile2}/${mini_portile2.prefix}
+    export GEM_PATH=${mini_portile2}/${mini_portile2.bundle_path}
     export RUBY_GPGME_USE_SYSTEM_LIBRARIES=1
   '';
 }

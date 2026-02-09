@@ -99,7 +99,7 @@ in {
   deps = with pkgs; [ libxml2 libxslt pkg-config zlib ];
   extconfFlags = "--use-system-libraries";
   beforeBuild = ''
-    export GEM_PATH=${mini_portile2}/${mini_portile2.prefix}
+    export GEM_PATH=${mini_portile2}/${mini_portile2.bundle_path}
   '';
 }
 ```
@@ -452,7 +452,7 @@ let
 in {
   deps = with pkgs; [ rustc cargo libclang ];
   beforeBuild = ''
-    export GEM_PATH=${rb_sys}/${rb_sys.prefix}
+    export GEM_PATH=${rb_sys}/${rb_sys.bundle_path}
     export CARGO_HOME="$TMPDIR/cargo"
     mkdir -p "$CARGO_HOME"
     export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"

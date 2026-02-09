@@ -14,7 +14,7 @@
 }:
 let
   rubyVersion = "${ruby.version.majMin}.0";
-  prefix = "ruby/${rubyVersion}";
+  bundle_path = "ruby/${rubyVersion}";
 in
 stdenv.mkDerivation {
   pname = "rails";
@@ -27,10 +27,10 @@ stdenv.mkDerivation {
   dontBuild = true;
   dontConfigure = true;
 
-  passthru = { inherit prefix; };
+  passthru = { inherit bundle_path; };
 
   installPhase = ''
-    local dest=$out/${prefix}/bundler/gems/rails-60d92e4e7dfe
+    local dest=$out/${bundle_path}/bundler/gems/rails-60d92e4e7dfe
     mkdir -p $dest
     cp -r . $dest/
   '';

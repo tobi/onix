@@ -9,7 +9,7 @@
 
 let
   resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; gemset = import ../../nix/app/mastodon.nix; };
+  gems = resolve { inherit pkgs ruby; gemset = { gem.app.mastodon.enable = true; }; };
   bundlePath = pkgs.buildEnv {
     name = "mastodon-bundle-path";
     paths = builtins.attrValues gems;

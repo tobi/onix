@@ -200,9 +200,31 @@ end
 
 nix << "]\n"
 
+# -- Rebuild apps.nix registry after writing the app file -------------------
+rebuild_apps_registry = -> {
+  apps_dir = APP_DIR
+  apps = +""
+  apps << "#\n"
+  apps << "# ╔═══════════════════════════════════════════════════════╗\n"
+  apps << "# ║  GENERATED — do not edit.  Run bin/import to refresh ║\n"
+  apps << "# ╚═══════════════════════════════════════════════════════╝\n"
+  apps << "#\n"
+  apps << "# App presets for gem.app.<name>.enable = true\n"
+  apps << "#\n"
+  apps << "{\n"
+  Dir.glob(File.join(apps_dir, "*.nix")).sort.each do |f|
+    name = File.basename(f, ".nix")
+    apps << "  #{name.inspect} = import ../app/#{name}.nix;\n"
+  end
+  apps << "}\n"
+  File.write(File.join(apps_dir, "..", "modules", "apps.nix"), apps)
+}
+
 FileUtils.mkdir_p(APP_DIR)
 File.write(File.join(APP_DIR, "#{project}.nix"), nix)
 $stderr.puts "  -> nix/app/#{project}.nix"
+rebuild_apps_registry.call
+$stderr.puts "  -> nix/modules/apps.nix"
 
 # -- Generate git repo derivations -----------------------------------------
 
@@ -254,7 +276,7 @@ git_repos.each do |repo_key, repo|
   gnix << "}:\n"
   gnix << "let\n"
   gnix << "  rubyVersion = \"${ruby.version.majMin}.0\";\n"
-  gnix << "  prefix = \"ruby/${rubyVersion}\";\n"
+  gnix << "  bundle_path = \"ruby/${rubyVersion}\";\n"
   gnix << "in\n"
   gnix << "stdenv.mkDerivation {\n"
   gnix << "  pname = #{repo[:base].inspect};\n"
@@ -265,10 +287,10 @@ git_repos.each do |repo_key, repo|
   gnix << "  };\n\n"
   gnix << "  dontBuild = true;\n"
   gnix << "  dontConfigure = true;\n\n"
-  gnix << "  passthru = { inherit prefix; };\n\n"
+  gnix << "  passthru = { inherit bundle_path; };\n\n"
 
   gnix << "  installPhase = ''\n"
-  gnix << "#{si}local dest=$out/${prefix}/bundler/gems/#{repo_key}\n"
+  gnix << "#{si}local dest=$out/${bundle_path}/bundler/gems/#{repo_key}\n"
   gnix << "#{si}mkdir -p $dest\n"
   gnix << "#{si}cp -r . $dest/\n"
 

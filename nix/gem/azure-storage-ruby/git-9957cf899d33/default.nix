@@ -14,7 +14,7 @@
 }:
 let
   rubyVersion = "${ruby.version.majMin}.0";
-  prefix = "ruby/${rubyVersion}";
+  bundle_path = "ruby/${rubyVersion}";
 in
 stdenv.mkDerivation {
   pname = "azure-storage-ruby";
@@ -27,10 +27,10 @@ stdenv.mkDerivation {
   dontBuild = true;
   dontConfigure = true;
 
-  passthru = { inherit prefix; };
+  passthru = { inherit bundle_path; };
 
   installPhase = ''
-        local dest=$out/${prefix}/bundler/gems/azure-storage-ruby-9957cf899d33
+        local dest=$out/${bundle_path}/bundler/gems/azure-storage-ruby-9957cf899d33
         mkdir -p $dest
         cp -r . $dest/
         cat > $dest/azure-storage-blob.gemspec <<'EOF'

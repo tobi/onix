@@ -14,7 +14,7 @@
 let
   rubyVersion = "${ruby.version.majMin}.0";
   arch = stdenv.hostPlatform.system;
-  prefix = "ruby/${rubyVersion}";
+  bundle_path = "ruby/${rubyVersion}";
   overlay = import ../../../../overlays/libv8.nix { inherit pkgs ruby; };
   overlayDeps = if builtins.isList overlay then overlay else overlay.deps or [ ];
   overlayBuildPhase =
@@ -65,10 +65,10 @@ stdenv.mkDerivation {
 
   dontConfigure = true;
 
-  passthru = { inherit prefix; };
+  passthru = { inherit bundle_path; };
 
   installPhase = ''
-        local dest=$out/${prefix}
+        local dest=$out/${bundle_path}
         mkdir -p $dest/gems/libv8-8.4.255.0.1
         cp -r . $dest/gems/libv8-8.4.255.0.1/
         local extdir=$dest/extensions/${arch}/${rubyVersion}/libv8-8.4.255.0.1

@@ -9,7 +9,7 @@
 
 let
   resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; gemset = import ../../nix/app/discourse.nix; };
+  gems = resolve { inherit pkgs ruby; gemset = { gem.app.discourse.enable = true; }; };
   bundlePath = pkgs.buildEnv {
     name = "discourse-bundle-path";
     paths = builtins.attrValues gems;

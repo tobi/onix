@@ -9,7 +9,7 @@
 
 let
   resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; gemset = import ../../nix/app/redmine.nix; };
+  gems = resolve { inherit pkgs ruby; gemset = { gem.app.redmine.enable = true; }; };
   bundlePath = pkgs.buildEnv {
     name = "redmine-bundle-path";
     paths = builtins.attrValues gems;

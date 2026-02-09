@@ -120,7 +120,7 @@ meta_by_key.each_value do |meta|
   nix << "let\n"
   nix << "  rubyVersion = \"${ruby.version.majMin}.0\";\n"
   nix << "  arch = stdenv.hostPlatform.system;\n"
-  nix << "  prefix = \"ruby/${rubyVersion}\";\n"
+  nix << "  bundle_path = \"ruby/${rubyVersion}\";\n"
 
   if has_overlay
     nix << "  overlay = import ../../../../overlays/#{name}.nix { inherit pkgs ruby; };\n"
@@ -189,10 +189,10 @@ meta_by_key.each_value do |meta|
   end
 
   nix << "  dontConfigure = true;\n\n"
-  nix << "  passthru = { inherit prefix; };\n\n"
+  nix << "  passthru = { inherit bundle_path; };\n\n"
 
   nix << "  installPhase = ''\n"
-  nix << "#{si}local dest=$out/${prefix}\n"
+  nix << "#{si}local dest=$out/${bundle_path}\n"
   nix << "#{si}mkdir -p $dest/gems/#{key}\n"
   nix << "#{si}cp -r . $dest/gems/#{key}/\n"
 

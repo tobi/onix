@@ -14,7 +14,7 @@
 let
   rubyVersion = "${ruby.version.majMin}.0";
   arch = stdenv.hostPlatform.system;
-  prefix = "ruby/${rubyVersion}";
+  bundle_path = "ruby/${rubyVersion}";
   overlay = import ../../../../overlays/ffi-yajl.nix { inherit pkgs ruby; };
   overlayDeps = if builtins.isList overlay then overlay else overlay.deps or [ ];
   overlayBuildPhase =
@@ -65,10 +65,10 @@ stdenv.mkDerivation {
 
   dontConfigure = true;
 
-  passthru = { inherit prefix; };
+  passthru = { inherit bundle_path; };
 
   installPhase = ''
-        local dest=$out/${prefix}
+        local dest=$out/${bundle_path}
         mkdir -p $dest/gems/ffi-yajl-2.7.7
         cp -r . $dest/gems/ffi-yajl-2.7.7/
         local extdir=$dest/extensions/${arch}/${rubyVersion}/ffi-yajl-2.7.7

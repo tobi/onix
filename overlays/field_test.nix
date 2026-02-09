@@ -6,6 +6,6 @@ in
 {
   deps = [ ];
   beforeBuild = ''
-    export GEM_PATH=${rice}/${rice.prefix}
+    export GEM_PATH=${rice}/${rice.bundle_path}
   '';
 }

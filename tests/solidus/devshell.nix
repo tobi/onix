@@ -9,7 +9,7 @@
 
 let
   resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; gemset = import ../../nix/app/solidus.nix; };
+  gems = resolve { inherit pkgs ruby; gemset = { gem.app.solidus.enable = true; }; };
   bundlePath = pkgs.buildEnv {
     name = "solidus-bundle-path";
     paths = builtins.attrValues gems;

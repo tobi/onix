@@ -9,7 +9,7 @@
 
 let
   resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; gemset = import ../../nix/app/chatwoot.nix; };
+  gems = resolve { inherit pkgs ruby; gemset = { gem.app.chatwoot.enable = true; }; };
   bundlePath = pkgs.buildEnv {
     name = "chatwoot-bundle-path";
     paths = builtins.attrValues gems;

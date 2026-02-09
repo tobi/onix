@@ -3,20 +3,89 @@
 A Nix package set for Ruby gems. 1,413 gems, 3,786 versions, all building from source with correct native dependencies — ready to compose into any Ruby project.
 
 ```nix
+{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
 let
-  pkgs = import <nixpkgs> {};
-  ruby = pkgs.ruby_3_4;
-  gem = name: args: import (./nix/gem + "/${name}") ({ inherit (pkgs) lib stdenv; inherit ruby pkgs; } // args);
+  resolve = import ./nix/modules/resolve.nix;
+  gems = resolve {
+    inherit pkgs ruby;
+    gemset = {
+      gem.app.fizzy.enable = true;     # all 161 gems at locked versions
+    };
+  };
 in
-{
-  rack    = gem "rack"    { version = "3.2.4"; };
-  pg      = gem "pg"      { version = "1.5.9"; };
-  nokogiri = gem "nokogiri" { version = "1.19.0"; };  # links system libxml2
-  puma    = gem "puma"    { version = "6.6.0"; };      # compiles C extension
-}
+  builtins.attrValues gems             # list of derivations
 ```
 
 Every gem is a standalone Nix derivation. Pure-ruby gems just copy files. Native gems compile from source in the Nix sandbox, linked against system libraries from nixpkgs — never vendored copies.
+
+## Quick start
+
+```bash
+# 1. Import your project's Gemfile.lock
+bin/import myapp ~/src/myapp/Gemfile.lock
+
+# 2. Fetch any new gems
+bin/fetch
+
+# 3. Generate derivations
+bin/generate
+
+# 4. Build
+just build myapp
+```
+
+## Gemset config
+
+Gemsets use a declarative, module-style config:
+
+### App presets
+
+```nix
+# Enable all gems for an imported app at their locked versions
+{
+  gem.app.fizzy.enable = true;
+}
+```
+
+### Direct gem selection
+
+```nix
+# Pick individual gems
+{
+  gem.rack = { enable = true; version = "3.2.4"; };
+  gem.pg = { enable = true; version = "1.5.9"; };
+  gem.nokogiri = { enable = true; version = "1.19.0"; };
+}
+```
+
+### Composing apps with overrides
+
+```nix
+# Start from an app preset, override one gem's version
+{
+  gem.app.fizzy.enable = true;
+  gem.rack = { enable = true; version = "3.2.3"; };  # override fizzy's rack
+}
+```
+
+### Git-sourced gems
+
+```nix
+{
+  gem.rails = { enable = true; git.rev = "60d92e4e7dfe"; };
+}
+```
+
+### Legacy format
+
+Plain lists still work for backward compatibility:
+
+```nix
+[
+  { name = "rack"; version = "3.2.4"; }
+  { name = "rails"; git.rev = "60d92e4e7dfe"; }
+]
+```
 
 ## The gem pool
 
@@ -47,6 +116,12 @@ $out/ruby/3.4.0/
 └── extensions/x86_64-linux/3.4.0/nokogiri-1.19.0/nokogiri.so
 ```
 
+The `bundle_path` passthru attribute (`"ruby/3.4.0"`) exposes the prefix for use in overlays that need `GEM_PATH`:
+
+```nix
+export GEM_PATH=${some_gem}/${some_gem.bundle_path}
+```
+
 Merge any set of gems with `buildEnv` and you get a complete `BUNDLE_PATH` that `require "bundler/setup"` accepts without modification.
 
 ## Native gem overlays
@@ -71,7 +146,7 @@ in {
   deps = with pkgs; [ libxml2 libxslt pkg-config zlib ];
   extconfFlags = "--use-system-libraries";
   beforeBuild = ''
-    export GEM_PATH=${mini_portile2}/${mini_portile2.prefix}
+    export GEM_PATH=${mini_portile2}/${mini_portile2.bundle_path}
   '';
 }
 ```
@@ -81,14 +156,13 @@ in {
 { pkgs, ruby }:
 let
   rb_sys = pkgs.callPackage ../nix/gem/rb_sys/0.9.113 { inherit ruby; };
-  cargoDeps = pkgs.fetchCargoVendor { ... };
 in {
-  deps = with pkgs; [ rustPlatform.rust.cargo rustPlatform.rust.rustc pkg-config llvmPackages.libclang ];
+  deps = with pkgs; [ rustc cargo libclang ];
   beforeBuild = ''
-    export GEM_PATH=${rb_sys}/${rb_sys.prefix}
-    export LIBCLANG_PATH="${pkgs.llvmPackages.libclang.lib}/lib"
-    mkdir -p .cargo
-    sed "s|@vendor@|${cargoDeps}|" ${cargoDeps}/.cargo/config.toml > .cargo/config.toml
+    export GEM_PATH=${rb_sys}/${rb_sys.bundle_path}
+    export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"
+    export CARGO_HOME="$TMPDIR/cargo"
+    mkdir -p "$CARGO_HOME"
   '';
 }
 ```
@@ -101,7 +175,7 @@ in {
 | `extconfFlags` | `string` | Passed to `ruby extconf.rb $extconfFlags` |
 | `beforeBuild` | `string` | Runs before `extconf.rb && make` |
 | `afterBuild` | `string` | Runs after `make` |
-| `postInstall` | `string` | Runs after install (`$dest` = output prefix) |
+| `postInstall` | `string` | Runs after install (`$dest` = output bundle_path) |
 | `buildPhase` | `string` | **Replaces** the default build entirely |
 
 A list return is shorthand for deps-only: `{ pkgs, ruby }: [ pkgs.openssl ]`.
@@ -120,7 +194,8 @@ A list return is shorthand for deps-only: `{ pkgs, ruby }: [ pkgs.openssl ]`.
 # Import generates a gemset config from your lockfile
 bin/import myapp ~/src/myapp/Gemfile.lock
 
-# Result: nix/app/myapp.nix — a plain list of { name; version; }
+# Result: nix/app/myapp.nix — a list of { name; version; }
+# Also updates: nix/modules/apps.nix — the app registry
 ```
 
 ### Devshell
@@ -129,7 +204,10 @@ bin/import myapp ~/src/myapp/Gemfile.lock
 { pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
 let
   resolve = import ./nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; gemset = import ./nix/app/myapp.nix; };
+  gems = resolve {
+    inherit pkgs ruby;
+    gemset = { gem.app.myapp.enable = true; };
+  };
   bundlePath = pkgs.buildEnv {
     name = "myapp-bundle-path";
     paths = builtins.attrValues gems;
@@ -143,6 +221,17 @@ in pkgs.mkShell {
 }
 ```
 
+### Composing in a devshell
+
+```nix
+# Use an app preset but add extra gems or override versions
+gemset = {
+  gem.app.myapp.enable = true;
+  gem.debug = { enable = true; version = "1.11.1"; };   # add debug gem
+  gem.puma = { enable = true; version = "7.1.0"; };     # override puma version
+};
+```
+
 ### Ruby version matrix
 
 ```bash
@@ -154,22 +243,31 @@ just matrix myapp ruby_4_0    # single version
 nix-build nix/matrix.nix -A ruby_3_4.myapp
 ```
 
+## Tested apps
+
+10 Ruby projects build and pass tests through Nix devshells:
+
+| Project | Gems | Test |
+|---------|------|------|
+| fizzy | 161 | 1,026 minitest (3 app-level failures) |
+| liquid | 44 | 5,106 tests across 6 modes |
+| chatwoot | 364 | Rails boot smoke |
+| discourse | 296 | Rails runner smoke |
+| forem | 381 | Rails boot smoke |
+| mastodon | 350 | Rails boot smoke |
+| rails | 217 | `require "rails"` |
+| redmine | 154 | Rails boot smoke |
+| solidus | 200 | Rails boot smoke |
+| spree | 222 | `require "spree/core"` |
+
 ## Growing the pool
 
 ### Add gems from a project
 
 ```bash
-bin/import myapp ~/src/myapp/Gemfile.lock   # writes imports/myapp.gemset
+bin/import myapp ~/src/myapp/Gemfile.lock   # writes imports/myapp.gemset + nix/app/myapp.nix
 bin/fetch                                    # fetches new gems into cache/
 bin/generate                                 # regenerates nix/gem/ tree
-bin/generate-gemset myapp ~/src/myapp/Gemfile.lock  # writes nix/app/myapp.nix
-```
-
-### Add popular gems in bulk
-
-```bash
-bin/fetch-top-gems          # top 1000 rubygems, 3 versions each
-bin/generate                # regenerates everything
 ```
 
 ### Add an overlay for a new native gem
@@ -219,5 +317,6 @@ loadable:                      7 key gems load successfully
 - **`builtins.fetchGit` for git gems** — nix fetches at eval time, pinned to exact commit
 - **Platform-native mimicry** — source-compiled gems look like prebuilt platform gems to bundler
 - **Parameterized Ruby** — `ruby` flows through every derivation; one argument changes everything
+- **Module-style config** — `gem.app.<name>.enable = true` with per-gem overrides, composable
 - **Zero dependencies** — the tool itself needs only Ruby (bundler ships with it since 2.6)
 - **Generated, not templated** — the entire `nix/` tree is regenerated from cache; overlays are the only manual layer

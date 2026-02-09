@@ -9,7 +9,7 @@
 
 let
   resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; gemset = import ../../nix/app/liquid.nix; };
+  gems = resolve { inherit pkgs ruby; gemset = { gem.app.liquid.enable = true; }; };
   bundlePath = pkgs.buildEnv {
     name = "liquid-bundle-path";
     paths = builtins.attrValues gems;
