@@ -3,16 +3,18 @@
 Nix-packaged Ruby gems. Takes a `Gemfile.lock`, builds every gem once, caches forever.
 
 ```
-$ gemset2nix import ~/src/myapp
-$ gemset2nix fetch
-$ gemset2nix generate
-$ gemset2nix build myapp
+$ gemset2nix import ~/src/rails     # read Gemfile.lock, generate nix gem list
+$ gemset2nix import ~/src/shopify  # import as many projects as you want
+$ gemset2nix fetch                 # download .gem files, unpack sources
+$ gemset2nix generate              # emit one nix derivation per gem
+$ gemset2nix build                 # build everything, cache forever
 ```
 
 ## Install
 
 ```bash
-gem install gemset2nix
+gem install specific_install
+gem specific_install https://github.com/tobi/gemset2nix
 ```
 
 Requires Ruby ≥ 3.1 and Nix.
