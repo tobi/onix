@@ -1,6 +1,8 @@
+require_relative "lib/onix/version"
+
 Gem::Specification.new do |s|
   s.name        = "onix"
-  s.version     = "0.5.0"
+  s.version     = Onix::VERSION
   s.summary     = "Convert Ruby Gemfile.lock to hermetic Nix derivations"
   s.description = "Generates per-gem Nix derivations from a Gemfile.lock, " \
                   "with auto-detection of native dependencies, overlay support, " \
