@@ -3,3 +3,5 @@ cache/
 nix/gem/*/*/source
 result
 source
+pkg/
+*.gem
