@@ -197,7 +197,7 @@ module Onix
             )
             unless status.success?
               UI.warn "Failed to fetch #{repo[:uri]}"
-              repo[:gems].each { |g| subdirs[g[:name]] = g[:name] }
+              repo[:gems].each { |g| subdirs[g[:name]] = "." }
               return subdirs
             end
           end
@@ -208,7 +208,7 @@ module Onix
           )
           unless status.success?
             UI.warn "Failed to checkout #{repo[:rev]} in #{repo[:uri]}"
-            repo[:gems].each { |g| subdirs[g[:name]] = g[:name] }
+            repo[:gems].each { |g| subdirs[g[:name]] = "." }
             return subdirs
           end
 
@@ -231,7 +231,7 @@ module Onix
 
           # Map each gem to its subdirectory
           repo[:gems].each do |g|
-            subdirs[g[:name]] = gemspec_map[g[:name]] || g[:name]
+            subdirs[g[:name]] = gemspec_map[g[:name]] || "."
           end
         end
 

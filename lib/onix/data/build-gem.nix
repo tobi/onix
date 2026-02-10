@@ -70,7 +70,7 @@ let
       '' + lib.optionalString (!isPlatformGem) ''
         find $out -name '*.so' -o -name '*.bundle' -o -name '*.dylib' | xargs rm -f 2>/dev/null || true
       '')
-    else if subdir != "." then
+    else if subdir != "." && builtins.pathExists (src + "/${subdir}/lib") then
       # Git monorepo: extract just the gem's subdirectory
       src + "/${subdir}"
     else

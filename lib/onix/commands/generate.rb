@@ -4,6 +4,9 @@ require "open3"
 require "json"
 require "fileutils"
 require "thread"
+require "uri"
+require "cgi"
+require "scint/credentials"
 require_relative "../packageset"
 
 module Onix
@@ -55,6 +58,14 @@ module Onix
             key = "#{e.name}/#{e.version}"
             all_entries[key] ||= e
           end
+        end
+
+        # ── Load credentials for private gem sources ────────────────
+        @credentials = Scint::Credentials.new
+        # Register all unique remotes so credentials can be looked up
+        all_entries.values.each do |e|
+          next unless e.source == "rubygems" && e.remote
+          @credentials.register_uri(e.remote)
         end
 
         rubygem_entries = all_entries.values.select { |e| e.source == "rubygems" }
@@ -198,6 +209,7 @@ module Onix
           Thread.new do
             while (e = queue.pop)
               url = "#{e.remote}/gems/#{e.name}-#{e.version}.gem"
+              url = inject_credentials(url)
               sha256 = nix_prefetch_url(url)
               key = "#{e.name}/#{e.version}"
 
@@ -217,6 +229,21 @@ module Onix
         errors
       end
 
+      # Embed HTTP Basic credentials into a URL for nix-prefetch-url.
+      # The nix store indexes by content hash, so the URL with creds is only
+      # used during prefetch — the generated nix files use the clean URL.
+      def inject_credentials(url)
+        creds = @credentials&.for_uri(url)
+        return url unless creds
+
+        parsed = URI.parse(url)
+        parsed.user = CGI.escape(creds[0])
+        parsed.password = CGI.escape(creds[1])
+        parsed.to_s
+      rescue URI::InvalidURIError
+        url
+      end
+
       def nix_prefetch_url(url)
         out, status = Open3.capture2("nix-prefetch-url", "--type", "sha256", url,
                                      err: File::NULL)
@@ -226,8 +253,20 @@ module Onix
       def nix_prefetch_git(url, rev)
         out, status = Open3.capture2("nix-prefetch-git", "--url", url, "--rev", rev,
                                      "--quiet", err: File::NULL)
-        return nil unless status.success?
-        JSON.parse(out)["sha256"]
+        return JSON.parse(out)["sha256"] if status.success?
+        nil
+      rescue Errno::ENOENT
+        # nix-prefetch-git not on PATH — fall back to builtins.fetchGit
+        nix_eval_fetchgit(url, rev)
+      rescue
+        nil
+      end
+
+      def nix_eval_fetchgit(url, rev)
+        expr = "(builtins.fetchGit { url = \"#{url}\"; rev = \"#{rev}\"; }).narHash"
+        out, status = Open3.capture2("nix", "eval", "--impure", "--raw", "--expr", expr,
+                                     err: File::NULL)
+        status.success? ? out.strip : nil
       rescue
         nil
       end
@@ -280,7 +319,18 @@ module Onix
         nix << "{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:\n"
         nix << "let\n"
         nix << "  buildGem = import ./build-gem.nix { inherit pkgs ruby; };\n"
-        nix << "  gemConfig = import ./gem-config.nix { inherit pkgs ruby; overlayDir = ../overlays; };\n"
+        nix << "  buildGemByName = name:\n"
+        nix << "    let\n"
+        nix << "      versions = import (./ruby + \"/\${name}.nix\");\n"
+        nix << "      version = builtins.head (builtins.attrNames versions);\n"
+        nix << "      spec = versions.\${version};\n"
+        nix << "    in buildGem (spec // { gemName = name; });\n"
+        nix << "  gemConfig = import ./gem-config.nix {\n"
+        nix << "    inherit pkgs ruby;\n"
+        nix << "    overlayDir = ../overlays;\n"
+        nix << "    rubyDir = ./ruby;\n"
+        nix << "    buildGemFn = buildGemByName;\n"
+        nix << "  };\n"
         nix << "\n"
         nix << "  build = name: version:\n"
         nix << "    let\n"
@@ -295,7 +345,8 @@ module Onix
         nix << "      afterBuild = config.afterBuild or \"\";\n"
         nix << "    } // (if config ? buildPhase then { inherit (config) buildPhase; } else {})\n"
         nix << "      // (if config ? postInstall then { inherit (config) postInstall; } else {})\n"
-        nix << "      // (if config ? skip then { inherit (config) skip; } else {}));\n"
+        nix << "      // (if config ? skip then { inherit (config) skip; } else {})\n"
+        nix << "      // (if config ? buildGems then { inherit (config) buildGems; } else {}));\n"
         nix << "\n"
         nix << "  gems = {\n"
         buildable.sort_by(&:name).each do |e|
