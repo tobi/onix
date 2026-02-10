@@ -146,8 +146,8 @@ def scan_extconf(source_dir)
     end
 
     # Category 2: system libraries flag
-    if content.include?('enable_config("system-libraries")') ||
-       content.include?("enable_config('system-libraries')")
+    if content.include?('enable_config("system-libraries"') ||
+       content.include?("enable_config('system-libraries'")
       result[:extconf_flags] = "--enable-system-libraries"
     end
 
@@ -227,6 +227,14 @@ meta_by_key.each_value do |meta|
   next unless Dir.exist?(source_dir)
 
   has_ext       = meta[:has_extensions] || !Dir.glob(File.join(source_dir, "ext", "**", "extconf.rb")).empty?
+  # Detect prebuilt platform gems (ship .bundle/.so files or native binaries but has_extensions=false)
+  has_prebuilt  = !has_ext && (
+    !Dir.glob(File.join(source_dir, "**", "*.{so,bundle}")).empty? ||
+    Dir.glob(File.join(source_dir, "{libexec,exe,bin}", "**", "*")).any? { |path|
+      File.file?(path) && File.executable?(path) && !path.end_with?(".rb", ".sh", ".bat") &&
+        (`file -b "#{path}"` rescue "").match?(/Mach-O|ELF/)
+    }
+  )
   require_paths = meta[:require_paths] || ["lib"]
   executables   = meta[:executables] || []
   bindir        = meta[:bindir] || "exe"
@@ -247,7 +255,7 @@ meta_by_key.each_value do |meta|
   # Auto-detect deps from extconf.rb (only used when no manual overlay exists)
   auto = has_ext && !has_overlay ? scan_extconf(source_dir) : nil
   auto_has_deps = auto && (!auto[:deps].empty? || !auto[:build_gem_deps].empty? || auto[:is_rust])
-  # Need pkgs when overlay exists OR when auto-detection found system deps
+  # Need pkgs when overlay exists OR when auto-detection found system deps OR Rust build
   needs_pkgs = has_overlay || (auto && (auto[:is_rust] || !auto[:deps].empty?))
 
   # Pick indent: 4 spaces if no heredoc in block, 8 if heredoc present
@@ -359,11 +367,13 @@ meta_by_key.each_value do |meta|
       "  dir=$(dirname \"$makefile\")",
       "  target_name=$(sed -n 's/^TARGET = //p' \"$makefile\")",
       "  target_prefix=$(sed -n 's/^target_prefix = //p' \"$makefile\")",
-      "  if [ -n \"$target_name\" ] && [ -f \"$dir/$target_name.so\" ]; then",
-      "    mkdir -p \"lib$target_prefix\"",
-      "    cp \"$dir/$target_name.so\" \"lib$target_prefix/$target_name.so\"",
-      "    echo \"Installed $dir/$target_name.so -> lib$target_prefix/$target_name.so\"",
-      "  fi",
+      "  for ext in so bundle; do",
+      "    if [ -n \"$target_name\" ] && [ -f \"$dir/$target_name.$ext\" ]; then",
+      "      mkdir -p \"lib$target_prefix\"",
+      "      cp \"$dir/$target_name.$ext\" \"lib$target_prefix/$target_name.$ext\"",
+      "      echo \"Installed $dir/$target_name.$ext -> lib$target_prefix/$target_name.$ext\"",
+      "    fi",
+      "  done",
       "done",
     ]
     # Determine if we have a gemPath to export (from overlay buildGems or auto-detection)
@@ -385,7 +395,7 @@ meta_by_key.each_value do |meta|
       nix << "      '';\n\n"
     elsif auto&.dig(:is_rust)
       # Rust extension via rb_sys — full Rust build environment
-      rust_deps = %w[pkgs.rustPlatform.rust.cargo pkgs.rustPlatform.rust.rustc pkgs.llvmPackages.libclang]
+      rust_deps = %w[pkgs.cargo pkgs.rustc pkgs.llvmPackages.libclang]
       auto[:deps].each { |d| rust_deps << "pkgs.#{d}" }
       nix << "  nativeBuildInputs = [ ruby #{rust_deps.join(" ")} ];\n\n"
       nix << "  buildPhase = ''\n"
@@ -393,7 +403,9 @@ meta_by_key.each_value do |meta|
       nix << "    export CARGO_HOME=\"$TMPDIR/cargo\"\n"
       nix << "    mkdir -p \"$CARGO_HOME\"\n"
       nix << "    export LIBCLANG_PATH=\"${pkgs.llvmPackages.libclang.lib}/lib\"\n"
-      nix << "    export BINDGEN_EXTRA_CLANG_ARGS=\"-isystem ${pkgs.stdenv.cc.cc}/lib/gcc/${pkgs.stdenv.hostPlatform.config}/${pkgs.stdenv.cc.cc.version}/include\"\n"
+      nix << "    # Find clang resource dir for stdarg.h etc. (works on both macOS and Linux)\n"
+      nix << "    clang_version=$(ls \"${pkgs.llvmPackages.libclang.lib}/lib/clang/\" | head -1)\n"
+      nix << "    export BINDGEN_EXTRA_CLANG_ARGS=\"-isystem ${pkgs.llvmPackages.libclang.lib}/lib/clang/$clang_version/include\"\n"
       nix << "    export CC=\"${pkgs.stdenv.cc}/bin/cc\"\n"
       nix << "    export CXX=\"${pkgs.stdenv.cc}/bin/c++\"\n"
       nix << "    extconfFlags=\"#{auto[:extconf_flags] || ""}\"\n"
@@ -429,18 +441,26 @@ meta_by_key.each_value do |meta|
   nix << "#{si}mkdir -p $dest/gems/#{key}\n"
   nix << "#{si}cp -r . $dest/gems/#{key}/\n"
 
-  if has_ext
+  if has_ext || has_prebuilt
     nix << "#{si}local extdir=$dest/extensions/${arch}/${rubyVersion}/#{key}\n"
     nix << "#{si}mkdir -p $extdir\n"
-    nix << "#{si}find . -name '*.so' -path '*/lib/*' | while read so; do\n"
+    nix << "#{si}find . \\( -name '*.so' -o -name '*.bundle' \\) -path '*/lib/*' | while read so; do\n"
     nix << "#{si}  cp \"$so\" \"$extdir/\"\n"
     nix << "#{si}done\n"
-    nix << "#{si}local gp=\"${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}\"\n"
+    # Map nix cpu names to Ruby/Bundler platform names (e.g. aarch64 → arm64)
+    nix << "#{si}local cpu=\"${stdenv.hostPlatform.parsed.cpu.name}\"\n"
+    nix << "#{si}if [ \"$cpu\" = \"aarch64\" ]; then cpu=\"arm64\"; fi\n"
+    nix << "#{si}local gp=\"$cpu-${stdenv.hostPlatform.parsed.kernel.name}\"\n"
     nix << "#{si}if [ \"${stdenv.hostPlatform.parsed.abi.name}\" != \"unknown\" ]; then\n"
     nix << "#{si}  gp=\"$gp-${stdenv.hostPlatform.parsed.abi.name}\"\n"
     nix << "#{si}fi\n"
     nix << "#{si}ln -s #{key} $dest/gems/#{key}-$gp\n"
     nix << "#{si}ln -s #{key} $dest/extensions/${arch}/${rubyVersion}/#{key}-$gp\n"
+    # Also create universal-darwin alias on macOS (some gems use that platform)
+    nix << "#{si}if [ \"${stdenv.hostPlatform.parsed.kernel.name}\" = \"darwin\" ]; then\n"
+    nix << "#{si}  ln -sf #{key} $dest/gems/#{key}-universal-darwin\n"
+    nix << "#{si}  ln -sf #{key} $dest/extensions/${arch}/${rubyVersion}/#{key}-universal-darwin\n"
+    nix << "#{si}fi\n"
   end
 
   nix << "#{si}mkdir -p $dest/specifications\n"
@@ -458,7 +478,7 @@ meta_by_key.each_value do |meta|
   nix << "#{HD}end\n"
   nix << "#{HD}EOF\n"
 
-  if has_ext
+  if has_ext || has_prebuilt
     rp_str = require_paths.map { |p| "\"#{p}\"" }.join(", ")
     nix << "#{si}cat > $dest/specifications/#{key}-$gp.gemspec <<PLATSPEC\n"
     nix << "#{HD}Gem::Specification.new do |s|\n"
@@ -474,6 +494,23 @@ meta_by_key.each_value do |meta|
     nix << "#{HD}  s.files = []\n"
     nix << "#{HD}end\n"
     nix << "#{HD}PLATSPEC\n"
+    # Also create universal-darwin gemspec on macOS
+    nix << "#{si}if [ \"${stdenv.hostPlatform.parsed.kernel.name}\" = \"darwin\" ]; then\n"
+    nix << "#{si}  cat > $dest/specifications/#{key}-universal-darwin.gemspec <<'UNISPEC'\n"
+    nix << "#{HD}Gem::Specification.new do |s|\n"
+    nix << "#{HD}  s.name = \"#{name}\"\n"
+    nix << "#{HD}  s.version = \"#{version}\"\n"
+    nix << "#{HD}  s.platform = \"universal-darwin\"\n"
+    nix << "#{HD}  s.summary = \"#{name}\"\n"
+    nix << "#{HD}  s.require_paths = [#{rp_str}]\n"
+    unless executables.empty?
+      nix << "#{HD}  s.bindir = \"#{bindir}\"\n"
+      nix << "#{HD}  s.executables = [#{executables.map { |e| "\"#{e}\"" }.join(", ")}]\n"
+    end
+    nix << "#{HD}  s.files = []\n"
+    nix << "#{HD}end\n"
+    nix << "#{HD}UNISPEC\n"
+    nix << "#{si}fi\n"
   end
 
   unless executables.empty?
