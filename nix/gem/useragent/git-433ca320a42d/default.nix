@@ -1,6 +1,6 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run gemset2nix import to regen  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # Git: useragent @ 433ca320a42d
