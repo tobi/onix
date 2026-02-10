@@ -118,10 +118,6 @@ let
   bundlePath = pkgs.buildEnv {
     name = "onix-bundle";
     paths = builtins.attrValues gems;
-    # Multiple gem derivations may provide overlapping platform-qualified
-    # gemspecs (e.g. specifications/rack-3.2.4-arm64-darwin.gemspec).
-    # These are identical content — safe to pick either one.
-    ignoreCollisions = true;
   };
 in
 gems // {
