@@ -13,7 +13,7 @@
 # mini_racer then does: require 'libv8-node'; Libv8::Node.configure_makefile
 # which reads these paths and sets $INCFLAGS / $LDFLAGS for its own build.
 #
-{ pkgs, ruby }:
+{ pkgs, ruby, ... }:
 let
   libv8 = pkgs.nodejs_24.libv8;
 in

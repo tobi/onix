@@ -1,2 +1,2 @@
 # rpam2 — needs PAM library
-{ pkgs, ruby }: with pkgs; [ pam ]
+{ pkgs, ruby, ... }: with pkgs; [ pam ]

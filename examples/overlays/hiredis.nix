@@ -1,6 +1,6 @@
 # hiredis (ruby gem) — vendor/hiredis code is broken on modern GCC or missing.
 # Replace with system hiredis library.
-{ pkgs, ruby }:
+{ pkgs, ruby, ... }:
 let
   hiredis-c = pkgs.hiredis;
 in

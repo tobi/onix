@@ -1,4 +1,4 @@
-{ pkgs, ruby }:
+{ pkgs, ruby, ... }:
 with pkgs;
 [
   libyaml

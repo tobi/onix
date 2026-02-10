@@ -1,5 +1,5 @@
 # rugged — needs cmake to build vendored libgit2
-{ pkgs, ruby }:
+{ pkgs, ruby, ... }:
 with pkgs;
 [
   cmake

@@ -1,5 +1,5 @@
 # zlib (ruby gem) — needs system zlib
-{ pkgs, ruby }:
+{ pkgs, ruby, ... }:
 with pkgs;
 [
   zlib

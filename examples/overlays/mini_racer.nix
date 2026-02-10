@@ -2,7 +2,7 @@
 # which was compiled without -fPIC, causing relocation errors on NixOS.
 # This requires rebuilding V8 from source or using a platform-specific gem.
 # Skip the build for now.
-{ pkgs, ruby }:
+{ pkgs, ruby, ... }:
 {
   deps = [ ];
   buildPhase = ''

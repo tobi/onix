@@ -1,7 +1,7 @@
 # therubyracer — Depends on libv8 (old, unbuildable versions).
 # This gem is abandoned; use mini_racer instead.
 # Skip the build entirely.
-{ pkgs, ruby }:
+{ pkgs, ruby, ... }:
 {
   deps = [ ];
   buildPhase = ''

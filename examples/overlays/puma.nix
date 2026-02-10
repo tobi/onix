@@ -1,1 +1,1 @@
-{ pkgs, ruby }: [ pkgs.openssl ]
+{ pkgs, ruby, ... }: [ pkgs.openssl ]

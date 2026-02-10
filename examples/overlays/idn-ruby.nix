@@ -1,5 +1,5 @@
 # idn-ruby — needs libidn
-{ pkgs, ruby }:
+{ pkgs, ruby, ... }:
 with pkgs;
 [
   libidn

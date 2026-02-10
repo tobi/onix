@@ -1,1 +1,1 @@
-{ pkgs, ruby }: [ pkgs.perl ]
+{ pkgs, ruby, ... }: [ pkgs.perl ]

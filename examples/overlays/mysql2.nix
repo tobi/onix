@@ -1,5 +1,5 @@
 # mysql2 — needs mysql/mariadb client library + openssl
-{ pkgs, ruby }:
+{ pkgs, ruby, ... }:
 with pkgs;
 [
   libmysqlclient

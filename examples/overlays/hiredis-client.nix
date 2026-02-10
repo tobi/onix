@@ -1,5 +1,5 @@
 # hiredis-client — needs openssl for SSL support
-{ pkgs, ruby }:
+{ pkgs, ruby, ... }:
 with pkgs;
 [
   openssl

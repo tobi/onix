@@ -1,6 +1,6 @@
 # h3 — Uber's H3 geospatial indexing library
 # The gem bundles H3 source and builds via cmake in ext/h3/src/
-{ pkgs, ruby }: {
+{ pkgs, ruby, ... }: {
   deps = with pkgs; [ cmake ];
   buildPhase = ''
     # Fix deprecated .clang-tidy key that causes build errors with newer clang

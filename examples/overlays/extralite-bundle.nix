@@ -9,7 +9,7 @@
 #   pkg_config('sqlite3')  # finds system sqlite via pkg-config
 #   create_makefile('extralite/extralite')
 #
-{ pkgs, ruby }:
+{ pkgs, ruby, ... }:
 {
   deps = with pkgs; [
     sqlite

@@ -1,5 +1,5 @@
 # libxml-ruby — needs libxml2 headers and xml2-config
-{ pkgs, ruby }:
+{ pkgs, ruby, ... }:
 {
   deps = with pkgs; [
     libxml2

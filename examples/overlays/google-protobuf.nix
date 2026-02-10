@@ -1,6 +1,6 @@
 # google-protobuf — old versions (3.x) fail with -Werror=format-security
 # Disable that warning-as-error
-{ pkgs, ruby }:
+{ pkgs, ruby, ... }:
 {
   deps = [ ];
   beforeBuild = ''

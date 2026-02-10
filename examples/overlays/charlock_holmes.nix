@@ -1,6 +1,6 @@
 # charlock_holmes — needs ICU, zlib, which, pkg-config
 # ICU 76+ requires C++17; older gem versions (0.7.7) force C++11 which breaks.
-{ pkgs, ruby }:
+{ pkgs, ruby, ... }:
 {
   deps = with pkgs; [
     icu
