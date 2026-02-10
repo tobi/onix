@@ -38,16 +38,13 @@ module Onix
         nix_file = project_nix(project)
         UI.header "Build"
         UI.info "#{gem_name} #{UI.dim("from #{project}")}"
-
-        cmd = ["nix-build", "--no-out-link", nix_file, "-A", gem_name]
-        run_nix(cmd)
+        run_nix(["nix-build", "--no-out-link", nix_file, "-A", gem_name])
       end
 
       def build_project(project)
         nix_file = project_nix(project)
         UI.header "Build"
         UI.info project
-
         cmd = ["nix-build", "--no-out-link", nix_file, "-A", "bundlePath"]
         cmd << "--keep-going" if @keep_going
         run_nix(cmd)
@@ -82,20 +79,41 @@ module Onix
 
       def run_nix(cmd)
         t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+        if HAS_NOM
+          run_nix_with_nom(cmd, t0)
+        else
+          run_nix_direct(cmd, t0)
+        end
+      end
+
+      # nom needs a real TTY to render its TUI. We pipe nix stderr to nom,
+      # and tee stdout to capture store paths + errors.
+      def run_nix_with_nom(cmd, t0)
+        shell = cmd.map { |a| shellescape(a) }.join(" ") + " 2>&1 | nom"
+        success = system("bash", "-c", shell)
+        elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0
+
+        if success
+          UI.done "built #{UI.dim(UI.format_time(elapsed))}"
+        else
+          UI.fail "build failed #{UI.dim(UI.format_time(elapsed))}"
+          $stderr.puts
+          $stderr.puts "  Re-run without nom for detailed errors:"
+          $stderr.puts "  #{UI.dim(cmd.join(" "))}"
+          exit 1 unless @keep_going
+        end
+      end
+
+      # Without nom: capture output, parse errors, show progress
+      def run_nix_direct(cmd, t0)
         output_lines = []
         failed_drvs = []
 
-        popen_args = if HAS_NOM
-          shell = cmd.map { |a| shellescape(a) }.join(" ") + " 2>&1 | nom"
-          ["bash", "-c", shell]
-        else
-          cmd
-        end
-
-        IO.popen(popen_args, err: [:child, :out]) do |io|
+        IO.popen(cmd, err: [:child, :out]) do |io|
           io.set_encoding("UTF-8", invalid: :replace)
           io.each_line do |line|
-            $stderr.print "  #{line}" if UI.tty? && !HAS_NOM
+            $stderr.print "  #{line}" if UI.tty?
             output_lines << line
             stripped = line.strip
 
@@ -128,8 +146,7 @@ module Onix
           end
           if failed_drvs.any?
             $stderr.puts
-            overlay_doc = File.expand_path("../../../docs/overlays.md", __dir__)
-            $stderr.puts "  See #{UI.dim(overlay_doc)}"
+            $stderr.puts "  See #{UI.dim("docs/overlays.md")}"
           end
           print_tail(output_lines)
           exit 1 unless @keep_going
