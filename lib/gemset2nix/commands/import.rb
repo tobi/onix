@@ -279,7 +279,7 @@ module Gemset2Nix
       def rebuild_apps_registry
         apps = +""
         apps << NixWriter::BANNER_IMPORT
-        apps << "# App presets for gem.app.<name>.enable = true\n#\n{\n"
+        apps << "# App presets for deps.gem.app.<name>.enable = true\n#\n{\n"
         Dir.glob(File.join(@project.app_dir, "*.nix")).sort.each do |f|
           name = File.basename(f, ".nix")
           apps << "  #{name.inspect} = import ../app/#{name}.nix;\n"

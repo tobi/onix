@@ -103,7 +103,7 @@ module Gemset2Nix
           let pkgs = import <nixpkgs> {};
               ruby = pkgs.#{@ruby};
               resolve = import #{@project.modules_dir}/resolve.nix;
-              gems = resolve { inherit pkgs ruby; gemset = import #{app_nix}; };
+              gems = resolve { inherit pkgs ruby; config = import #{app_nix}; };
           in gems."#{gem_name}"
         NIX
       end
@@ -121,7 +121,7 @@ module Gemset2Nix
           let pkgs = import <nixpkgs> {};
               ruby = pkgs.#{@ruby};
               resolve = import #{@project.modules_dir}/resolve.nix;
-              gems = resolve { inherit pkgs ruby; gemset = import #{app_nix}; };
+              gems = resolve { inherit pkgs ruby; config = import #{app_nix}; };
           in builtins.attrValues gems
         NIX
       end

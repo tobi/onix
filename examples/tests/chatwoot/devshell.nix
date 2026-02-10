@@ -1,7 +1,7 @@
 { pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
 let
   resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; gemset = { gem.app.chatwoot.enable = true; }; };
+  gems = resolve { inherit pkgs ruby; config = { deps.gem.app.chatwoot.enable = true; }; };
 in gems.devShell {
   name = "chatwoot-devshell";
   buildInputs = with pkgs; [

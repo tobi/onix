@@ -343,57 +343,72 @@ module Gemset2Nix
 
       RESOLVE_NIX = <<~'NIX'
         #
-        # resolve.nix — turn a gemset (list or module-style config) into built derivations.
+        # resolve.nix — turn a dependency config into built derivations + devShell
         #
         # Usage:
-        #   resolve { inherit pkgs ruby; gemset = import ../app/fizzy.nix; }
-        #   resolve { inherit pkgs ruby; gemset = { gem.app.fizzy.enable = true; }; }
+        #   resolve = import ./nix/modules/resolve.nix;
+        #   env = resolve { inherit pkgs ruby; config = { deps.gem.app.myapp.enable = true; }; };
+        #   env.devShell { buildInputs = with pkgs; [ sqlite ]; }
         #
-        {
-          pkgs,
-          ruby,
-          gemset,
-        }:
+        { pkgs, ruby, config, gemset ? null }:
         let
           inherit (pkgs) lib stdenv;
+          cfg = if gemset != null then gemset else config;
           gems = import ./gem.nix { inherit pkgs ruby; };
           apps = import ./apps.nix;
 
-          # Normalise: attrset (module-style) or list (legacy)
-          isList = builtins.isList gemset;
-          isModule = builtins.isAttrs gemset && gemset ? gem;
+          gemCfg =
+            if builtins.isList cfg then null
+            else if cfg ? deps && cfg.deps ? gem then cfg.deps.gem
+            else if cfg ? gem then cfg.gem
+            else {};
 
-          # Module-style: collect enabled app gem lists + per-gem overrides
-          moduleGems =
-            if isModule then
+          appGems =
+            if gemCfg == null then []
+            else if gemCfg ? app then
               let
-                appCfg = gemset.gem.app or { };
-                enabledApps = lib.filterAttrs (_: v: v.enable or false) appCfg;
-                appGemLists = lib.mapAttrsToList (
-                  name: _:
-                  if apps ? ${name} then
-                    apps.${name}
-                  else
-                    throw "gem.app.${name}: unknown app. Available: ${builtins.concatStringsSep ", " (builtins.attrNames apps)}"
-                ) enabledApps;
-              in
-              lib.concatLists appGemLists
-            else
-              [ ];
+                enabledApps = lib.filterAttrs (_: v: v.enable or false) gemCfg.app;
+              in lib.concatMap (name:
+                if apps ? ${name} then apps.${name}
+                else throw "deps.gem.app.${name}: unknown app"
+              ) (builtins.attrNames enabledApps)
+            else [];
 
-          specs = if isList then gemset else moduleGems;
+          directGems =
+            if gemCfg == null then []
+            else lib.mapAttrsToList (name: v:
+              if v ? git then { inherit name; git = v.git; }
+              else { inherit name; version = v.version; }
+            ) (lib.filterAttrs (n: v: n != "app" && builtins.isAttrs v && (v.enable or false)) gemCfg);
 
-          build =
-            spec:
-            let
-              args = builtins.removeAttrs spec [ "name" ];
-            in
-            {
-              name = spec.name;
-              value = gems.${spec.name} args;
-            };
-        in
-        builtins.listToAttrs (map build specs)
+          specs =
+            if builtins.isList cfg then cfg
+            else let
+              byName = builtins.listToAttrs (map (e: { name = e.name; value = e; }) directGems);
+            in (builtins.filter (e: !(byName ? ${e.name})) appGems) ++ directGems;
+
+          build = spec: {
+            name = spec.name;
+            value = gems.${spec.name} (builtins.removeAttrs spec ["name"]);
+          };
+
+          resolved = builtins.listToAttrs (map build specs);
+          bundlePath = pkgs.buildEnv {
+            name = "gemset2nix-bundle";
+            paths = builtins.attrValues resolved;
+          };
+        in resolved // {
+          inherit bundlePath;
+          devShell = { name ? "gemset2nix-devshell", buildInputs ? [], shellHook ? "", ... }@args:
+            pkgs.mkShell (builtins.removeAttrs args ["buildInputs" "shellHook" "name"] // {
+              inherit name;
+              buildInputs = [ ruby ] ++ buildInputs;
+              shellHook = ''
+                export BUNDLE_PATH="${bundlePath}"
+                export BUNDLE_GEMFILE="''${BUNDLE_GEMFILE:-$PWD/Gemfile}"
+              '' + shellHook;
+            });
+        }
       NIX
     end
   end

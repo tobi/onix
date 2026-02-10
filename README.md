@@ -95,7 +95,7 @@ let
   resolve = import ./nix/modules/resolve.nix;
   gems = resolve {
     inherit pkgs ruby;
-    gemset = { gem.app.rails.enable = true; };
+    config = { deps.gem.app.rails.enable = true; };
   };
 in gems.devShell {
   buildInputs = with pkgs; [ sqlite postgresql ];

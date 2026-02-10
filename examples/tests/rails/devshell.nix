@@ -1,7 +1,7 @@
 { pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
 let
   resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; gemset = { gem.app.rails.enable = true; }; };
+  gems = resolve { inherit pkgs ruby; config = { deps.gem.app.rails.enable = true; }; };
 in gems.devShell {
   name = "rails-devshell";
   buildInputs = with pkgs; [

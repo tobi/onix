@@ -1,7 +1,7 @@
 { pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_3 }:
 let
   resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; gemset = { gem.app.discourse.enable = true; }; };
+  gems = resolve { inherit pkgs ruby; config = { deps.gem.app.discourse.enable = true; }; };
 in gems.devShell {
   name = "discourse-devshell";
   buildInputs = with pkgs; [

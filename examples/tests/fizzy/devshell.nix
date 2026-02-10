@@ -1,7 +1,7 @@
 { pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
 let
   resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; gemset = { gem.app.fizzy.enable = true; }; };
+  gems = resolve { inherit pkgs ruby; config = { deps.gem.app.fizzy.enable = true; }; };
 in gems.devShell {
   name = "fizzy-devshell";
   buildInputs = with pkgs; [ sqlite libyaml openssl zlib pkg-config vips ];
