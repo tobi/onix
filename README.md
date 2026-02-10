@@ -167,14 +167,16 @@ Force gems to use system libraries instead of vendored copies:
 
 ### Build-time gem dependencies
 
-Some gems need other gems during `extconf.rb`. Use `buildGems` — the framework resolves each name to a built derivation and constructs `GEM_PATH` automatically:
+Some gems need other gems during `extconf.rb`. Use `buildGems` — each entry is a derivation (built via `pkgs.callPackage`). The framework constructs `GEM_PATH` automatically from each derivation's `bundle_path`:
 
 ```nix
 # overlays/nokogiri.nix
 { pkgs, ruby }: {
   deps = with pkgs; [ libxml2 libxslt pkg-config zlib ];
   extconfFlags = "--use-system-libraries";
-  buildGems = [ "mini_portile2" ];
+  buildGems = [
+    (pkgs.callPackage ../nix/gem/mini_portile2/2.8.9 { inherit ruby; })
+  ];
 }
 ```
 
@@ -184,7 +186,9 @@ Some gems need other gems during `extconf.rb`. Use `buildGems` — the framework
 # overlays/tiktoken_ruby.nix
 { pkgs, ruby }: {
   deps = with pkgs; [ rustc cargo libclang ];
-  buildGems = [ "rb_sys" ];
+  buildGems = [
+    (pkgs.callPackage ../nix/gem/rb_sys/0.9.124 { inherit ruby; })
+  ];
   beforeBuild = ''
     export CARGO_HOME="$TMPDIR/cargo"
     mkdir -p "$CARGO_HOME"
@@ -199,7 +203,7 @@ Some gems need other gems during `extconf.rb`. Use `buildGems` — the framework
 |-------|------|--------|
 | `deps` | list | Added to `nativeBuildInputs` |
 | `extconfFlags` | string | Appended to `ruby extconf.rb` |
-| `buildGems` | list | Gem names needed at build time (auto `GEM_PATH`) |
+| `buildGems` | list | Derivations needed at build time (auto `GEM_PATH`) |
 | `beforeBuild` | string | Runs before the default build phase |
 | `afterBuild` | string | Runs after `make` |
 | `buildPhase` | string | **Replaces** the default build entirely |

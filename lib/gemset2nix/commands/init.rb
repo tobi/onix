@@ -200,20 +200,22 @@ module Gemset2Nix
           ### Build-time gem dependencies
 
           Some gems require other gems at build time (e.g., `nokogiri` needs
-          `mini_portile2` during `extconf.rb`). Use `buildGems` to declare them:
+          `mini_portile2` during `extconf.rb`). Use `buildGems` to declare them
+          as derivations — the framework constructs `GEM_PATH` automatically:
 
           ```nix
           # overlays/nokogiri.nix
           { pkgs, ruby }: {
             deps = with pkgs; [ libxml2 libxslt pkg-config zlib ];
             extconfFlags = "--use-system-libraries";
-            buildGems = [ "mini_portile2" ];
+            buildGems = [
+              (pkgs.callPackage ../nix/gem/mini_portile2/2.8.9 { inherit ruby; })
+            ];
           }
           ```
 
-          `buildGems` lists gem names. The framework resolves each to a built
-          derivation and constructs `GEM_PATH` automatically — no manual path
-          wiring needed.
+          Each `buildGems` entry must be a derivation with a `bundle_path`
+          passthru attribute (i.e., built by `gemset2nix generate`).
 
           ### Lifecycle hooks
 
@@ -239,7 +241,9 @@ module Gemset2Nix
           # overlays/tiktoken_ruby.nix
           { pkgs, ruby }: {
             deps = with pkgs; [ rustc cargo libclang ];
-            buildGems = [ "rb_sys" ];
+            buildGems = [
+              (pkgs.callPackage ../nix/gem/rb_sys/0.9.124 { inherit ruby; })
+            ];
             beforeBuild = ''
               export CARGO_HOME="$TMPDIR/cargo"
               mkdir -p "$CARGO_HOME"
@@ -291,7 +295,7 @@ module Gemset2Nix
           |-------|------|-------------|
           | `deps` | list | Extra `nativeBuildInputs` |
           | `extconfFlags` | string | Appended to every `ruby extconf.rb` call |
-          | `buildGems` | list | Gem names needed at build time (auto-resolves `GEM_PATH`) |
+          | `buildGems` | list | Derivations needed at build time (auto `GEM_PATH`) |
           | `beforeBuild` | string | Shell commands before the default build phase |
           | `afterBuild` | string | Shell commands after the default build phase |
           | `buildPhase` | string | **Replaces** the entire default build phase |
