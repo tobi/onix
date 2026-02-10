@@ -86,10 +86,19 @@ Checks: `symlinks` · `nix-eval` · `source-clean` · `secrets` · `dep-complete
 
 ## Using built gems
 
-`resolve` returns gem derivations plus `bundlePath` and `devShell`. The devShell sets `BUNDLE_PATH` and `BUNDLE_GEMFILE` automatically:
+`resolve` is the Nix-side API. Pass it `pkgs`, `ruby`, and a config — it returns an attrset with:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `<gem-name>` | derivation | Individual gem outputs (one per gem) |
+| `bundlePath` | derivation | All gems merged into a single `BUNDLE_PATH` via `buildEnv` |
+| `devShell` | function | `mkShell` wrapper that sets `BUNDLE_PATH`, `BUNDLE_GEMFILE`, and includes `ruby` |
+
+### devShell (recommended)
+
+The simplest way to use gemset2nix. Handles all Bundler plumbing automatically:
 
 ```nix
-# devshell.nix
 { pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
 let
   resolve = import ./nix/modules/resolve.nix;
@@ -102,14 +111,32 @@ in gems.devShell {
 }
 ```
 
+`devShell` accepts the same arguments as `mkShell`. It prepends `ruby` to `buildInputs` and prepends the `BUNDLE_PATH`/`BUNDLE_GEMFILE` exports to your `shellHook`.
+
+### bundlePath
+
+If you need more control (CI scripts, Docker images, custom derivations), use `bundlePath` directly:
+
+```nix
+gems.bundlePath        # → /nix/store/...-gemset2nix-bundle
+                       # contains ruby/3.4.0/gems/*, specifications/*, extensions/*,
+                       # and bundler/gems/* for git sources
+```
+
+### Config namespace
+
+The config uses `deps.gem.*` — namespaced for future package manager support (`deps.npm`, `deps.pip`, etc.):
+
+```nix
+config = {
+  deps.gem.app.rails.enable = true;         # enable an app preset (all locked gems)
+  deps.gem.rack = { enable = true; version = "3.2.4"; };  # pin a specific gem
+};
+```
+
 ### Git-sourced gems
 
 Git gems from `Gemfile.lock` are handled automatically. The import preserves the full lockfile, `fetch` clones the repo, and `generate` creates a derivation at `nix/gem/<repo>/git-<shortrev>/`.
-
-```nix
-# In nix/app/myapp.nix (auto-generated):
-{ name = "rails"; git.rev = "60d92e4e7dfe"; }
-```
 
 ## Overlays
 
