@@ -18,9 +18,12 @@ in
 {
   gemName,
   version,
+  platform ? null,
   source,
+  subdir ? ".",              # subdirectory within git repo (monorepo support)
   nativeBuildInputs ? [],
   buildInputs ? [],
+  buildGems ? [],
   extconfFlags ? "",
   beforeBuild ? "",
   afterBuild ? "",
@@ -37,32 +40,45 @@ let
   bundle_path = "ruby/${rubyVersion}";
   arch = stdenv.hostPlatform.system;
 
+  slug = if platform != null then "${gemName}-${version}-${platform}" else "${gemName}-${version}";
+
   src =
     if source.type == "gem" then
       fetchurl {
-        urls = map (remote: "${remote}/gems/${gemName}-${version}.gem")
+        urls = map (remote: "${remote}/gems/${slug}.gem")
           (source.remotes or [ "https://rubygems.org" ]);
         inherit (source) sha256;
       }
     else if source.type == "git" then
-      fetchgit {
-        inherit (source) url rev sha256;
-        fetchSubmodules = source.fetchSubmodules or false;
+      builtins.fetchGit {
+        inherit (source) url rev;
+        allRefs = true;
+        submodules = source.fetchSubmodules or false;
       }
     else
       throw "buildGem: unknown source type '${source.type}' for ${gemName}";
 
+  isPlatformGem = platform != null && source.type == "gem";
+
   # Unpack .gem into a source directory
   sourceDir =
     if source.type == "gem" then
-      pkgs.runCommand "${key}-source" { inherit src; nativeBuildInputs = [ ruby ]; } ''
+      pkgs.runCommand "${key}-source" { inherit src; nativeBuildInputs = [ ruby ]; } (''
         mkdir -p $out
         gem unpack $src --target=tmp
         cp -r tmp/*/* $out/ 2>/dev/null || cp -r tmp/* $out/
+      '' + lib.optionalString (!isPlatformGem) ''
         find $out -name '*.so' -o -name '*.bundle' -o -name '*.dylib' | xargs rm -f 2>/dev/null || true
-      ''
+      '')
+    else if subdir != "." then
+      # Git monorepo: extract just the gem's subdirectory
+      src + "/${subdir}"
     else
       src;
+
+  gemPathSetup = lib.optionalString (buildGems != []) ''
+    export GEM_PATH="${lib.concatMapStringsSep ":" (g: "${g}/${bundle_path}") buildGems}''${GEM_PATH:+:$GEM_PATH}"
+  '';
 
   defaultBuildPhase = ''
     ${beforeBuild}
@@ -115,9 +131,12 @@ stdenv.mkDerivation {
   dontConfigure = true;
 
   buildPhase =
-    if buildPhase != null then buildPhase
-    else if builtins.pathExists (sourceDir + "/ext") then defaultBuildPhase
-    else "true";
+    if isPlatformGem then "true"  # platform gems have prebuilt binaries
+    else gemPathSetup + (
+      if buildPhase != null then buildPhase
+      else if builtins.pathExists (sourceDir + "/ext") then defaultBuildPhase
+      else "true"
+    );
 
   passthru = { inherit bundle_path; };
 

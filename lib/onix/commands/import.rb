@@ -1,98 +1,157 @@
 # frozen_string_literal: true
 
 require "scint/lockfile/parser"
-require "scint/source/git"
-require "scint/source/path"
-require "digest"
+require "scint/credentials"
+require "open3"
 require "fileutils"
-require "pathname"
-require "uri"
-require "net/http"
 require "json"
+require "set"
+require "tmpdir"
+require_relative "../packageset"
 
 module Onix
   module Commands
+    # `onix import` — parse Gemfile.lock and produce a hermetic JSONL packageset.
+    #
+    # This is the only step that talks to the outside world (cloning git repos
+    # to discover subdirectories). Everything after this is mechanical.
+    #
     class Import
       def run(argv)
         @project = Project.new
         name_override = nil
-        from_index = false
-        index_count = 1000
-        index_versions = 3
 
         while argv.first&.start_with?("-")
           case argv.shift
-          when "--name", "-n"      then name_override = argv.shift
-          when "--from-index"      then from_index = true
-          when "--count", "-c"     then index_count = argv.shift.to_i
-          when "--versions"        then index_versions = argv.shift.to_i
+          when "--name", "-n" then name_override = argv.shift
           when "--help", "-h"
-            usage
+            $stderr.puts "Usage: onix import [--name NAME] <path/to/Gemfile.lock>"
             exit 0
-          else
-            $stderr.puts "Unknown option. Use --help."
-            exit 1
           end
         end
 
-        if from_index
-          import_from_index(name_override || "index", index_count, index_versions)
-        else
-          if argv.empty?
-            usage
-            exit 1
-          end
-          import_from_gemfile(argv.first, name_override)
+        if argv.empty?
+          $stderr.puts "Usage: onix import <path/to/Gemfile.lock>"
+          exit 1
         end
-      end
 
-      private
-
-      def usage
-        $stderr.puts <<~USAGE
-          Usage: onix import [options] <path>
-
-          Import gems from a Gemfile.lock or the rubygems.org index.
-
-          From Gemfile.lock:
-            onix import path/to/myapp/              # finds Gemfile.lock in dir
-            onix import path/to/Gemfile.lock         # explicit file
-            onix import --name myapp Gemfile.lock    # override project name
-
-          From rubygems.org index:
-            onix import --from-index                 # top 1000, 3 versions each
-            onix import --from-index --count 500
-
-          Options:
-            --name, -n NAME       Override the project/packageset name
-            --from-index          Import from rubygems.org index
-            --count, -c N         Number of top gems (default: 1000)
-            --versions N          Versions per gem (default: 3)
-        USAGE
-      end
-
-      # ── Import from Gemfile.lock ──────────────────────────────────────
-
-      def import_from_gemfile(arg, name_override)
-        lockfile, project_name = resolve_lockfile(arg, name_override)
+        lockfile, project_name = resolve_lockfile(argv.first, name_override)
 
         UI.header "Import #{UI.bold(project_name)}"
         UI.info lockfile
 
         lockdata = Scint::Lockfile::Parser.parse(lockfile)
-        mat = @project.materializer
-        classified = mat.classify(lockdata)
+        credentials = Scint::Credentials.new
+        credentials.register_lockfile_sources(lockdata.sources)
 
-        rubygem_specs = classified[:rubygems]
-        git_repos = classified[:git]
+        # ── Build dependency map ─────────────────────────────────────
+        # spec[:dependencies] is [{name:, version_reqs:}]
+        dep_map = {}
+        lockdata.specs.each do |spec|
+          dep_map[spec[:name]] = spec[:dependencies].map { |d| d[:name] }
+        end
 
-        UI.info "#{rubygem_specs.size} rubygems, #{git_repos.values.sum { |r| r[:gems].size }} git " \
-                "#{UI.dim("(#{git_repos.size} repos)")}"
+        # ── Classify specs ───────────────────────────────────────────
 
-        write_packageset(project_name, lockfile)
-        write_app_nix(project_name, rubygem_specs, git_repos)
-        rebuild_apps_registry
+        entries = []
+        git_repos = {}  # key => { uri:, rev:, branch:, ... , gems: [] }
+
+        lockdata.specs.each do |spec|
+          name = spec[:name]
+          version = spec[:version]
+          deps = dep_map[name] || []
+
+          case spec[:source]
+          when Scint::Source::Git
+            src = spec[:source]
+            rev = src.revision
+            key = "#{src.name}-#{rev[0, 12]}"
+
+            repo = (git_repos[key] ||= {
+              uri: src.uri, rev: rev,
+              branch: src.branch, tag: src.tag,
+              submodules: src.submodules, glob: src.glob,
+              base: src.name, gems: [],
+            })
+            repo[:gems] << { name: name, version: version, deps: deps }
+
+          when Scint::Source::Path
+            entries << Packageset::Entry.new(
+              installer: "ruby", name: name, version: version,
+              source: "path", path: spec[:source].path, deps: deps,
+            )
+
+          else
+            # Rubygems — skip platform variants, always use "ruby" platform
+            platform = spec[:platform] || "ruby"
+            next unless platform == "ruby"
+
+            source_uri = spec[:source].respond_to?(:uri) ? spec[:source].uri : "https://rubygems.org/"
+
+            if Packageset::RUBY_STDLIB.include?(name)
+              entries << Packageset::Entry.new(
+                installer: "ruby", name: name, version: version, source: "stdlib",
+              )
+            else
+              entries << Packageset::Entry.new(
+                installer: "ruby", name: name, version: version,
+                source: "rubygems",
+                remote: source_uri.chomp("/"),
+                deps: deps,
+              )
+            end
+          end
+        end
+
+        UI.info "#{entries.count { |e| e.source == "rubygems" }} rubygems, " \
+                "#{git_repos.values.sum { |r| r[:gems].size }} git (#{git_repos.size} repos), " \
+                "#{entries.count { |e| e.source == "stdlib" }} stdlib, " \
+                "#{entries.count { |e| e.source == "path" }} path"
+
+        # ── Resolve git monorepo subdirectories ──────────────────────
+
+        if git_repos.any?
+          progress = UI::Progress.new(git_repos.size, label: "Resolve git repos")
+          git_repos.each_value do |repo|
+            subdirs = resolve_git_subdirs(repo)
+            repo[:gems].each do |g|
+              subdir = subdirs[g[:name]]
+              entries << Packageset::Entry.new(
+                installer: "ruby", name: g[:name], version: g[:version],
+                source: "git", uri: repo[:uri], rev: repo[:rev],
+                branch: repo[:branch], tag: repo[:tag],
+                submodules: repo[:submodules],
+                subdir: subdir,
+                deps: g[:deps],
+              )
+            end
+            progress.advance
+          end
+          progress.finish
+        end
+
+        # ── Enrich: scan for has_ext, require_paths, executables ─────
+        # For rubygems, we'd need to download the gem to check. Instead
+        # we'll detect has_ext at build time (check for ext/ dir).
+        # For git gems with subdir, we already have the checkout.
+
+        # ── Write JSONL packageset ───────────────────────────────────
+
+        meta = Packageset::Meta.new(
+          ruby: lockdata.ruby_version,
+          bundler: lockdata.bundler_version,
+          platforms: lockdata.platforms,
+        )
+
+        FileUtils.mkdir_p(@project.packagesets_dir)
+        outpath = File.join(@project.packagesets_dir, "#{project_name}.jsonl")
+        Packageset.write(outpath, meta: meta, entries: entries)
+
+        UI.wrote "packagesets/#{project_name}.jsonl"
+        UI.done "#{entries.size} packages"
       end
+
+      private
 
       def resolve_lockfile(arg, name_override)
         path = File.expand_path(arg)
@@ -113,141 +172,70 @@ module Onix
         [lockfile, project]
       end
 
-      # ── Import from rubygems.org index ────────────────────────────────
+      # Clone a git repo and find which subdirectory each gem lives in.
+      # Returns { "activesupport" => "activesupport", "rails" => ".", ... }
+      def resolve_git_subdirs(repo)
+        subdirs = {}
 
-      def import_from_index(name, count, max_versions)
-        UI.header "Import from rubygems.org"
+        Dir.mktmpdir("onix-git-") do |tmpdir|
+          clone_dir = File.join(tmpdir, repo[:base])
 
-        gem_names = fetch_top_gem_names(count)
-        UI.info "#{gem_names.size} gem names"
+          # Try shallow fetch of exact rev first, fall back to full clone
+          _, status = Open3.capture2e(
+            "git", "init", clone_dir
+          )
+          Open3.capture2e("git", "-C", clone_dir, "remote", "add", "origin", repo[:uri])
 
-        lines = []
-        skipped = 0
-        progress = UI::Progress.new(gem_names.size, label: "Versions")
-
-        gem_names.each do |gem_name|
-          versions = fetch_gem_versions(gem_name, max_versions)
-          if versions
-            versions.each { |v| lines << "#{gem_name} #{v}" }
-            progress.advance
-          else
-            skipped += 1
-            progress.advance(success: false)
+          # Try fetching just the one commit (works with most Git servers)
+          _, status = Open3.capture2e(
+            "git", "-C", clone_dir, "fetch", "--depth=1", "origin", repo[:rev]
+          )
+          unless status.success?
+            # Fall back: fetch full history
+            _, status = Open3.capture2e(
+              "git", "-C", clone_dir, "fetch", "origin"
+            )
+            unless status.success?
+              UI.warn "Failed to fetch #{repo[:uri]}"
+              repo[:gems].each { |g| subdirs[g[:name]] = g[:name] }
+              return subdirs
+            end
           end
-          sleep 0.1
-        end
-        progress.finish
 
-        FileUtils.mkdir_p(@project.packagesets_dir)
-        out = "GEM\n  remote: https://rubygems.org/\n  specs:\n"
-        lines.sort.each { |l| n, ver = l.split(" ", 2); out << "    #{n} (#{ver})\n" }
-        out << "\n"
-        path = File.join(@project.packagesets_dir, "#{name}.gem")
-        File.write(path, out)
-        UI.wrote "packagesets/#{name}.gem #{UI.dim("(#{lines.size} versions)")}"
-      end
-
-      def fetch_top_gem_names(count)
-        per_page = 30
-        pages = (count.to_f / per_page).ceil
-        names = []
-        progress = UI::Progress.new(pages, label: "Index")
-
-        pages.times do |i|
-          uri = URI("https://rubygems.org/api/v1/search.json?query=*&page=#{i + 1}")
-          resp = http_get_with_retry(uri)
-          break(progress.advance(success: false)) unless resp
-
-          data = JSON.parse(resp)
-          break(progress.advance(success: false)) if data.empty?
-
-          data.each { |g| names << g["name"] }
-          progress.advance
-          sleep 0.5
-          break if names.size >= count
-        end
-        progress.finish
-        names.first(count)
-      end
-
-      def fetch_gem_versions(name, max_versions)
-        uri = URI("https://rubygems.org/info/#{name}")
-        body = http_get_with_retry(uri)
-        return nil unless body
-
-        versions = []
-        body.each_line do |line|
-          line = line.strip
-          next if line == "---" || line.empty?
-          ver = line.split(" ", 2).first
-          next if ver =~ /-(java|x86|x64|mingw|mswin|arm|aarch|darwin|linux|musl|freebsd)/i
-          next if ver =~ /[a-zA-Z]/
-          versions << ver
-        end
-
-        versions.uniq
-          .sort_by { |v| Gem::Version.new(v) rescue Gem::Version.new("0") }
-          .last(max_versions)
-      end
-
-      def http_get_with_retry(uri, retries: 3)
-        retries.times do
-          resp = Net::HTTP.get_response(uri)
-          if resp.code == "429"
-            wait = (resp["retry-after"] || "2").to_i + 1
-            sleep wait
-            next
+          # Checkout the pinned revision
+          _, status = Open3.capture2e(
+            "git", "-C", clone_dir, "checkout", repo[:rev]
+          )
+          unless status.success?
+            UI.warn "Failed to checkout #{repo[:rev]} in #{repo[:uri]}"
+            repo[:gems].each { |g| subdirs[g[:name]] = g[:name] }
+            return subdirs
           end
-          return resp.body if resp.code == "200"
-          return nil
-        end
-        nil
-      end
 
-      # ── Output writers ────────────────────────────────────────────────
+          # Find all gemspecs and map gem names to directories
+          gemspec_map = {}
+          glob = repo[:glob] || "{,*,*/*}.gemspec"
+          Dir.glob(File.join(clone_dir, glob)).each do |path|
+            begin
+              content = File.read(path)
+              # Extract gem name from gemspec — look for .name = "foo" or .name = 'foo'
+              if content =~ /\.name\s*=\s*["']([^"']+)["']/
+                gem_name = $1
+                rel_dir = File.dirname(path).sub("#{clone_dir}/", "").sub(clone_dir, ".")
+                gemspec_map[gem_name] = rel_dir
+              end
+            rescue => e
+              # Skip unparseable gemspecs
+            end
+          end
 
-      def write_packageset(project_name, lockfile)
-        FileUtils.mkdir_p(@project.packagesets_dir)
-        dest = File.join(@project.packagesets_dir, "#{project_name}.gem")
-        FileUtils.cp(lockfile, dest)
-        UI.wrote "packagesets/#{project_name}.gem"
-      end
-
-      def write_app_nix(project_name, rubygem_specs, git_repos)
-        nix = +""
-        nix << NixWriter::BANNER_IMPORT
-        total = rubygem_specs.size + git_repos.values.sum { |r| r[:gems].size }
-        nix << "# #{project_name.upcase} — #{total} gems\n#\n[\n"
-
-        rubygem_specs.sort_by { |s| s[:name] }.each do |spec|
-          nix << "  { name = #{spec[:name].inspect}; version = #{spec[:version].inspect}; }\n"
-        end
-
-        git_repos.each_value do |repo|
-          nix << "  # git: #{repo[:base]} @ #{repo[:shortrev]}\n"
-          nix << "  { name = #{repo[:base].inspect}; git.rev = #{repo[:shortrev].inspect}; }\n"
+          # Map each gem to its subdirectory
+          repo[:gems].each do |g|
+            subdirs[g[:name]] = gemspec_map[g[:name]] || g[:name]
+          end
         end
 
-        nix << "]\n"
-
-        FileUtils.mkdir_p(@project.app_dir)
-        File.write(File.join(@project.app_dir, "#{project_name}.nix"), nix)
-        UI.wrote "nix/app/#{project_name}.nix"
-      end
-
-      def rebuild_apps_registry
-        apps = +""
-        apps << NixWriter::BANNER_IMPORT
-        apps << "# App presets for onix.apps.<name>.enable = true\n#\n{\n"
-        Dir.glob(File.join(@project.app_dir, "*.nix")).sort.each do |f|
-          name = File.basename(f, ".nix")
-          apps << "  #{name.inspect} = import ../app/#{name}.nix;\n"
-        end
-        apps << "}\n"
-
-        FileUtils.mkdir_p(@project.modules_dir)
-        File.write(File.join(@project.modules_dir, "apps.nix"), apps)
-        UI.wrote "nix/modules/apps.nix"
+        subdirs
       end
     end
   end

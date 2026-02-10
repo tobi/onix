@@ -4,10 +4,10 @@ module Onix
   module CLI
     COMMANDS = {
       "init"     => "Initialize a new project",
-      "import"   => "Import gems from Gemfile.lock",
+      "import"   => "Import Gemfile.lock into a hermetic packageset",
       "generate" => "Prefetch hashes and generate nix derivations",
-      "build"    => "Build gems via Nix",
-      "check"    => "Run checks on generated derivations",
+      "build"    => "Build all gems via Nix",
+      "check"    => "Run checks on built gems",
     }.freeze
 
     def self.run(argv)

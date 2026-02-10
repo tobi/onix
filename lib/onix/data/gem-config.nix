@@ -14,7 +14,9 @@ let
     then builtins.readDir overlayDir
     else {};
 
-  nixFiles = lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".nix" name) overlayFiles;
+  nixFiles = lib.filterAttrs (name: type:
+    type == "regular" && lib.hasSuffix ".nix" name && !(lib.hasPrefix "_" name)
+  ) overlayFiles;
 
   loadOverlay = filename:
     let
