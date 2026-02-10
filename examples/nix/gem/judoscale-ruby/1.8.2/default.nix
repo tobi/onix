@@ -1,6 +1,6 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
+# ║  GENERATED — do not edit.  Run gemset2nix generate to regen ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # judoscale-ruby 1.8.2

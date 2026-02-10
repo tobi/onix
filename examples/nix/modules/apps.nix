@@ -3,7 +3,7 @@
 # ║  GENERATED — do not edit.  Run gemset2nix import to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
-# App presets for gem.app.<name>.enable = true
+# App presets for deps.gem.app.<name>.enable = true
 #
 {
   "chatwoot" = import ../app/chatwoot.nix;

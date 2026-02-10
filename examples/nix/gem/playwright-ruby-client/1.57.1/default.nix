@@ -1,6 +1,6 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
+# ║  GENERATED — do not edit.  Run gemset2nix generate to regen ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # playwright-ruby-client 1.57.1

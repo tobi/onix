@@ -1,6 +1,6 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
+# ║  GENERATED — do not edit.  Run gemset2nix generate to regen ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # license_finder 7.1.0

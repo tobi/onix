@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
-require "bundler"
+require "scint/lockfile/parser"
+require "scint/source/git"
+require "scint/source/path"
 require "etc"
 require "json"
 require "open3"
 require "tmpdir"
-require "open3"
 
 module Gemset2Nix
   module Commands
@@ -237,14 +238,13 @@ module Gemset2Nix
         missing = 0
         total = 0
 
+        mat = @project.materializer
         gemset_files.each do |f|
-          lf = @project.parse_lockfile(f)
-          lf.specs.each do |spec|
-            src = spec.source
-            next if src.is_a?(Bundler::Source::Git)
-            next if src.is_a?(Bundler::Source::Path)
+          lockdata = @project.parse_lockfile(f)
+          classified = mat.classify(lockdata)
+          classified[:rubygems].each do |spec|
             total += 1
-            dir = File.join(@project.output_dir, spec.name, spec.version.to_s)
+            dir = File.join(@project.output_dir, spec[:name], spec[:version])
             missing += 1 unless Dir.exist?(dir)
           end
         end

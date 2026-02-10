@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-require "bundler"
+require "scint/lockfile/parser"
+require "scint/source/git"
+require "scint/source/path"
 require "digest"
 require "fileutils"
 require "pathname"
@@ -50,24 +52,22 @@ module Gemset2Nix
         $stderr.puts <<~USAGE
           Usage: gemset2nix import [options] <path>
 
-          Import gems into gemset2nix from a Gemfile.lock or the rubygems.org index.
+          Import gems from a Gemfile.lock or the rubygems.org index.
 
           From Gemfile.lock:
-            gemset2nix import path/to/Gemfile.lock
             gemset2nix import path/to/myapp/              # finds Gemfile.lock in dir
+            gemset2nix import path/to/Gemfile.lock         # explicit file
             gemset2nix import --name myapp Gemfile.lock    # override project name
 
-          From rubygems.org index (top gems by download count):
+          From rubygems.org index:
             gemset2nix import --from-index                 # top 1000, 3 versions each
-            gemset2nix import --from-index --count 500     # top 500
-            gemset2nix import --from-index --versions 5    # 5 versions per gem
-            gemset2nix import --from-index --name top      # custom gemset name
+            gemset2nix import --from-index --count 500
 
           Options:
             --name, -n NAME       Override the project/gemset name
-            --from-index          Import from rubygems.org index instead of Gemfile.lock
-            --count, -c N         Number of top gems to fetch (default: 1000)
-            --versions N          Versions per gem to include (default: 3)
+            --from-index          Import from rubygems.org index
+            --count, -c N         Number of top gems (default: 1000)
+            --versions N          Versions per gem (default: 3)
         USAGE
       end
 
@@ -79,11 +79,15 @@ module Gemset2Nix
         UI.header "Import #{UI.bold(project_name)}"
         UI.info lockfile
 
-        gemfile = lockfile.sub(/Gemfile\.lock$/, "Gemfile")
-        ENV["BUNDLE_GEMFILE"] = File.expand_path(gemfile) if File.exist?(gemfile)
+        lockdata = Scint::Lockfile::Parser.parse(lockfile)
+        mat = @project.materializer
+        classified = mat.classify(lockdata)
 
-        lf = Bundler::LockfileParser.new(File.read(lockfile))
-        rubygem_specs, git_repos = classify_specs(lf)
+        rubygem_specs = classified[:rubygems]
+        git_repos = classified[:git]
+
+        UI.info "#{rubygem_specs.size} rubygems, #{git_repos.values.sum { |r| r[:gems].size }} git " \
+                "#{UI.dim("(#{git_repos.size} repos)")}"
 
         write_gemset(project_name, lockfile)
         write_app_nix(project_name, rubygem_specs, git_repos)
@@ -130,11 +134,10 @@ module Gemset2Nix
             skipped += 1
             progress.advance(success: false)
           end
-          sleep 0.1 # rate limit
+          sleep 0.1
         end
         progress.finish
 
-        # Write as a synthetic Gemfile.lock (GEM section only)
         FileUtils.mkdir_p(@project.gemsets_dir)
         out = "GEM\n  remote: https://rubygems.org/\n  specs:\n"
         lines.sort.each { |l| n, ver = l.split(" ", 2); out << "    #{n} (#{ver})\n" }
@@ -164,7 +167,6 @@ module Gemset2Nix
           break if names.size >= count
         end
         progress.finish
-
         names.first(count)
       end
 
@@ -177,9 +179,7 @@ module Gemset2Nix
         body.each_line do |line|
           line = line.strip
           next if line == "---" || line.empty?
-
           ver = line.split(" ", 2).first
-          # Skip platform-specific and prerelease
           next if ver =~ /-(java|x86|x64|mingw|mswin|arm|aarch|darwin|linux|musl|freebsd)/i
           next if ver =~ /[a-zA-Z]/
           versions << ver
@@ -191,7 +191,7 @@ module Gemset2Nix
       end
 
       def http_get_with_retry(uri, retries: 3)
-        retries.times do |attempt|
+        retries.times do
           resp = Net::HTTP.get_response(uri)
           if resp.code == "429"
             wait = (resp["retry-after"] || "2").to_i + 1
@@ -204,50 +204,9 @@ module Gemset2Nix
         nil
       end
 
-      # ── Gemfile.lock classification ───────────────────────────────────
-
-      def classify_specs(lf)
-        rubygem_specs = []
-        git_specs = []
-
-        lf.specs.each do |spec|
-          src = spec.source
-          case src
-          when Bundler::Source::Git
-            base = File.basename(src.uri, ".git")
-            rev = src.options["revision"]
-            git_specs << { spec: spec, uri: src.uri, rev: rev,
-                           base: base, shortrev: rev[0, 12] }
-          when Bundler::Source::Path
-            next
-          else
-            existing = rubygem_specs.find { |s| s.name == spec.name }
-            if existing
-              rubygem_specs.delete(existing) if spec.platform.to_s == "ruby"
-              next unless spec.platform.to_s == "ruby"
-            end
-            rubygem_specs << spec
-          end
-        end
-
-        git_repos = {}
-        git_specs.each do |gs|
-          key = "#{gs[:base]}-#{gs[:shortrev]}"
-          unless git_repos[key]
-            git_repos[key] = { uri: gs[:uri], rev: gs[:rev], base: gs[:base],
-                               shortrev: gs[:shortrev], gems: [] }
-          end
-          git_repos[key][:gems] << gs[:spec] unless git_repos[key][:gems].any? { |e| e.name == gs[:spec].name }
-        end
-
-        UI.info "#{rubygem_specs.size} rubygems, #{git_specs.size} git #{UI.dim("(#{git_repos.size} repos)")}"
-        [rubygem_specs, git_repos]
-      end
-
       # ── Output writers ────────────────────────────────────────────────
 
       def write_gemset(project_name, lockfile)
-        # The gemset IS the Gemfile.lock — just copy it.
         FileUtils.mkdir_p(@project.gemsets_dir)
         dest = File.join(@project.gemsets_dir, "#{project_name}.gemset")
         FileUtils.cp(lockfile, dest)
@@ -257,14 +216,14 @@ module Gemset2Nix
       def write_app_nix(project_name, rubygem_specs, git_repos)
         nix = +""
         nix << NixWriter::BANNER_IMPORT
-        nix << "# #{project_name.upcase} — #{rubygem_specs.size + git_repos.values.sum { |r| r[:gems].size }} gems\n"
-        nix << "#\n[\n"
+        total = rubygem_specs.size + git_repos.values.sum { |r| r[:gems].size }
+        nix << "# #{project_name.upcase} — #{total} gems\n#\n[\n"
 
-        rubygem_specs.sort_by(&:name).each do |spec|
-          nix << "  { name = #{spec.name.inspect}; version = #{spec.version.to_s.inspect}; }\n"
+        rubygem_specs.sort_by { |s| s[:name] }.each do |spec|
+          nix << "  { name = #{spec[:name].inspect}; version = #{spec[:version].inspect}; }\n"
         end
 
-        git_repos.each do |_, repo|
+        git_repos.each_value do |repo|
           nix << "  # git: #{repo[:base]} @ #{repo[:shortrev]}\n"
           nix << "  { name = #{repo[:base].inspect}; git.rev = #{repo[:shortrev].inspect}; }\n"
         end
@@ -290,7 +249,6 @@ module Gemset2Nix
         File.write(File.join(@project.modules_dir, "apps.nix"), apps)
         UI.wrote "nix/modules/apps.nix"
       end
-
     end
   end
 end

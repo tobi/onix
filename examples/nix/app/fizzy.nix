@@ -152,10 +152,10 @@
   { name = "xpath"; version = "3.2.0"; }
   { name = "zeitwerk"; version = "2.7.4"; }
   { name = "zip_kit"; version = "6.3.4"; }
-  # git: rails @ 60d92e4e7dfe
-  { name = "rails"; git.rev = "60d92e4e7dfe"; }
   # git: lexxy @ 4f0fc4d5773b
   { name = "lexxy"; git.rev = "4f0fc4d5773b"; }
   # git: useragent @ 433ca320a42d
   { name = "useragent"; git.rev = "433ca320a42d"; }
+  # git: rails @ 60d92e4e7dfe
+  { name = "rails"; git.rev = "60d92e4e7dfe"; }
 ]

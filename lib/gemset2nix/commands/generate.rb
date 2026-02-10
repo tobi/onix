@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require "bundler"
+require "scint/lockfile/parser"
+require "scint/materializer"
 require "json"
 require "fileutils"
 require "pathname"
@@ -528,20 +529,14 @@ module Gemset2Nix
       # ── Git repo derivations ──────────────────────────────────────────
 
       def generate_git_derivations
-        # Parse all gemset files for GIT sources via Bundler
+        # Parse all gemset files for GIT sources via Scint
         repos = {}
+        mat = @project.materializer
         Dir.glob(File.join(@project.gemsets_dir, "*.gemset")).each do |f|
-          lf = @project.parse_lockfile(f)
-          lf.specs.each do |spec|
-            src = spec.source
-            next unless src.is_a?(Bundler::Source::Git)
-
-            base = File.basename(src.uri, ".git")
-            shortrev = src.options["revision"][0, 12]
-            key = "#{base}-#{shortrev}"
-            repo = (repos[key] ||= { uri: src.uri, rev: src.options["revision"], base: base,
-                                      shortrev: shortrev, gems: [] })
-            repo[:gems] << { name: spec.name, version: spec.version.to_s } unless repo[:gems].any? { |g| g[:name] == spec.name }
+          lockdata = @project.parse_lockfile(f)
+          classified = mat.classify(lockdata)
+          classified[:git].each do |key, repo|
+            repos[key] ||= repo
           end
         end
 

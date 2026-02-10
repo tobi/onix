@@ -11,10 +11,10 @@ Gem::Specification.new do |s|
 
   s.required_ruby_version = ">= 3.1"
 
-  s.files         = Dir["lib/**/*.rb", "exe/*", "LICENSE", "README.md"]
+  s.files         = Dir["lib/**/*.rb", "lib/**/*.nix", "exe/*", "LICENSE", "README.md"]
   s.bindir        = "exe"
   s.executables   = ["gemset2nix"]
   s.require_paths = ["lib"]
 
-  s.add_dependency "bundler", ">= 2.0"
+  s.add_dependency "scint", ">= 0.1"
 end

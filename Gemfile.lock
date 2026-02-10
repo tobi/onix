@@ -1,0 +1,25 @@
+PATH
+  remote: ../scint
+  specs:
+    scint (0.9.0)
+
+PATH
+  remote: .
+  specs:
+    gemset2nix (0.5.0)
+      scint (>= 0.1)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+
+PLATFORMS
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  gemset2nix!
+  scint!
+
+BUNDLED WITH
+   2.7.2
