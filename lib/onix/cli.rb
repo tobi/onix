@@ -5,9 +5,7 @@ module Onix
     COMMANDS = {
       "init"     => "Initialize a new project",
       "import"   => "Import gems from Gemfile.lock",
-      "lock"     => "Lock gems with sha256 hashes (nix-native fetch)",
-      "fetch"    => "Download gem sources into cache/",
-      "generate" => "Generate Nix derivations and run checks",
+      "generate" => "Prefetch hashes and generate nix derivations",
       "build"    => "Build gems via Nix",
       "check"    => "Run checks on generated derivations",
     }.freeze
@@ -44,7 +42,7 @@ module Onix
         $stderr.puts "  #{UI.amber(name.ljust(10))} #{desc}"
       end
       $stderr.puts
-      $stderr.puts UI.dim("  Workflow: init → import → fetch → generate → build")
+      $stderr.puts UI.dim("  Workflow: init → import → generate → build")
       $stderr.puts
     end
   end

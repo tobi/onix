@@ -2,345 +2,334 @@
 
 require "scint/lockfile/parser"
 require "scint/materializer"
+require "scint/credentials"
+require "open3"
 require "json"
 require "fileutils"
-require "pathname"
 require "set"
+require "thread"
 
 module Onix
   module Commands
+    # `onix generate` — reads packagesets, prefetches hashes, writes nix files.
+    #
+    # Output:
+    #   nix/ruby/<name>.nix      — per-gem: all known versions + sha256 hashes
+    #   nix/<project>.nix        — per-project: selects gem versions
+    #   nix/build-gem.nix        — generic builder
+    #   nix/gem-config.nix       — overlay loader
+    #
     class Generate
-      include NixWriter
-
-      # Map pkg-config module names to nixpkgs attribute paths.
-      PKG_CONFIG_TO_NIX = {
-        "yaml-0.1"  => "libyaml",
-        "yaml-0"    => "libyaml",
-        "libffi"    => "libffi",
-        "libiconv"  => "libiconv",
-        "openssl"   => "openssl",
-        "zlib"      => "zlib",
-        "libxml-2.0" => "libxml2",
-        "libxslt"   => "libxslt",
-        "libexslt"  => "libxslt",
-        "sqlite3"   => "sqlite",
-        "libcurl"   => "curl",
-        "glib-2.0"  => "glib",
-        "gobject-2.0" => "glib",
-        "gio-2.0"   => "glib",
-        "cairo"     => "cairo",
-        "pangocairo" => "pango",
-        "gdk-pixbuf-2.0" => "gdk-pixbuf",
-        "vips"      => "vips",
-        "MagickWand" => "imagemagick",
-        "libbrotlicommon" => "brotli",
-        "libbrotlidec" => "brotli",
-        "libbrotlienc" => "brotli",
-      }.freeze
-
-      LIBRARY_TO_NIX = {
-        "ssl"       => "openssl",
-        "crypto"    => "openssl",
-        "z"         => "zlib",
-        "zlib"      => "zlib",
-        "xml2"      => "libxml2",
-        "libxml2"   => "libxml2",
-        "xslt"      => "libxslt",
-        "exslt"     => "libxslt",
-        "yaml"      => "libyaml",
-        "libyaml"   => "libyaml",
-        "ffi"       => "libffi",
-        "libffi"    => "libffi",
-        "libffi-8"  => "libffi",
-        "iconv"     => "libiconv",
-        "libiconv"  => "libiconv",
-        "curl"      => "curl",
-        "libcurl"   => "curl",
-        "sqlite3"   => "sqlite",
-        "gmp"       => "gmp",
-        "readline"  => "readline",
-        "ncurses"   => "ncurses",
-        "ncursesw"  => "ncurses",
-        "vips"      => "vips",
-      }.freeze
-
-      C_INCLUDE_TO_NIX = {
-        "openssl" => "openssl",
-        "libxml"  => "libxml2",
-        "libxslt" => "libxslt",
-        "yaml"    => "libyaml",
-        "zlib"    => "zlib",
-        "sqlite3" => "sqlite",
-        "curl"    => "curl",
-        "ffi"     => "libffi",
-        "mysql"   => "libmysqlclient",
-        "glib"    => "glib",
-        "gobject" => "glib",
-        "gio"     => "glib",
-        "cairo"   => "cairo",
-        "pango"   => "pango",
-        "gdk-pixbuf" => "gdk-pixbuf",
-        "vips"    => "vips",
-      }.freeze
-
-      DIR_CONFIG_TO_NIX = {
-        "openssl"    => "openssl",
-        "zlib"       => "zlib",
-        "libyaml"    => "libyaml",
-        "libxml2"    => "libxml2",
-        "libxslt"    => "libxslt",
-        "sqlite3"    => "sqlite",
-        "libffi"     => "libffi",
-        "readline"   => "readline",
-        "ncurses"    => "ncurses",
-        "curl"       => "curl",
-        "iconv"      => "libiconv",
-      }.freeze
-
-      BUILD_TOOL_TO_NIX = {
-        "perl"    => "perl",
-        "python"  => "python3",
-        "python3" => "python3",
-        "cmake"   => "cmake",
-      }.freeze
-
       def run(argv)
         @project = Project.new
-        @meta = @project.load_metadata
-        @overlays = Set.new(@project.overlays)
-        @tpl = NixTemplate.new
+        jobs = (ENV["JOBS"] || "20").to_i
+
+        while argv.first&.start_with?("-")
+          case argv.shift
+          when "-j", "--jobs" then jobs = argv.shift.to_i
+          when "--help", "-h"
+            $stderr.puts "Usage: onix generate [options]"
+            $stderr.puts "  -j, --jobs N    Parallel prefetch jobs (default: 20)"
+            exit 0
+          end
+        end
+
+        packagesets = Dir.glob(File.join(@project.packagesets_dir, "*.gem"))
+        if packagesets.empty?
+          UI.fail "No packagesets found. Run 'onix import' first."
+          exit 1
+        end
 
         UI.header "Generate"
-        UI.info "#{@meta.size} gems in cache #{UI.dim("(#{@overlays.size} overlays)")}"
 
-        generate_derivations
-        generate_selectors
-        generate_git_derivations
-        generate_catalogue
+        credentials = Scint::Credentials.new
+        mat = Scint::Materializer.new(cache_dir: @project.cache_dir)
 
-        $stderr.puts
-        UI.info "Run #{UI.amber("onix check")} to verify"
+        # ── Collect all gems across all projects ─────────────────────
+
+        all_gems = {}      # "name/version" => { name:, version:, source_uri:, platform: }
+        all_git = {}       # "base-shortrev" => repo hash
+        projects = {}      # project_name => classified
+
+        packagesets.each do |f|
+          project_name = File.basename(f, ".gem")
+          lockdata = @project.parse_lockfile(f)
+          credentials.register_lockfile_sources(lockdata.sources)
+          classified = mat.classify(lockdata)
+
+          classified[:rubygems].each do |g|
+            key = "#{g[:name]}/#{g[:version]}"
+            all_gems[key] ||= g
+          end
+          classified[:git].each do |key, repo|
+            all_git[key] ||= repo
+          end
+
+          projects[project_name] = classified
+        end
+
+        rubygem_count = all_gems.size
+        git_gem_count = all_git.values.sum { |r| r[:gems].size }
+        UI.info "#{packagesets.size} packagesets, #{rubygem_count + git_gem_count} unique gems"
+
+        # ── Load existing hashes to skip re-prefetch ─────────────────
+
+        ruby_dir = File.join(@project.root, "nix", "ruby")
+        existing = load_existing_hashes(ruby_dir)
+        UI.info "#{existing.size} existing hashes" if existing.any?
+
+        # ── Prefetch rubygems ────────────────────────────────────────
+
+        new_hashes = {}
+        if all_gems.any?
+          needed = all_gems.values.reject { |g| existing.key?("#{g[:name]}/#{g[:version]}") }
+          cached = all_gems.size - needed.size
+
+          if needed.empty?
+            UI.done "#{all_gems.size} rubygems (all hashes cached)"
+          else
+            progress = UI::Progress.new(all_gems.size, label: "Prefetch")
+            cached.times { progress.advance(skip: true) }
+            errors = prefetch_parallel(needed, jobs, new_hashes, progress)
+            progress.finish
+
+            if errors.any?
+              errors.each { |e| UI.fail e }
+              exit 1
+            end
+          end
+        end
+
+        # ── Prefetch git repos ───────────────────────────────────────
+
+        if all_git.any?
+          progress = UI::Progress.new(all_git.size, label: "Prefetch git")
+          all_git.each_value do |repo|
+            repo_key = "git:#{repo[:uri]}@#{repo[:rev]}"
+            sha256 = existing[repo_key]
+            unless sha256
+              sha256 = nix_prefetch_git(repo[:uri], repo[:rev])
+              unless sha256
+                progress.finish
+                UI.fail "Failed to prefetch #{repo[:uri]} @ #{repo[:rev]}"
+                exit 1
+              end
+            end
+            repo[:sha256] = sha256
+            progress.advance
+          end
+          progress.finish
+        end
+
+        # ── Write nix/ruby/<name>.nix per gem ────────────────────────
+
+        nix_dir = File.join(@project.root, "nix")
+        FileUtils.mkdir_p(ruby_dir)
+
+        # Group by gem name
+        by_name = {}
+        all_gems.each_value do |g|
+          (by_name[g[:name]] ||= []) << {
+            version: g[:version],
+            sha256: existing["#{g[:name]}/#{g[:version]}"] || new_hashes["#{g[:name]}/#{g[:version]}"],
+            source_uri: g[:source_uri]&.chomp("/") || "https://rubygems.org",
+          }
+        end
+        all_git.each_value do |repo|
+          repo[:gems].each do |g|
+            (by_name[g[:name]] ||= []) << {
+              version: g[:version],
+              sha256: repo[:sha256],
+              git: { url: repo[:uri], rev: repo[:rev], fetchSubmodules: repo[:submodules] || false },
+            }
+          end
+        end
+
+        by_name.each { |name, versions| write_gem_nix(ruby_dir, name, versions) }
+        UI.wrote "nix/ruby/ (#{by_name.size} gems)"
+
+        # ── Write per-project nix ────────────────────────────────────
+
+        projects.each { |name, classified| write_project_nix(nix_dir, name, classified) }
+
+        # ── Copy support files ───────────────────────────────────────
+
+        copy_support_files(nix_dir)
+
+        UI.done "#{by_name.size} gems, #{projects.size} projects"
       end
 
       private
 
-      # ── Per-gem derivation ────────────────────────────────────────
+      # ── Existing hash loader ─────────────────────────────────────
 
-      def generate_derivations
-        generated = 0
+      def load_existing_hashes(ruby_dir)
+        hashes = {}
+        return hashes unless Dir.exist?(ruby_dir)
 
-        @meta.each_value do |meta|
-          name    = meta[:name]
-          version = meta[:version]
-          key     = "#{name}-#{version}"
-          source  = File.join(@project.source_dir, key)
-          next unless Dir.exist?(source)
-
-          has_ext = meta[:has_extensions] || !Dir.glob(File.join(source, "ext", "**", "extconf.rb")).empty?
-          require_paths = meta[:require_paths] || ["lib"]
-          executables   = meta[:executables] || []
-          bindir        = meta[:bindir] || "exe"
-
-          verified = require_paths.select { |p| Dir.exist?(File.join(source, p)) }
-          require_paths = verified unless verified.empty?
-
-          gem_dir = File.join(@project.output_dir, name, version)
-          FileUtils.mkdir_p(gem_dir)
-          link = File.join(gem_dir, "source")
-          FileUtils.rm_f(link)
-          FileUtils.ln_s(File.expand_path(source), link)
-
-          has_overlay = @overlays.include?(name)
-          scan = has_ext && !has_overlay ? ExtconfScanner.scan(source) : nil
-          has_auto = scan&.needs_auto_deps?
-          auto_nix_deps = has_auto && scan ? resolve_nix_deps(scan) : []
-          needs_pkgs = has_overlay || (scan && (scan.is_rust || !auto_nix_deps.empty?))
-          has_prebuilt = !has_ext && !Dir.glob(File.join(source, "**", "*.{so,bundle}")).empty?
-
-          # Resolve build gem imports for the let-block
-          gem_path_entries = []
-          if !has_overlay && scan
-            gem_path_entries = resolve_gem_path_entries(scan)
-          end
-
-          nix = @tpl.derivation(
-            name: name, version: version,
-            has_ext: has_ext, has_overlay: has_overlay,
-            scan: scan, has_auto: has_auto, needs_pkgs: needs_pkgs,
-            auto_nix_deps: auto_nix_deps,
-            require_paths: require_paths, executables: executables, bindir: bindir,
-            has_prebuilt: has_prebuilt,
-            auto_build_gems: missing_build_gems(scan),
-            gem_path_entries: gem_path_entries,
-          )
-
-          File.write(File.join(gem_dir, "default.nix"), nix)
-          generated += 1
-        end
-
-        UI.done "#{generated} derivations"
-      end
-
-      # Resolve scanner's build gem deps into let-block import entries.
-      # Returns [{ varname:, import_path: }]
-      def resolve_gem_path_entries(scan)
-        entries = []
-
-        if scan.is_rust
-          rb_sys_dir = File.join(@project.output_dir, "rb_sys")
-          if Dir.exist?(rb_sys_dir)
-            versions = version_dirs(rb_sys_dir)
-            unless versions.empty?
-              entries << { varname: "rb_sys", import_path: "../../rb_sys/#{versions.last}" }
-            end
+        Dir.glob(File.join(ruby_dir, "*.nix")).each do |f|
+          name = File.basename(f, ".nix")
+          content = File.read(f)
+          content.scan(/"([^"]+)"\s*=\s*\{[^}]*sha256\s*=\s*"([^"]+)"/) do |version, sha256|
+            hashes["#{name}/#{version}"] = sha256
           end
         end
-
-        scan.build_gem_deps.reject { |g| g == "rb_sys" }.each do |gdep|
-          gdep_dir = File.join(@project.output_dir, gdep)
-          if Dir.exist?(gdep_dir)
-            versions = version_dirs(gdep_dir)
-            unless versions.empty?
-              entries << { varname: gdep.tr("-", "_"), import_path: "../../#{gdep}/#{versions.last}" }
-            end
-          end
-        end
-
-        entries
+        hashes
       end
 
-      # Resolve all scanner signals into a deduplicated list of nixpkgs attrs.
-      def resolve_nix_deps(scan)
-        nix_deps = Set.new
+      # ── Parallel prefetch ──────────────────────────────────────
 
-        scan.pkg_configs.each { |pc| nix_deps << PKG_CONFIG_TO_NIX[pc] if PKG_CONFIG_TO_NIX[pc] }
-        scan.libraries.each { |lib| nix_pkg = LIBRARY_TO_NIX[lib]; nix_deps << nix_pkg if nix_pkg }
-        scan.dir_configs.each { |dc| nix_pkg = DIR_CONFIG_TO_NIX[dc]; nix_deps << nix_pkg if nix_pkg }
-        scan.c_includes.each { |inc| nix_pkg = C_INCLUDE_TO_NIX[inc]; nix_deps << nix_pkg if nix_pkg }
-        scan.build_tools.each { |tool| nix_pkg = BUILD_TOOL_TO_NIX[tool]; nix_deps << nix_pkg if nix_pkg }
-        has_known_pkg_configs = scan.pkg_configs.any? { |pc| PKG_CONFIG_TO_NIX.key?(pc) }
-        nix_deps << "pkg-config" if has_known_pkg_configs
+      def prefetch_parallel(gems, jobs, hashes, progress)
+        errors = []
+        mutex = Mutex.new
+        queue = Queue.new
+        gems.each { |g| queue << g }
+        jobs.times { queue << nil }
 
-        nix_deps.to_a.sort
-      end
+        threads = jobs.times.map do
+          Thread.new do
+            while (g = queue.pop)
+              name = g[:name]
+              version = g[:version]
+              platform = g[:platform]
+              source_uri = g[:source_uri] || "https://rubygems.org/"
 
-      def missing_build_gems(scan)
-        return [] unless scan
-        scan.build_gem_deps.select { |g| !Dir.exist?(File.join(@project.output_dir, g)) }
-      end
+              slug = platform && platform != "ruby" ? "#{name}-#{version}-#{platform}" : "#{name}-#{version}"
+              url = "#{source_uri.chomp("/")}/gems/#{slug}.gem"
 
-      def version_dirs(dir)
-        Dir.children(dir)
-          .select { |d| d != "default.nix" && File.directory?(File.join(dir, d)) && !d.start_with?("git-") }
-          .sort_by { |v| Gem::Version.new(v) rescue Gem::Version.new("0") }
-      end
+              sha256 = nix_prefetch_url(url)
+              key = "#{name}/#{version}"
 
-      # ── Git repo derivations ──────────────────────────────────────
-
-      def generate_git_derivations
-        repos = {}
-        mat = @project.materializer
-        Dir.glob(File.join(@project.packagesets_dir, "*.gem")).each do |f|
-          lockdata = @project.parse_lockfile(f)
-          classified = mat.classify(lockdata)
-          classified[:git].each { |key, repo| repos[key] ||= repo }
-        end
-
-        return if repos.empty?
-
-        generated = 0
-        repos.each do |repo_key, repo|
-          source_dir = repo[:gems].lazy.map { |g|
-            File.join(@project.source_dir, "#{g[:name]}-#{g[:version]}")
-          }.find { |d| Dir.exist?(d) }
-
-          unless source_dir
-            UI.warn "no source for git repo #{repo_key} (run onix fetch)"
-            next
-          end
-
-          git_dir = File.join(@project.output_dir, repo[:base], "git-#{repo[:shortrev]}")
-          FileUtils.mkdir_p(git_dir)
-          source_link = File.join(git_dir, "source")
-          FileUtils.rm_f(source_link)
-          FileUtils.ln_s(File.expand_path(source_dir), source_link)
-
-          missing_gemspecs = repo[:gems].select do |g|
-            !File.exist?(File.join(source_dir, "#{g[:name]}.gemspec")) &&
-              !File.exist?(File.join(source_dir, g[:name], "#{g[:name]}.gemspec"))
-          end
-
-          nix = @tpl.git_derivation(repo_key: repo_key, repo: repo, missing_gemspecs: missing_gemspecs)
-          File.write(File.join(git_dir, "default.nix"), nix)
-          generated += 1
-
-          patch_git_selector(repo)
-        end
-
-        UI.done "#{generated} git derivations" if generated > 0
-      end
-
-      def patch_git_selector(repo)
-        selector_path = File.join(@project.output_dir, repo[:base], "default.nix")
-
-        if File.exist?(selector_path)
-          selector = File.read(selector_path)
-          rev_line = "    #{repo[:shortrev].inspect} = import ./git-#{repo[:shortrev]} { inherit lib stdenv ruby; };\n"
-          unless selector.include?(repo[:shortrev].inspect)
-            selector.sub!("  gitRevs = {\n", "  gitRevs = {\n#{rev_line}")
-            File.write(selector_path, selector)
-          end
-        else
-          nix = @tpl.git_only_selector(name: repo[:base], shortrev: repo[:shortrev])
-          FileUtils.mkdir_p(File.dirname(selector_path))
-          File.write(selector_path, nix)
-          @gems_by_name[repo[:base]] ||= { versions: [], needs_pkgs: false }
-        end
-      end
-
-      # ── Selectors ─────────────────────────────────────────────────
-
-      def generate_selectors
-        @gems_by_name = {}
-        @gems_needing_pkgs = Set.new(@overlays)
-
-        @meta.each_value do |meta|
-          name = meta[:name]
-          version = meta[:version]
-          source = File.join(@project.source_dir, "#{name}-#{version}")
-          next unless Dir.exist?(source)
-
-          info = (@gems_by_name[name] ||= { versions: [], needs_pkgs: @overlays.include?(name) })
-          info[:versions] << version
-
-          unless info[:needs_pkgs]
-            has_ext = meta[:has_extensions] || !Dir.glob(File.join(source, "ext", "**", "extconf.rb")).empty?
-            if has_ext
-              scan = ExtconfScanner.scan(source)
-              if scan.needs_auto_deps? && !resolve_nix_deps(scan).empty?
-                info[:needs_pkgs] = true
-                @gems_needing_pkgs << name
+              mutex.synchronize do
+                if sha256
+                  hashes[key] = sha256
+                  progress.advance
+                else
+                  errors << "Failed to prefetch #{name} #{version} from #{url}"
+                  progress.advance(success: false)
+                end
               end
             end
           end
         end
-
-        @gems_by_name.each do |name, info|
-          versions = info[:versions].sort_by { |v| Gem::Version.new(v) }
-          nix = @tpl.selector(name: name, versions: versions, needs_pkgs: info[:needs_pkgs])
-          File.write(File.join(@project.output_dir, name, "default.nix"), nix)
-        end
-
-        UI.done "#{@gems_by_name.size} selectors"
+        threads.each(&:join)
+        errors
       end
 
-      # ── Catalogue ─────────────────────────────────────────────────
+      def nix_prefetch_url(url)
+        out, status = Open3.capture2("nix-prefetch-url", "--type", "sha256", url,
+                                     err: File::NULL)
+        status.success? ? out.strip : nil
+      end
 
-      def generate_catalogue
-        nix = @tpl.catalogue(gem_names: @gems_by_name.keys)
-        FileUtils.mkdir_p(@project.modules_dir)
-        File.write(File.join(@project.modules_dir, "gem.nix"), nix)
-        UI.wrote "nix/modules/gem.nix"
+      def nix_prefetch_git(url, rev)
+        out, status = Open3.capture2("nix-prefetch-git", "--url", url, "--rev", rev,
+                                     "--quiet", err: File::NULL)
+        return nil unless status.success?
+        JSON.parse(out)["sha256"]
+      rescue
+        nil
+      end
+
+      # ── Writers ────────────────────────────────────────────────
+
+      def write_gem_nix(dir, name, versions)
+        nix = +"# #{name} — all known versions. Generated by onix generate.\n"
+        nix << "{\n"
+
+        versions.sort_by { |v| Gem::Version.new(v[:version]) rescue Gem::Version.new("0") }.each do |v|
+          nix << "  #{nix_str v[:version]} = {\n"
+          nix << "    version = #{nix_str v[:version]};\n"
+          nix << "    source = {\n"
+
+          if v[:git]
+            nix << "      type = \"git\";\n"
+            nix << "      url = #{nix_str v[:git][:url]};\n"
+            nix << "      rev = #{nix_str v[:git][:rev]};\n"
+            nix << "      sha256 = #{nix_str v[:sha256]};\n"
+            nix << "      fetchSubmodules = #{v[:git][:fetchSubmodules]};\n"
+          else
+            nix << "      type = \"gem\";\n"
+            nix << "      remotes = [ #{nix_str v[:source_uri]} ];\n"
+            nix << "      sha256 = #{nix_str v[:sha256]};\n"
+          end
+
+          nix << "    };\n"
+          nix << "  };\n"
+        end
+
+        nix << "}\n"
+        File.write(File.join(dir, "#{name}.nix"), nix)
+      end
+
+      def write_project_nix(dir, project_name, classified)
+        gems = classified[:rubygems].map { |g| { name: g[:name], version: g[:version] } }
+        classified[:git].each_value do |repo|
+          repo[:gems].each { |g| gems << { name: g[:name], version: g[:version] } }
+        end
+
+        nix = +"# #{project_name} — generated by onix generate. Do not edit.\n"
+        nix << "{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:\n"
+        nix << "let\n"
+        nix << "  buildGem = import ./build-gem.nix { inherit pkgs ruby; };\n"
+        nix << "  gemConfig = import ./gem-config.nix { inherit pkgs ruby; overlayDir = ../overlays; };\n"
+        nix << "\n"
+        nix << "  build = name: version:\n"
+        nix << "    let\n"
+        nix << "      versions = import (./ruby + \"/\${name}.nix\");\n"
+        nix << "      spec = versions.${version};\n"
+        nix << "      config = gemConfig.${name} or {};\n"
+        nix << "    in buildGem (spec // {\n"
+        nix << "      gemName = name;\n"
+        nix << "      nativeBuildInputs = config.deps or [];\n"
+        nix << "      extconfFlags = config.extconfFlags or \"\";\n"
+        nix << "      beforeBuild = config.beforeBuild or \"\";\n"
+        nix << "      afterBuild = config.afterBuild or \"\";\n"
+        nix << "    } // (if config ? buildPhase then { inherit (config) buildPhase; } else {})\n"
+        nix << "      // (if config ? postInstall then { inherit (config) postInstall; } else {})\n"
+        nix << "      // (if config ? skip then { inherit (config) skip; } else {}));\n"
+        nix << "\n"
+        nix << "  gems = {\n"
+        gems.sort_by { |g| g[:name] }.each do |g|
+          nix << "    #{nix_key(g[:name])} = build #{nix_str g[:name]} #{nix_str g[:version]};\n"
+        end
+        nix << "  };\n"
+        nix << "\n"
+        nix << "  bundlePath = pkgs.buildEnv {\n"
+        nix << "    name = #{nix_str "#{project_name}-bundle"};\n"
+        nix << "    paths = builtins.attrValues gems;\n"
+        nix << "  };\n"
+        nix << "in gems // {\n"
+        nix << "  inherit bundlePath;\n"
+        nix << "  devShell = { buildInputs ? [], shellHook ? \"\", ... }@args:\n"
+        nix << "    pkgs.mkShell (builtins.removeAttrs args [\"buildInputs\" \"shellHook\"] // {\n"
+        nix << "      name = #{nix_str "#{project_name}-devshell"};\n"
+        nix << "      buildInputs = [ ruby ] ++ buildInputs;\n"
+        nix << "      shellHook = ''\n"
+        nix << "        export BUNDLE_PATH=\"${bundlePath}\"\n"
+        nix << "        export BUNDLE_GEMFILE=\"''${BUNDLE_GEMFILE:-$PWD/Gemfile}\"\n"
+        nix << "      '' + shellHook;\n"
+        nix << "    });\n"
+        nix << "}\n"
+
+        File.write(File.join(dir, "#{project_name}.nix"), nix)
+        UI.wrote "nix/#{project_name}.nix"
+      end
+
+      def copy_support_files(dir)
+        data_dir = File.expand_path("../data", __dir__)
+        %w[build-gem.nix gem-config.nix].each do |f|
+          FileUtils.cp(File.join(data_dir, f), File.join(dir, f))
+        end
+        UI.wrote "nix/build-gem.nix, nix/gem-config.nix"
+      end
+
+      def nix_key(name)
+        name =~ /^[a-zA-Z_][a-zA-Z0-9_]*$/ ? name : "\"#{name}\""
+      end
+
+      def nix_str(s)
+        "\"#{s}\""
       end
     end
   end
