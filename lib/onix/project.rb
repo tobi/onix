@@ -1,11 +1,7 @@
 # frozen_string_literal: true
 
-require "scint"
-require "scint/lockfile/parser"
-require "scint/materializer"
-
 module Onix
-  # Represents a onix project directory — knows all the paths.
+  # Represents an onix project directory — knows all the paths.
   class Project
     attr_reader :root
 
@@ -13,15 +9,9 @@ module Onix
       @root = File.expand_path(root)
     end
 
-    def cache_dir      = File.join(root, "cache")
-    def source_dir     = File.join(cache_dir, "sources")
-    def meta_dir       = File.join(cache_dir, "meta")
-    def gem_cache_dir  = File.join(cache_dir, "gems")
-    def git_clones_dir = File.join(cache_dir, "git-clones")
-    def overlays_dir   = File.join(root, "overlays")
-    def output_dir     = File.join(root, "nix", "gem")
-    def app_dir        = File.join(root, "nix", "app")
-    def modules_dir    = File.join(root, "nix", "modules")
+    def nix_dir         = File.join(root, "nix")
+    def ruby_dir        = File.join(nix_dir, "ruby")
+    def overlays_dir    = File.join(root, "overlays")
     def packagesets_dir = File.join(root, "packagesets")
 
     # All overlay names (without .nix extension)
@@ -37,25 +27,14 @@ module Onix
       overlays.include?(name)
     end
 
-    # Parse a Gemfile.lock / .gem packageset file via Scint's lockfile parser.
-    # Returns a Scint::Lockfile::LockfileData with .specs, .sources, etc.
-    def parse_lockfile(path)
-      Scint::Lockfile::Parser.parse(path)
-    end
-
-    # Get a Materializer for this project's cache directory.
-    def materializer
-      @materializer ||= Scint::Materializer.new(cache_dir: cache_dir)
-    end
-
-    # Load all gem metadata from cache
-    def load_metadata
-      materializer.all_metadata
+    # All packageset names (without .jsonl extension)
+    def packageset_names
+      Dir.glob(File.join(packagesets_dir, "*.jsonl")).map { |f| File.basename(f, ".jsonl") }.sort
     end
 
     # Check if project is initialized
     def initialized?
-      Dir.exist?(cache_dir) && Dir.exist?(File.join(root, "nix"))
+      Dir.exist?(nix_dir) && Dir.exist?(packagesets_dir)
     end
   end
 end
