@@ -4,6 +4,8 @@ require "bundler"
 require "etc"
 require "json"
 require "open3"
+require "tmpdir"
+require "open3"
 
 module Gemset2Nix
   module Commands
@@ -176,77 +178,54 @@ module Gemset2Nix
 
       # ── secrets ──────────────────────────────────────────────────
 
-      SECRETS_PATTERNS = {
-        "Private key" => /-----BEGIN (RSA |DSA |EC |OPENSSH )?PRIVATE KEY-----/,
-        "AWS key" => /(?<![A-Z0-9])AKIA[0-9A-Z]{16}(?![A-Z0-9])/,
-        "GitHub token" => /(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{36,}/,
-        "GitLab token" => /glpat-[A-Za-z0-9\-_]{20,}/,
-        "Slack webhook" => %r{https://hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[A-Za-z0-9]+},
-        "Password in URL" => %r{://[^/\s]+:[^@/\s]{8,}@[^/\s]+},
-      }.freeze
-
-      SECRETS_PATH_SKIP = %r{/spec/fixtures/|/test/fixtures/|/node_modules/|/ext/openssl/|README\.md$|CHANGELOG\.md$|tests/lint/}
-
-      SECRETS_CONTENT_SKIP = /EXAMPLE|example\.com|placeholder|changeme|xxxx|your[_-]?secret/i
-
       def check_secrets
-        findings = 0
-
-        # Scan repo files
-        %w[lib exe overlays].each do |d|
-          dir = File.join(@project.root, d)
-          next unless Dir.exist?(dir)
-          findings += scan_secrets_dir(dir)
+        gitleaks = find_gitleaks
+        unless gitleaks
+          return [true, "skipped — install gitleaks to enable (nix-shell -p gitleaks)"]
         end
 
-        # Scan gem sources (threaded)
-        source_dirs = Dir.glob(File.join(@project.output_dir, "*", "*", "source"))
-        mutex = Mutex.new
-        source_dirs.each_slice(50).flat_map do |batch|
-          batch.map do |d|
-            Thread.new do
-              next unless Dir.exist?(d)
-              n = scan_secrets_dir(d, gem_source: true)
-              mutex.synchronize { findings += n }
-            end
-          end
-        end.each(&:join)
+        # Scan repo-owned files only (overlays, nix derivations) — not upstream gem sources.
+        # Gem sources are third-party code full of test keys and crypto fixtures.
+        scan_dirs = %w[overlays nix].filter_map do |d|
+          dir = File.join(@project.root, d)
+          Dir.exist?(dir) ? dir : nil
+        end
+        return [true, "no directories to scan"] if scan_dirs.empty?
 
-        if findings > 0
-          [false, "#{findings} potential secrets found"]
+        report = File.join(Dir.tmpdir, "gitleaks-#{$$}.json")
+        all_findings = []
+
+        scan_dirs.each do |dir|
+          cmd = [gitleaks, "detect", "--source", dir,
+                 "--no-git", "--report-format", "json", "--report-path", report,
+                 "--exit-code", "0"]
+          _out, status = Open3.capture2e(*cmd)
+
+          unless status.success?
+            return [false, "gitleaks failed to run on #{dir}"]
+          end
+
+          if File.exist?(report)
+            results = JSON.parse(File.read(report))
+            # Skip findings inside source/ symlinks (upstream gem code)
+            results.reject! { |f| f["File"].include?("/source/") }
+            all_findings.concat(results)
+            File.delete(report) rescue nil
+          end
+        end
+
+        if all_findings.empty?
+          [true, "clean"]
         else
-          gem_count = source_dirs.count { |d| Dir.exist?(d) }
-          [true, "repo + #{gem_count} gem sources clean"]
+          [false, "#{all_findings.size} potential secrets found", all_findings.map { |f|
+            "#{f["File"].sub(@project.root + "/", "")}:#{f["StartLine"]}: #{f["RuleID"]}"
+          }]
         end
       end
 
-      def scan_secrets_dir(dir, gem_source: false)
-        findings = 0
-        Dir.glob(File.join(dir, "**", "*")).each do |path|
-          next unless File.file?(path)
-          next if File.size(path) > 1_048_576
-          next if path.include?("/.git/")
-          rel = path.sub(@project.root + "/", "")
-          next if gem_source && SECRETS_PATH_SKIP.match?(rel)
-
-          begin
-            content = File.binread(path)
-          rescue
-            next
-          end
-          next if content[0..512]&.include?("\x00")
-          content.force_encoding("UTF-8")
-          content.encode!("UTF-8", invalid: :replace, undef: :replace, replace: "")
-
-          content.each_line do |line|
-            SECRETS_PATTERNS.each do |_, re|
-              next unless re.match?(line)
-              next if gem_source && SECRETS_CONTENT_SKIP.match?(line)
-              findings += 1
-            end
-          end
-        end
-        findings
+      def find_gitleaks
+        path = `which gitleaks 2>/dev/null`.strip
+        path.empty? ? nil : path
       end
 
       # ── dep-completeness ─────────────────────────────────────────

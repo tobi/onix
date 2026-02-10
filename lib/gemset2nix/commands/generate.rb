@@ -408,7 +408,7 @@ module Gemset2Nix
           unless missing_gems.empty?
             nix << "    # Auto-install build-time gem deps not in the gemset\n"
             nix << "    export GEM_HOME=\"$TMPDIR/gems\"\n"
-            nix << "    export GEM_PATH=\"$GEM_HOME${GEM_PATH:+:$GEM_PATH}\"\n"
+            nix << "    export GEM_PATH=\"$GEM_HOME''${GEM_PATH:+:$GEM_PATH}\"\n"
             missing_gems.each do |g|
               nix << "    ${ruby}/bin/gem install #{g} --no-document --install-dir \"$GEM_HOME\" 2>/dev/null || true\n"
             end
