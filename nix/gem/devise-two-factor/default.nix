@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # devise-two-factor
 #
-# Available versions:
-#   6.1.0
-#   6.3.0
-#   6.3.1
-#   6.4.0
-#
-# Usage:
-#   devise-two-factor { version = "6.4.0"; }
-#   devise-two-factor { }  # latest (6.4.0)
+# Versions: 6.1.0, 6.3.0, 6.3.1, 6.4.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "devise-two-factor: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "devise-two-factor: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "devise-two-factor: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "devise-two-factor: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # aws-sdk-personalizeevents
 #
-# Available versions:
-#   1.71.0
-#   1.72.0
-#   1.73.0
-#
-# Usage:
-#   aws-sdk-personalizeevents { version = "1.73.0"; }
-#   aws-sdk-personalizeevents { }  # latest (1.73.0)
+# Versions: 1.71.0, 1.72.0, 1.73.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "aws-sdk-personalizeevents: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "aws-sdk-personalizeevents: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "aws-sdk-personalizeevents: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "aws-sdk-personalizeevents: unknown version '${version}'")

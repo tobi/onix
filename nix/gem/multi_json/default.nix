@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # multi_json
 #
-# Available versions:
-#   1.15.0
-#   1.18.0
-#   1.19.0
-#   1.19.1
-#
-# Usage:
-#   multi_json { version = "1.19.1"; }
-#   multi_json { }  # latest (1.19.1)
+# Versions: 1.15.0, 1.18.0, 1.19.0, 1.19.1
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "multi_json: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "multi_json: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "multi_json: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "multi_json: unknown version '${version}'")

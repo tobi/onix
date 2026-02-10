@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # bullet
 #
-# Available versions:
-#   7.1.6
-#   8.0.7
-#   8.0.8
-#   8.1.0
-#
-# Usage:
-#   bullet { version = "8.1.0"; }
-#   bullet { }  # latest (8.1.0)
+# Versions: 7.1.6, 8.0.7, 8.0.8, 8.1.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "bullet: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "bullet: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "bullet: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "bullet: unknown version '${version}'")

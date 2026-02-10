@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # aws-sdk-servicecatalog
 #
-# Available versions:
-#   1.124.0
-#   1.125.0
-#   1.126.0
-#
-# Usage:
-#   aws-sdk-servicecatalog { version = "1.126.0"; }
-#   aws-sdk-servicecatalog { }  # latest (1.126.0)
+# Versions: 1.124.0, 1.125.0, 1.126.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "aws-sdk-servicecatalog: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "aws-sdk-servicecatalog: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "aws-sdk-servicecatalog: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "aws-sdk-servicecatalog: unknown version '${version}'")

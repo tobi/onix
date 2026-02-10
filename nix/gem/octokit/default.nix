@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # octokit
 #
-# Available versions:
-#   5.6.1
-#   7.2.0
-#   9.1.0
-#   9.2.0
-#   10.0.0
-#
-# Usage:
-#   octokit { version = "10.0.0"; }
-#   octokit { }  # latest (10.0.0)
+# Versions: 5.6.1, 7.2.0, 9.1.0, 9.2.0, 10.0.0
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "octokit: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "octokit: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "octokit: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "octokit: unknown version '${version}'")

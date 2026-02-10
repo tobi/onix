@@ -1,17 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # annotaterb
 #
-# Available versions:
-#   4.20.0
-#   4.21.0
-#
-# Usage:
-#   annotaterb { version = "4.21.0"; }
-#   annotaterb { }  # latest (4.21.0)
+# Versions: 4.20.0, 4.21.0
 #
 {
   lib,
@@ -32,7 +26,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "annotaterb: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "annotaterb: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "annotaterb: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "annotaterb: unknown version '${version}'")

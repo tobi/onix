@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # action_text-trix
 #
-# Available versions:
-#   2.1.16
-#
-# Usage:
-#   action_text-trix { version = "2.1.16"; }
-#   action_text-trix { }  # latest (2.1.16)
+# Versions: 2.1.16
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "action_text-trix: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "action_text-trix: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "action_text-trix: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "action_text-trix: unknown version '${version}'")

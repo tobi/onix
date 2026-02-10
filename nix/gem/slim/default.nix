@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # slim
 #
-# Available versions:
-#   5.1.1
-#   5.2.0
-#   5.2.1
-#
-# Usage:
-#   slim { version = "5.2.1"; }
-#   slim { }  # latest (5.2.1)
+# Versions: 5.1.1, 5.2.0, 5.2.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "slim: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "slim: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "slim: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "slim: unknown version '${version}'")

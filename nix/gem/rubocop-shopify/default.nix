@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rubocop-shopify
 #
-# Available versions:
-#   2.18.0
-#
-# Usage:
-#   rubocop-shopify { version = "2.18.0"; }
-#   rubocop-shopify { }  # latest (2.18.0)
+# Versions: 2.18.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rubocop-shopify: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rubocop-shopify: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rubocop-shopify: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rubocop-shopify: unknown version '${version}'")

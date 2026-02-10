@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # json-ld-preloaded
 #
-# Available versions:
-#   3.3.2
-#
-# Usage:
-#   json-ld-preloaded { version = "3.3.2"; }
-#   json-ld-preloaded { }  # latest (3.3.2)
+# Versions: 3.3.2
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "json-ld-preloaded: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "json-ld-preloaded: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "json-ld-preloaded: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "json-ld-preloaded: unknown version '${version}'")

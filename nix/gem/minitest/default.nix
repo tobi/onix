@@ -1,21 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # minitest
 #
-# Available versions:
-#   5.25.4
-#   5.25.5
-#   5.26.2
-#   5.27.0
-#   6.0.0
-#   6.0.1
-#
-# Usage:
-#   minitest { version = "6.0.1"; }
-#   minitest { }  # latest (6.0.1)
+# Versions: 5.25.4, 5.25.5, 5.26.2, 5.27.0, 6.0.0, 6.0.1
 #
 {
   lib,
@@ -40,7 +30,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "minitest: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "minitest: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "minitest: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "minitest: unknown version '${version}'")

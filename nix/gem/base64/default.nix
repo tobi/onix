@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # base64
 #
-# Available versions:
-#   0.1.2
-#   0.2.0
-#   0.3.0
-#
-# Usage:
-#   base64 { version = "0.3.0"; }
-#   base64 { }  # latest (0.3.0)
+# Versions: 0.1.2, 0.2.0, 0.3.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "base64: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "base64: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "base64: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "base64: unknown version '${version}'")

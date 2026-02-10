@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # haikunator
 #
-# Available versions:
-#   1.1.1
-#
-# Usage:
-#   haikunator { version = "1.1.1"; }
-#   haikunator { }  # latest (1.1.1)
+# Versions: 1.1.1
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "haikunator: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "haikunator: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "haikunator: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "haikunator: unknown version '${version}'")

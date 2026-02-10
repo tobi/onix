@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rubocop-performance
 #
-# Available versions:
-#   1.21.0
-#   1.24.0
-#   1.25.0
-#   1.26.0
-#   1.26.1
-#
-# Usage:
-#   rubocop-performance { version = "1.26.1"; }
-#   rubocop-performance { }  # latest (1.26.1)
+# Versions: 1.21.0, 1.24.0, 1.25.0, 1.26.0, 1.26.1
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rubocop-performance: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rubocop-performance: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rubocop-performance: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rubocop-performance: unknown version '${version}'")

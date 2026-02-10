@@ -1,21 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # aws-sdk-sns
 #
-# Available versions:
-#   1.70.0
-#   1.92.0
-#   1.96.0
-#   1.110.0
-#   1.111.0
-#   1.112.0
-#
-# Usage:
-#   aws-sdk-sns { version = "1.112.0"; }
-#   aws-sdk-sns { }  # latest (1.112.0)
+# Versions: 1.70.0, 1.92.0, 1.96.0, 1.110.0, 1.111.0, 1.112.0
 #
 {
   lib,
@@ -40,7 +30,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "aws-sdk-sns: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "aws-sdk-sns: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "aws-sdk-sns: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "aws-sdk-sns: unknown version '${version}'")

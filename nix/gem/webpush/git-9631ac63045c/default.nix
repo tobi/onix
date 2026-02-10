@@ -1,7 +1,7 @@
 #
-# ╔═══════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/import to refresh ║
-# ╚═══════════════════════════════════════════════════════╝
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run gemset2nix import to regen  ║
+# ╚══════════════════════════════════════════════════════════════╝
 #
 # Git: webpush @ 9631ac63045c
 # URI: https://github.com/mastodon/webpush.git
@@ -30,8 +30,8 @@ stdenv.mkDerivation {
   passthru = { inherit bundle_path; };
 
   installPhase = ''
-    local dest=$out/${bundle_path}/bundler/gems/webpush-9631ac63045c
-    mkdir -p $dest
-    cp -r . $dest/
+        local dest=$out/${bundle_path}/bundler/gems/webpush-9631ac63045c
+        mkdir -p $dest
+        cp -r . $dest/
   '';
 }

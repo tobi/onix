@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # fastimage
 #
-# Available versions:
-#   2.3.0
-#   2.3.1
-#   2.4.0
-#
-# Usage:
-#   fastimage { version = "2.4.0"; }
-#   fastimage { }  # latest (2.4.0)
+# Versions: 2.3.0, 2.3.1, 2.4.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "fastimage: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "fastimage: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "fastimage: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "fastimage: unknown version '${version}'")

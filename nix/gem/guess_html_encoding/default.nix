@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # guess_html_encoding
 #
-# Available versions:
-#   0.0.11
-#
-# Usage:
-#   guess_html_encoding { version = "0.0.11"; }
-#   guess_html_encoding { }  # latest (0.0.11)
+# Versions: 0.0.11
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "guess_html_encoding: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "guess_html_encoding: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "guess_html_encoding: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "guess_html_encoding: unknown version '${version}'")

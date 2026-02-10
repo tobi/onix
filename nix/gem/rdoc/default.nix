@@ -1,21 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rdoc
 #
-# Available versions:
-#   6.6.3.1
-#   6.15.0
-#   6.17.0
-#   7.0.2
-#   7.0.3
-#   7.1.0
-#
-# Usage:
-#   rdoc { version = "7.1.0"; }
-#   rdoc { }  # latest (7.1.0)
+# Versions: 6.6.3.1, 6.15.0, 6.17.0, 7.0.2, 7.0.3, 7.1.0
 #
 {
   lib,
@@ -40,7 +30,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rdoc: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rdoc: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rdoc: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rdoc: unknown version '${version}'")

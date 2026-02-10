@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # turbolinks-source
 #
-# Available versions:
-#   5.0.3
-#   5.1.0
-#   5.2.0
-#
-# Usage:
-#   turbolinks-source { version = "5.2.0"; }
-#   turbolinks-source { }  # latest (5.2.0)
+# Versions: 5.0.3, 5.1.0, 5.2.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "turbolinks-source: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "turbolinks-source: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "turbolinks-source: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "turbolinks-source: unknown version '${version}'")

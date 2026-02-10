@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # ethon
 #
-# Available versions:
-#   0.16.0
-#   0.17.0
-#   0.18.0
-#
-# Usage:
-#   ethon { version = "0.18.0"; }
-#   ethon { }  # latest (0.18.0)
+# Versions: 0.16.0, 0.17.0, 0.18.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "ethon: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "ethon: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "ethon: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "ethon: unknown version '${version}'")

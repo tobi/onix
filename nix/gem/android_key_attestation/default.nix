@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # android_key_attestation
 #
-# Available versions:
-#   0.3.0
-#
-# Usage:
-#   android_key_attestation { version = "0.3.0"; }
-#   android_key_attestation { }  # latest (0.3.0)
+# Versions: 0.3.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "android_key_attestation: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "android_key_attestation: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "android_key_attestation: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "android_key_attestation: unknown version '${version}'")

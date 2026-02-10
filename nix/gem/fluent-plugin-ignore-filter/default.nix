@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # fluent-plugin-ignore-filter
 #
-# Available versions:
-#   1.0.0
-#   1.1.0
-#   2.0.0
-#
-# Usage:
-#   fluent-plugin-ignore-filter { version = "2.0.0"; }
-#   fluent-plugin-ignore-filter { }  # latest (2.0.0)
+# Versions: 1.0.0, 1.1.0, 2.0.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "fluent-plugin-ignore-filter: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "fluent-plugin-ignore-filter: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "fluent-plugin-ignore-filter: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "fluent-plugin-ignore-filter: unknown version '${version}'")

@@ -1,7 +1,7 @@
 #
-# ╔═══════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/import to refresh ║
-# ╚═══════════════════════════════════════════════════════╝
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run gemset2nix import to regen  ║
+# ╚══════════════════════════════════════════════════════════════╝
 #
 # Git: rails @ 60d92e4e7dfe
 # URI: https://github.com/rails/rails.git
@@ -30,8 +30,8 @@ stdenv.mkDerivation {
   passthru = { inherit bundle_path; };
 
   installPhase = ''
-    local dest=$out/${bundle_path}/bundler/gems/rails-60d92e4e7dfe
-    mkdir -p $dest
-    cp -r . $dest/
+        local dest=$out/${bundle_path}/bundler/gems/rails-60d92e4e7dfe
+        mkdir -p $dest
+        cp -r . $dest/
   '';
 }

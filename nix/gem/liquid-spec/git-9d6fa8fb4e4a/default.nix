@@ -1,7 +1,7 @@
 #
-# ╔═══════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/import to refresh ║
-# ╚═══════════════════════════════════════════════════════╝
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run gemset2nix import to regen  ║
+# ╚══════════════════════════════════════════════════════════════╝
 #
 # Git: liquid-spec @ 9d6fa8fb4e4a
 # URI: https://github.com/Shopify/liquid-spec.git
@@ -30,8 +30,8 @@ stdenv.mkDerivation {
   passthru = { inherit bundle_path; };
 
   installPhase = ''
-    local dest=$out/${bundle_path}/bundler/gems/liquid-spec-9d6fa8fb4e4a
-    mkdir -p $dest
-    cp -r . $dest/
+        local dest=$out/${bundle_path}/bundler/gems/liquid-spec-9d6fa8fb4e4a
+        mkdir -p $dest
+        cp -r . $dest/
   '';
 }

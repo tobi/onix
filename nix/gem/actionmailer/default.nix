@@ -1,22 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # actionmailer
 #
-# Available versions:
-#   7.0.8.7
-#   7.1.5.2
-#   8.0.3
-#   8.0.4
-#   8.1.0
-#   8.1.1
-#   8.1.2
-#
-# Usage:
-#   actionmailer { version = "8.1.2"; }
-#   actionmailer { }  # latest (8.1.2)
+# Versions: 7.0.8.7, 7.1.5.2, 8.0.3, 8.0.4, 8.1.0, 8.1.1, 8.1.2
 #
 {
   lib,
@@ -42,7 +31,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "actionmailer: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "actionmailer: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "actionmailer: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "actionmailer: unknown version '${version}'")

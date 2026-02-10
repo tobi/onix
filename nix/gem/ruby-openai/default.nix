@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # ruby-openai
 #
-# Available versions:
-#   7.3.1
-#
-# Usage:
-#   ruby-openai { version = "7.3.1"; }
-#   ruby-openai { }  # latest (7.3.1)
+# Versions: 7.3.1
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "ruby-openai: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "ruby-openai: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "ruby-openai: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "ruby-openai: unknown version '${version}'")

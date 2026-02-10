@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # e2mmap
 #
-# Available versions:
-#   0.1.0
-#
-# Usage:
-#   e2mmap { version = "0.1.0"; }
-#   e2mmap { }  # latest (0.1.0)
+# Versions: 0.1.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "e2mmap: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "e2mmap: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "e2mmap: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "e2mmap: unknown version '${version}'")

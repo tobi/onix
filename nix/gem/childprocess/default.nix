@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # childprocess
 #
-# Available versions:
-#   4.1.0
-#   5.0.0
-#   5.1.0
-#
-# Usage:
-#   childprocess { version = "5.1.0"; }
-#   childprocess { }  # latest (5.1.0)
+# Versions: 4.1.0, 5.0.0, 5.1.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "childprocess: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "childprocess: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "childprocess: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "childprocess: unknown version '${version}'")

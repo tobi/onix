@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # naturally
 #
-# Available versions:
-#   2.2.1
-#   2.2.2
-#   2.3.0
-#
-# Usage:
-#   naturally { version = "2.3.0"; }
-#   naturally { }  # latest (2.3.0)
+# Versions: 2.2.1, 2.2.2, 2.3.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "naturally: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "naturally: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "naturally: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "naturally: unknown version '${version}'")

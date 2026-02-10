@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rubocop-discourse
 #
-# Available versions:
-#   3.13.3
-#
-# Usage:
-#   rubocop-discourse { version = "3.13.3"; }
-#   rubocop-discourse { }  # latest (3.13.3)
+# Versions: 3.13.3
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rubocop-discourse: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rubocop-discourse: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rubocop-discourse: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rubocop-discourse: unknown version '${version}'")

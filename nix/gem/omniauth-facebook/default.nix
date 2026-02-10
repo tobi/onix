@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # omniauth-facebook
 #
-# Available versions:
-#   8.0.0
-#   9.0.0
-#   10.0.0
-#
-# Usage:
-#   omniauth-facebook { version = "10.0.0"; }
-#   omniauth-facebook { }  # latest (10.0.0)
+# Versions: 8.0.0, 9.0.0, 10.0.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "omniauth-facebook: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "omniauth-facebook: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "omniauth-facebook: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "omniauth-facebook: unknown version '${version}'")

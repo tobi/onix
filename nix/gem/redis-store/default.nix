@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # redis-store
 #
-# Available versions:
-#   1.9.2
-#   1.10.0
-#   1.11.0
-#
-# Usage:
-#   redis-store { version = "1.11.0"; }
-#   redis-store { }  # latest (1.11.0)
+# Versions: 1.9.2, 1.10.0, 1.11.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "redis-store: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "redis-store: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "redis-store: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "redis-store: unknown version '${version}'")

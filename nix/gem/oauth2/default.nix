@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # oauth2
 #
-# Available versions:
-#   1.4.11
-#   2.0.9
-#   2.0.16
-#   2.0.17
-#   2.0.18
-#
-# Usage:
-#   oauth2 { version = "2.0.18"; }
-#   oauth2 { }  # latest (2.0.18)
+# Versions: 1.4.11, 2.0.9, 2.0.16, 2.0.17, 2.0.18
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "oauth2: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "oauth2: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "oauth2: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "oauth2: unknown version '${version}'")

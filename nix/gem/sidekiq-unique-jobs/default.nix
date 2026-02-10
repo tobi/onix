@@ -1,17 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # sidekiq-unique-jobs
 #
-# Available versions:
-#   7.1.33
-#   8.0.13
-#
-# Usage:
-#   sidekiq-unique-jobs { version = "8.0.13"; }
-#   sidekiq-unique-jobs { }  # latest (8.0.13)
+# Versions: 7.1.33, 8.0.13
 #
 {
   lib,
@@ -32,7 +26,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "sidekiq-unique-jobs: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "sidekiq-unique-jobs: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "sidekiq-unique-jobs: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "sidekiq-unique-jobs: unknown version '${version}'")

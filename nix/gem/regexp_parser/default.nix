@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # regexp_parser
 #
-# Available versions:
-#   2.9.0
-#   2.10.0
-#   2.11.1
-#   2.11.2
-#   2.11.3
-#
-# Usage:
-#   regexp_parser { version = "2.11.3"; }
-#   regexp_parser { }  # latest (2.11.3)
+# Versions: 2.9.0, 2.10.0, 2.11.1, 2.11.2, 2.11.3
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "regexp_parser: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "regexp_parser: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "regexp_parser: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "regexp_parser: unknown version '${version}'")

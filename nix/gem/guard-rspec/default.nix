@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # guard-rspec
 #
-# Available versions:
-#   4.7.1
-#   4.7.2
-#   4.7.3
-#
-# Usage:
-#   guard-rspec { version = "4.7.3"; }
-#   guard-rspec { }  # latest (4.7.3)
+# Versions: 4.7.1, 4.7.2, 4.7.3
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "guard-rspec: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "guard-rspec: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "guard-rspec: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "guard-rspec: unknown version '${version}'")

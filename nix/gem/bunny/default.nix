@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # bunny
 #
-# Available versions:
-#   2.22.0
-#   2.23.0
-#   2.24.0
-#
-# Usage:
-#   bunny { version = "2.24.0"; }
-#   bunny { }  # latest (2.24.0)
+# Versions: 2.22.0, 2.23.0, 2.24.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "bunny: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "bunny: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "bunny: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "bunny: unknown version '${version}'")

@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # libddwaf
 #
-# Available versions:
-#   1.14.0.0.0
-#   1.24.1.0.3
-#   1.25.1.0.1
-#   1.25.1.1.0
-#   1.30.0.0.0
-#
-# Usage:
-#   libddwaf { version = "1.30.0.0.0"; }
-#   libddwaf { }  # latest (1.30.0.0.0)
+# Versions: 1.14.0.0.0, 1.24.1.0.3, 1.25.1.0.1, 1.25.1.1.0, 1.30.0.0.0
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "libddwaf: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "libddwaf: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "libddwaf: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "libddwaf: unknown version '${version}'")

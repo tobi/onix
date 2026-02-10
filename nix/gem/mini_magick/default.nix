@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # mini_magick
 #
-# Available versions:
-#   4.12.0
-#   4.13.2
-#   5.2.0
-#   5.3.0
-#   5.3.1
-#
-# Usage:
-#   mini_magick { version = "5.3.1"; }
-#   mini_magick { }  # latest (5.3.1)
+# Versions: 4.12.0, 4.13.2, 5.2.0, 5.3.0, 5.3.1
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "mini_magick: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "mini_magick: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "mini_magick: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "mini_magick: unknown version '${version}'")

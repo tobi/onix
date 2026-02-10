@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # restforce
 #
-# Available versions:
-#   7.6.0
-#   8.0.0
-#   8.0.1
-#
-# Usage:
-#   restforce { version = "8.0.1"; }
-#   restforce { }  # latest (8.0.1)
+# Versions: 7.6.0, 8.0.0, 8.0.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "restforce: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "restforce: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "restforce: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "restforce: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # gettext
 #
-# Available versions:
-#   3.4.9
-#   3.5.0
-#   3.5.1
-#
-# Usage:
-#   gettext { version = "3.5.1"; }
-#   gettext { }  # latest (3.5.1)
+# Versions: 3.4.9, 3.5.0, 3.5.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "gettext: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "gettext: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "gettext: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "gettext: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # json-jwt
 #
-# Available versions:
-#   1.16.6
-#   1.16.7
-#   1.17.0
-#
-# Usage:
-#   json-jwt { version = "1.17.0"; }
-#   json-jwt { }  # latest (1.17.0)
+# Versions: 1.16.6, 1.16.7, 1.17.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "json-jwt: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "json-jwt: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "json-jwt: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "json-jwt: unknown version '${version}'")

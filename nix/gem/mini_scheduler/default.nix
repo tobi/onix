@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # mini_scheduler
 #
-# Available versions:
-#   0.18.0
-#
-# Usage:
-#   mini_scheduler { version = "0.18.0"; }
-#   mini_scheduler { }  # latest (0.18.0)
+# Versions: 0.18.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "mini_scheduler: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "mini_scheduler: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "mini_scheduler: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "mini_scheduler: unknown version '${version}'")

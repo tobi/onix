@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # treetop
 #
-# Available versions:
-#   1.6.16
-#   1.6.17
-#   1.6.18
-#
-# Usage:
-#   treetop { version = "1.6.18"; }
-#   treetop { }  # latest (1.6.18)
+# Versions: 1.6.16, 1.6.17, 1.6.18
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "treetop: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "treetop: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "treetop: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "treetop: unknown version '${version}'")

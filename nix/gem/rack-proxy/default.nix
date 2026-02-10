@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rack-proxy
 #
-# Available versions:
-#   0.7.5
-#   0.7.6
-#   0.7.7
-#
-# Usage:
-#   rack-proxy { version = "0.7.7"; }
-#   rack-proxy { }  # latest (0.7.7)
+# Versions: 0.7.5, 0.7.6, 0.7.7
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rack-proxy: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rack-proxy: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rack-proxy: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rack-proxy: unknown version '${version}'")

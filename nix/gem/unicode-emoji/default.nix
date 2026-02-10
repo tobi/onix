@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # unicode-emoji
 #
-# Available versions:
-#   4.0.4
-#   4.1.0
-#   4.2.0
-#
-# Usage:
-#   unicode-emoji { version = "4.2.0"; }
-#   unicode-emoji { }  # latest (4.2.0)
+# Versions: 4.0.4, 4.1.0, 4.2.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "unicode-emoji: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "unicode-emoji: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "unicode-emoji: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "unicode-emoji: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # kgio
 #
-# Available versions:
-#   2.11.2
-#   2.11.3
-#   2.11.4
-#
-# Usage:
-#   kgio { version = "2.11.4"; }
-#   kgio { }  # latest (2.11.4)
+# Versions: 2.11.2, 2.11.3, 2.11.4
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "kgio: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "kgio: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "kgio: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "kgio: unknown version '${version}'")

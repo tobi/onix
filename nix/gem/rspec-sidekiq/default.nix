@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rspec-sidekiq
 #
-# Available versions:
-#   5.0.0
-#   5.1.0
-#   5.2.0
-#
-# Usage:
-#   rspec-sidekiq { version = "5.2.0"; }
-#   rspec-sidekiq { }  # latest (5.2.0)
+# Versions: 5.0.0, 5.1.0, 5.2.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rspec-sidekiq: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rspec-sidekiq: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rspec-sidekiq: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rspec-sidekiq: unknown version '${version}'")

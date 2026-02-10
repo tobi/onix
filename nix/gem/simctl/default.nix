@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # simctl
 #
-# Available versions:
-#   1.6.7
-#   1.6.8
-#   1.6.10
-#
-# Usage:
-#   simctl { version = "1.6.10"; }
-#   simctl { }  # latest (1.6.10)
+# Versions: 1.6.7, 1.6.8, 1.6.10
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "simctl: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "simctl: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "simctl: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "simctl: unknown version '${version}'")

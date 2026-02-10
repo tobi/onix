@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # opentelemetry-instrumentation-concurrent_ruby
 #
-# Available versions:
-#   0.24.0
-#
-# Usage:
-#   opentelemetry-instrumentation-concurrent_ruby { version = "0.24.0"; }
-#   opentelemetry-instrumentation-concurrent_ruby { }  # latest (0.24.0)
+# Versions: 0.24.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "opentelemetry-instrumentation-concurrent_ruby: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "opentelemetry-instrumentation-concurrent_ruby: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "opentelemetry-instrumentation-concurrent_ruby: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "opentelemetry-instrumentation-concurrent_ruby: unknown version '${version}'")

@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # email-provider-info
 #
-# Available versions:
-#   0.0.1
-#
-# Usage:
-#   email-provider-info { version = "0.0.1"; }
-#   email-provider-info { }  # latest (0.0.1)
+# Versions: 0.0.1
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "email-provider-info: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "email-provider-info: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "email-provider-info: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "email-provider-info: unknown version '${version}'")

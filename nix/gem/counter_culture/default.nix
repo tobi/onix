@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # counter_culture
 #
-# Available versions:
-#   3.5.3
-#
-# Usage:
-#   counter_culture { version = "3.5.3"; }
-#   counter_culture { }  # latest (3.5.3)
+# Versions: 3.5.3
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "counter_culture: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "counter_culture: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "counter_culture: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "counter_culture: unknown version '${version}'")

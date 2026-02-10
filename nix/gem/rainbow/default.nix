@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rainbow
 #
-# Available versions:
-#   3.0.0
-#   3.1.0
-#   3.1.1
-#
-# Usage:
-#   rainbow { version = "3.1.1"; }
-#   rainbow { }  # latest (3.1.1)
+# Versions: 3.0.0, 3.1.0, 3.1.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rainbow: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rainbow: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rainbow: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rainbow: unknown version '${version}'")

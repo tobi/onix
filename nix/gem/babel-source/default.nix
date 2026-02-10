@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # babel-source
 #
-# Available versions:
-#   5.8.33
-#   5.8.34
-#   5.8.35
-#
-# Usage:
-#   babel-source { version = "5.8.35"; }
-#   babel-source { }  # latest (5.8.35)
+# Versions: 5.8.33, 5.8.34, 5.8.35
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "babel-source: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "babel-source: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "babel-source: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "babel-source: unknown version '${version}'")

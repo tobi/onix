@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # hightop
 #
-# Available versions:
-#   0.6.0
-#
-# Usage:
-#   hightop { version = "0.6.0"; }
-#   hightop { }  # latest (0.6.0)
+# Versions: 0.6.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "hightop: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "hightop: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "hightop: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "hightop: unknown version '${version}'")

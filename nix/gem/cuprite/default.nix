@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # cuprite
 #
-# Available versions:
-#   0.15
-#
-# Usage:
-#   cuprite { version = "0.15"; }
-#   cuprite { }  # latest (0.15)
+# Versions: 0.15
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "cuprite: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "cuprite: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "cuprite: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "cuprite: unknown version '${version}'")

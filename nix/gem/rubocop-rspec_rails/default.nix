@@ -1,17 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rubocop-rspec_rails
 #
-# Available versions:
-#   2.28.3
-#   2.32.0
-#
-# Usage:
-#   rubocop-rspec_rails { version = "2.32.0"; }
-#   rubocop-rspec_rails { }  # latest (2.32.0)
+# Versions: 2.28.3, 2.32.0
 #
 {
   lib,
@@ -32,7 +26,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rubocop-rspec_rails: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rubocop-rspec_rails: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rubocop-rspec_rails: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rubocop-rspec_rails: unknown version '${version}'")

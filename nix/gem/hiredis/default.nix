@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # hiredis
 #
-# Available versions:
-#   0.6.1
-#   0.6.2
-#   0.6.3
-#
-# Usage:
-#   hiredis { version = "0.6.3"; }
-#   hiredis { }  # latest (0.6.3)
+# Versions: 0.6.1, 0.6.2, 0.6.3
 #
 {
   lib,
@@ -24,30 +17,9 @@
 }:
 let
   versions = {
-    "0.6.1" = import ./0.6.1 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
-    "0.6.2" = import ./0.6.2 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
-    "0.6.3" = import ./0.6.3 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
+    "0.6.1" = import ./0.6.1 { inherit lib stdenv ruby pkgs; };
+    "0.6.2" = import ./0.6.2 { inherit lib stdenv ruby pkgs; };
+    "0.6.3" = import ./0.6.3 { inherit lib stdenv ruby pkgs; };
   };
 
   gitRevs = {
@@ -55,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "hiredis: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "hiredis: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "hiredis: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "hiredis: unknown version '${version}'")

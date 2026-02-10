@@ -1,17 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # equalizer
 #
-# Available versions:
-#   0.0.9
-#   0.0.11
-#
-# Usage:
-#   equalizer { version = "0.0.11"; }
-#   equalizer { }  # latest (0.0.11)
+# Versions: 0.0.9, 0.0.11
 #
 {
   lib,
@@ -32,7 +26,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "equalizer: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "equalizer: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "equalizer: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "equalizer: unknown version '${version}'")

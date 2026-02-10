@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # webauthn
 #
-# Available versions:
-#   3.4.3
-#
-# Usage:
-#   webauthn { version = "3.4.3"; }
-#   webauthn { }  # latest (3.4.3)
+# Versions: 3.4.3
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "webauthn: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "webauthn: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "webauthn: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "webauthn: unknown version '${version}'")

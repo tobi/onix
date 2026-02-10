@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # grape-entity
 #
-# Available versions:
-#   0.10.2
-#   1.0.0
-#   1.0.1
-#
-# Usage:
-#   grape-entity { version = "1.0.1"; }
-#   grape-entity { }  # latest (1.0.1)
+# Versions: 0.10.2, 1.0.0, 1.0.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "grape-entity: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "grape-entity: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "grape-entity: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "grape-entity: unknown version '${version}'")

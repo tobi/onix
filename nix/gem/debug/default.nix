@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # debug
 #
-# Available versions:
-#   1.8.0
-#   1.9.2
-#   1.10.0
-#   1.11.0
-#   1.11.1
-#
-# Usage:
-#   debug { version = "1.11.1"; }
-#   debug { }  # latest (1.11.1)
+# Versions: 1.8.0, 1.9.2, 1.10.0, 1.11.0, 1.11.1
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "debug: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "debug: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "debug: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "debug: unknown version '${version}'")

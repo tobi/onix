@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # ice_cube
 #
-# Available versions:
-#   0.16.3
-#   0.16.4
-#   0.17.0
-#
-# Usage:
-#   ice_cube { version = "0.17.0"; }
-#   ice_cube { }  # latest (0.17.0)
+# Versions: 0.16.3, 0.16.4, 0.17.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "ice_cube: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "ice_cube: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "ice_cube: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "ice_cube: unknown version '${version}'")

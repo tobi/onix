@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # telephone_number
 #
-# Available versions:
-#   1.4.20
-#
-# Usage:
-#   telephone_number { version = "1.4.20"; }
-#   telephone_number { }  # latest (1.4.20)
+# Versions: 1.4.20
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "telephone_number: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "telephone_number: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "telephone_number: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "telephone_number: unknown version '${version}'")

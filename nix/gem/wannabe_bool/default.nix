@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # wannabe_bool
 #
-# Available versions:
-#   0.7.1
-#
-# Usage:
-#   wannabe_bool { version = "0.7.1"; }
-#   wannabe_bool { }  # latest (0.7.1)
+# Versions: 0.7.1
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "wannabe_bool: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "wannabe_bool: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "wannabe_bool: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "wannabe_bool: unknown version '${version}'")

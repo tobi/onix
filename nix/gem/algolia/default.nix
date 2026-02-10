@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # algolia
 #
-# Available versions:
-#   2.3.4
-#
-# Usage:
-#   algolia { version = "2.3.4"; }
-#   algolia { }  # latest (2.3.4)
+# Versions: 2.3.4
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "algolia: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "algolia: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "algolia: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "algolia: unknown version '${version}'")

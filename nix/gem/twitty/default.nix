@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # twitty
 #
-# Available versions:
-#   0.1.5
-#
-# Usage:
-#   twitty { version = "0.1.5"; }
-#   twitty { }  # latest (0.1.5)
+# Versions: 0.1.5
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "twitty: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "twitty: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "twitty: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "twitty: unknown version '${version}'")

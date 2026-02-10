@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # amq-protocol
 #
-# Available versions:
-#   2.3.2
-#   2.4.0
-#   2.5.0
-#   2.5.1
-#
-# Usage:
-#   amq-protocol { version = "2.5.1"; }
-#   amq-protocol { }  # latest (2.5.1)
+# Versions: 2.3.2, 2.4.0, 2.5.0, 2.5.1
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "amq-protocol: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "amq-protocol: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "amq-protocol: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "amq-protocol: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # uniform_notifier
 #
-# Available versions:
-#   1.16.0
-#   1.17.0
-#   1.18.0
-#
-# Usage:
-#   uniform_notifier { version = "1.18.0"; }
-#   uniform_notifier { }  # latest (1.18.0)
+# Versions: 1.16.0, 1.17.0, 1.18.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "uniform_notifier: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "uniform_notifier: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "uniform_notifier: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "uniform_notifier: unknown version '${version}'")

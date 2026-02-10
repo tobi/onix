@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # prometheus-client
 #
-# Available versions:
-#   4.2.3
-#   4.2.4
-#   4.2.5
-#
-# Usage:
-#   prometheus-client { version = "4.2.5"; }
-#   prometheus-client { }  # latest (4.2.5)
+# Versions: 4.2.3, 4.2.4, 4.2.5
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "prometheus-client: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "prometheus-client: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "prometheus-client: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "prometheus-client: unknown version '${version}'")

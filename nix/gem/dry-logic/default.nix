@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # dry-logic
 #
-# Available versions:
-#   1.4.0
-#   1.5.0
-#   1.6.0
-#
-# Usage:
-#   dry-logic { version = "1.6.0"; }
-#   dry-logic { }  # latest (1.6.0)
+# Versions: 1.4.0, 1.5.0, 1.6.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "dry-logic: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "dry-logic: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "dry-logic: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "dry-logic: unknown version '${version}'")

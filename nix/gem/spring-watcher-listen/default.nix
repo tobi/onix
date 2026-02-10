@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # spring-watcher-listen
 #
-# Available versions:
-#   2.0.0
-#   2.0.1
-#   2.1.0
-#
-# Usage:
-#   spring-watcher-listen { version = "2.1.0"; }
-#   spring-watcher-listen { }  # latest (2.1.0)
+# Versions: 2.0.0, 2.0.1, 2.1.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "spring-watcher-listen: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "spring-watcher-listen: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "spring-watcher-listen: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "spring-watcher-listen: unknown version '${version}'")

@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # benchmark
 #
-# Available versions:
-#   0.3.0
-#   0.4.0
-#   0.4.1
-#   0.5.0
-#
-# Usage:
-#   benchmark { version = "0.5.0"; }
-#   benchmark { }  # latest (0.5.0)
+# Versions: 0.3.0, 0.4.0, 0.4.1, 0.5.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "benchmark: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "benchmark: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "benchmark: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "benchmark: unknown version '${version}'")

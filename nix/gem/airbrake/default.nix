@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # airbrake
 #
-# Available versions:
-#   13.0.3
-#   13.0.4
-#   13.0.5
-#
-# Usage:
-#   airbrake { version = "13.0.5"; }
-#   airbrake { }  # latest (13.0.5)
+# Versions: 13.0.3, 13.0.4, 13.0.5
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "airbrake: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "airbrake: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "airbrake: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "airbrake: unknown version '${version}'")

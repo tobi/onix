@@ -1,17 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rake-compiler-dock
 #
-# Available versions:
-#   1.10.0
-#   1.11.0
-#
-# Usage:
-#   rake-compiler-dock { version = "1.11.0"; }
-#   rake-compiler-dock { }  # latest (1.11.0)
+# Versions: 1.10.0, 1.11.0
 #
 {
   lib,
@@ -32,7 +26,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rake-compiler-dock: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rake-compiler-dock: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rake-compiler-dock: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rake-compiler-dock: unknown version '${version}'")

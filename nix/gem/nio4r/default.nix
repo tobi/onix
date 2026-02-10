@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # nio4r
 #
-# Available versions:
-#   2.7.0
-#   2.7.3
-#   2.7.4
-#   2.7.5
-#
-# Usage:
-#   nio4r { version = "2.7.5"; }
-#   nio4r { }  # latest (2.7.5)
+# Versions: 2.7.0, 2.7.3, 2.7.4, 2.7.5
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "nio4r: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "nio4r: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "nio4r: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "nio4r: unknown version '${version}'")

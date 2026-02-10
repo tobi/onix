@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # simple-navigation
 #
-# Available versions:
-#   4.4.1
-#
-# Usage:
-#   simple-navigation { version = "4.4.1"; }
-#   simple-navigation { }  # latest (4.4.1)
+# Versions: 4.4.1
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "simple-navigation: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "simple-navigation: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "simple-navigation: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "simple-navigation: unknown version '${version}'")

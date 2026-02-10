@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # listen
 #
-# Available versions:
-#   3.8.0
-#   3.9.0
-#   3.10.0
-#
-# Usage:
-#   listen { version = "3.10.0"; }
-#   listen { }  # latest (3.10.0)
+# Versions: 3.8.0, 3.9.0, 3.10.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "listen: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "listen: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "listen: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "listen: unknown version '${version}'")

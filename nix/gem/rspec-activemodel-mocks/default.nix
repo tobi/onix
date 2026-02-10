@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rspec-activemodel-mocks
 #
-# Available versions:
-#   1.3.0
-#
-# Usage:
-#   rspec-activemodel-mocks { version = "1.3.0"; }
-#   rspec-activemodel-mocks { }  # latest (1.3.0)
+# Versions: 1.3.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rspec-activemodel-mocks: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rspec-activemodel-mocks: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rspec-activemodel-mocks: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rspec-activemodel-mocks: unknown version '${version}'")

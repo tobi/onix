@@ -1,17 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # exifr
 #
-# Available versions:
-#   1.4.0
-#   1.4.1
-#
-# Usage:
-#   exifr { version = "1.4.1"; }
-#   exifr { }  # latest (1.4.1)
+# Versions: 1.4.0, 1.4.1
 #
 {
   lib,
@@ -32,7 +26,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "exifr: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "exifr: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "exifr: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "exifr: unknown version '${version}'")

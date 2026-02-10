@@ -8,47 +8,30 @@ ruby := "ruby_3_4"
 
 # Build gems: all, by app, or a single gem
 [group('build')]
-build app="" gem="":
-    RUBY={{ruby}} bin/build {{app}} {{gem}}
-
-# Build across ruby versions
-[group('build')]
-matrix app="" rubyver="":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [[ -n "{{rubyver}}" ]]; then
-        attr="{{rubyver}}"
-        [[ -n "{{app}}" ]] && attr="${attr}.{{app}}"
-        echo "Building matrix: $attr..."
-        nix-build nix/matrix.nix --no-out-link --keep-going -A "$attr"
-    elif [[ -n "{{app}}" ]]; then
-        echo "Building {{app}} across all rubies..."
-        rubies=$(nix-instantiate --eval -E 'builtins.attrNames (import ./nix/matrix.nix {})' 2>/dev/null | tr -d '[]"' | tr ' ' '\n' | grep -v '^$')
-        for r in $rubies; do
-            echo "  $r.{{app}}..."
-            nix-build nix/matrix.nix --no-out-link --keep-going -A "$r.{{app}}" 2>&1 | tail -1
-        done
-    else
-        echo "Building full matrix..."
-        nix-build nix/matrix.nix --no-out-link --keep-going
-    fi
+build *args:
+    RUBY={{ruby}} ruby -Ilib exe/gemset2nix build {{args}}
 
 # ── Generate ───────────────────────────────────────────────────────
 
 # Fetch all gem sources into cache/
 [group('generate')]
-fetch:
-    bin/fetch imports/
+fetch *args:
+    ruby -Ilib exe/gemset2nix fetch {{args}}
 
 # Regenerate all gem derivations + selectors from cache
 [group('generate')]
-generate:
-    bin/generate
+update:
+    ruby -Ilib exe/gemset2nix update
 
 # Import a project (name or path to Gemfile.lock)
 [group('generate')]
 import *args:
-    bin/import {{args}}
+    ruby -Ilib exe/gemset2nix import {{args}}
+
+# Initialize a new project
+[group('generate')]
+init *args:
+    ruby -Ilib exe/gemset2nix init {{args}}
 
 # Recreate source symlinks (after fresh clone)
 [group('generate')]
@@ -72,7 +55,7 @@ link:
 
 # ── Test & Lint ────────────────────────────────────────────────────
 
-# Run lint suite (10 checks)
+# Run lint suite
 [group('test')]
 lint app="fizzy":
     tests/lint/run-all {{app}}
@@ -81,3 +64,8 @@ lint app="fizzy":
 [group('test')]
 test app:
     tests/{{app}}/run-tests
+
+# Run all app tests
+[group('test')]
+test-all:
+    tests/run-all

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # kostya-sigar
 #
-# Available versions:
-#   2.0.9
-#   2.0.10
-#   2.0.11
-#
-# Usage:
-#   kostya-sigar { version = "2.0.11"; }
-#   kostya-sigar { }  # latest (2.0.11)
+# Versions: 2.0.9, 2.0.10, 2.0.11
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "kostya-sigar: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "kostya-sigar: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "kostya-sigar: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "kostya-sigar: unknown version '${version}'")

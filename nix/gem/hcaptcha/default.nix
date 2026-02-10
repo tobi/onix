@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # hcaptcha
 #
-# Available versions:
-#   7.1.0
-#
-# Usage:
-#   hcaptcha { version = "7.1.0"; }
-#   hcaptcha { }  # latest (7.1.0)
+# Versions: 7.1.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "hcaptcha: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "hcaptcha: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "hcaptcha: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "hcaptcha: unknown version '${version}'")

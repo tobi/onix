@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rake
 #
-# Available versions:
-#   13.2.1
-#   13.3.0
-#   13.3.1
-#
-# Usage:
-#   rake { version = "13.3.1"; }
-#   rake { }  # latest (13.3.1)
+# Versions: 13.2.1, 13.3.0, 13.3.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rake: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rake: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rake: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rake: unknown version '${version}'")

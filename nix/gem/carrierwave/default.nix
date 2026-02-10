@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # carrierwave
 #
-# Available versions:
-#   2.2.6
-#   3.1.0
-#   3.1.1
-#   3.1.2
-#
-# Usage:
-#   carrierwave { version = "3.1.2"; }
-#   carrierwave { }  # latest (3.1.2)
+# Versions: 2.2.6, 3.1.0, 3.1.1, 3.1.2
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "carrierwave: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "carrierwave: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "carrierwave: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "carrierwave: unknown version '${version}'")

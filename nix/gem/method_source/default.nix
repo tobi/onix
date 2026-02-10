@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # method_source
 #
-# Available versions:
-#   0.9.2
-#   1.0.0
-#   1.1.0
-#
-# Usage:
-#   method_source { version = "1.1.0"; }
-#   method_source { }  # latest (1.1.0)
+# Versions: 0.9.2, 1.0.0, 1.1.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "method_source: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "method_source: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "method_source: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "method_source: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # googleapis-common-protos-types
 #
-# Available versions:
-#   1.20.0
-#   1.21.0
-#   1.22.0
-#
-# Usage:
-#   googleapis-common-protos-types { version = "1.22.0"; }
-#   googleapis-common-protos-types { }  # latest (1.22.0)
+# Versions: 1.20.0, 1.21.0, 1.22.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "googleapis-common-protos-types: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "googleapis-common-protos-types: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "googleapis-common-protos-types: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "googleapis-common-protos-types: unknown version '${version}'")

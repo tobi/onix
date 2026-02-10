@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # geocoder
 #
-# Available versions:
-#   1.8.1
-#   1.8.4
-#   1.8.5
-#   1.8.6
-#
-# Usage:
-#   geocoder { version = "1.8.6"; }
-#   geocoder { }  # latest (1.8.6)
+# Versions: 1.8.1, 1.8.4, 1.8.5, 1.8.6
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "geocoder: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "geocoder: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "geocoder: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "geocoder: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # socksify
 #
-# Available versions:
-#   1.7.1
-#   1.8.0
-#   1.8.1
-#
-# Usage:
-#   socksify { version = "1.8.1"; }
-#   socksify { }  # latest (1.8.1)
+# Versions: 1.7.1, 1.8.0, 1.8.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "socksify: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "socksify: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "socksify: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "socksify: unknown version '${version}'")

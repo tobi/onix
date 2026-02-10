@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # net-ntp
 #
-# Available versions:
-#   2.1.1
-#   2.1.2
-#   2.1.3
-#
-# Usage:
-#   net-ntp { version = "2.1.3"; }
-#   net-ntp { }  # latest (2.1.3)
+# Versions: 2.1.1, 2.1.2, 2.1.3
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "net-ntp: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "net-ntp: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "net-ntp: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "net-ntp: unknown version '${version}'")

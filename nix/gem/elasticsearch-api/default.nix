@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # elasticsearch-api
 #
-# Available versions:
-#   7.17.11
-#   9.1.3
-#   9.2.0
-#   9.3.0
-#
-# Usage:
-#   elasticsearch-api { version = "9.3.0"; }
-#   elasticsearch-api { }  # latest (9.3.0)
+# Versions: 7.17.11, 9.1.3, 9.2.0, 9.3.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "elasticsearch-api: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "elasticsearch-api: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "elasticsearch-api: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "elasticsearch-api: unknown version '${version}'")

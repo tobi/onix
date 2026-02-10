@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # opensearch-ruby
 #
-# Available versions:
-#   3.4.0
-#
-# Usage:
-#   opensearch-ruby { version = "3.4.0"; }
-#   opensearch-ruby { }  # latest (3.4.0)
+# Versions: 3.4.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "opensearch-ruby: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "opensearch-ruby: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "opensearch-ruby: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "opensearch-ruby: unknown version '${version}'")

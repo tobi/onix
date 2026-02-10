@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # jsonapi-rspec
 #
-# Available versions:
-#   0.0.11
-#
-# Usage:
-#   jsonapi-rspec { version = "0.0.11"; }
-#   jsonapi-rspec { }  # latest (0.0.11)
+# Versions: 0.0.11
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "jsonapi-rspec: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "jsonapi-rspec: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "jsonapi-rspec: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "jsonapi-rspec: unknown version '${version}'")

@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # state_machines-activemodel
 #
-# Available versions:
-#   0.9.0
-#   0.31.2
-#   0.100.0
-#   0.101.0
-#
-# Usage:
-#   state_machines-activemodel { version = "0.101.0"; }
-#   state_machines-activemodel { }  # latest (0.101.0)
+# Versions: 0.9.0, 0.31.2, 0.100.0, 0.101.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "state_machines-activemodel: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "state_machines-activemodel: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "state_machines-activemodel: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "state_machines-activemodel: unknown version '${version}'")

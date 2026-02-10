@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # libdatadog
 #
-# Available versions:
-#   5.0.0.1.0
-#   18.1.0.1.0
-#   24.0.1.1.0
-#   25.0.0.1.0
-#   26.0.0.1.0
-#
-# Usage:
-#   libdatadog { version = "26.0.0.1.0"; }
-#   libdatadog { }  # latest (26.0.0.1.0)
+# Versions: 5.0.0.1.0, 18.1.0.1.0, 24.0.1.1.0, 25.0.0.1.0, 26.0.0.1.0
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "libdatadog: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "libdatadog: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "libdatadog: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "libdatadog: unknown version '${version}'")

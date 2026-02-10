@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # sigdump
 #
-# Available versions:
-#   0.2.3
-#   0.2.4
-#   0.2.5
-#
-# Usage:
-#   sigdump { version = "0.2.5"; }
-#   sigdump { }  # latest (0.2.5)
+# Versions: 0.2.3, 0.2.4, 0.2.5
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "sigdump: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "sigdump: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "sigdump: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "sigdump: unknown version '${version}'")

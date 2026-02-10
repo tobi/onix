@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # kubeclient
 #
-# Available versions:
-#   4.11.0
-#   4.12.0
-#   4.13.0
-#
-# Usage:
-#   kubeclient { version = "4.13.0"; }
-#   kubeclient { }  # latest (4.13.0)
+# Versions: 4.11.0, 4.12.0, 4.13.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "kubeclient: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "kubeclient: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "kubeclient: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "kubeclient: unknown version '${version}'")

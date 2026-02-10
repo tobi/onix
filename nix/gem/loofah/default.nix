@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # loofah
 #
-# Available versions:
-#   2.23.1
-#   2.24.0
-#   2.24.1
-#   2.25.0
-#
-# Usage:
-#   loofah { version = "2.25.0"; }
-#   loofah { }  # latest (2.25.0)
+# Versions: 2.23.1, 2.24.0, 2.24.1, 2.25.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "loofah: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "loofah: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "loofah: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "loofah: unknown version '${version}'")

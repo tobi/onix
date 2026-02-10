@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # sawyer
 #
-# Available versions:
-#   0.9.1
-#   0.9.2
-#   0.9.3
-#
-# Usage:
-#   sawyer { version = "0.9.3"; }
-#   sawyer { }  # latest (0.9.3)
+# Versions: 0.9.1, 0.9.2, 0.9.3
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "sawyer: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "sawyer: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "sawyer: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "sawyer: unknown version '${version}'")

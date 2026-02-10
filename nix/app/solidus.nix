@@ -1,10 +1,9 @@
 #
-# ╔═══════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/import to refresh ║
-# ╚═══════════════════════════════════════════════════════╝
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run gemset2nix import to regen  ║
+# ╚══════════════════════════════════════════════════════════════╝
 #
 # SOLIDUS — 200 gems
-# Generated from Gemfile.lock
 #
 [
   { name = "action_text-trix"; version = "2.1.16"; }

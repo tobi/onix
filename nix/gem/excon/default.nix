@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # excon
 #
-# Available versions:
-#   0.104.0
-#   1.3.0
-#   1.3.1
-#   1.3.2
-#
-# Usage:
-#   excon { version = "1.3.2"; }
-#   excon { }  # latest (1.3.2)
+# Versions: 0.104.0, 1.3.0, 1.3.1, 1.3.2
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "excon: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "excon: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "excon: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "excon: unknown version '${version}'")

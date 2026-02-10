@@ -1,6 +1,6 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # nokogiri 1.19.0
@@ -58,11 +58,13 @@ stdenv.mkDerivation {
           dir=$(dirname "$makefile")
           target_name=$(sed -n 's/^TARGET = //p' "$makefile")
           target_prefix=$(sed -n 's/^target_prefix = //p' "$makefile")
-          if [ -n "$target_name" ] && [ -f "$dir/$target_name.so" ]; then
-            mkdir -p "lib$target_prefix"
-            cp "$dir/$target_name.so" "lib$target_prefix/$target_name.so"
-            echo "Installed $dir/$target_name.so -> lib$target_prefix/$target_name.so"
-          fi
+          for ext in so bundle; do
+            if [ -n "$target_name" ] && [ -f "$dir/$target_name.$ext" ]; then
+              mkdir -p "lib$target_prefix"
+              cp "$dir/$target_name.$ext" "lib$target_prefix/$target_name.$ext"
+              echo "Installed $dir/$target_name.$ext -> lib$target_prefix/$target_name.$ext"
+            fi
+          done
         done
         ${overlayAfterBuild}
       '';
@@ -77,15 +79,21 @@ stdenv.mkDerivation {
         cp -r . $dest/gems/nokogiri-1.19.0/
         local extdir=$dest/extensions/${arch}/${rubyVersion}/nokogiri-1.19.0
         mkdir -p $extdir
-        find . -name '*.so' -path '*/lib/*' | while read so; do
+        find . \( -name '*.so' -o -name '*.bundle' \) -path '*/lib/*' | while read so; do
           cp "$so" "$extdir/"
         done
-        local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+        local cpu="${stdenv.hostPlatform.parsed.cpu.name}"
+        if [ "$cpu" = "aarch64" ]; then cpu="arm64"; fi
+        local gp="$cpu-${stdenv.hostPlatform.parsed.kernel.name}"
         if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
           gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
         fi
         ln -s nokogiri-1.19.0 $dest/gems/nokogiri-1.19.0-$gp
         ln -s nokogiri-1.19.0 $dest/extensions/${arch}/${rubyVersion}/nokogiri-1.19.0-$gp
+        if [ "${stdenv.hostPlatform.parsed.kernel.name}" = "darwin" ]; then
+          ln -sf nokogiri-1.19.0 $dest/gems/nokogiri-1.19.0-universal-darwin
+          ln -sf nokogiri-1.19.0 $dest/extensions/${arch}/${rubyVersion}/nokogiri-1.19.0-universal-darwin
+        fi
         mkdir -p $dest/specifications
         cat > $dest/specifications/nokogiri-1.19.0.gemspec <<'EOF'
     Gem::Specification.new do |s|
@@ -110,6 +118,20 @@ stdenv.mkDerivation {
       s.files = []
     end
     PLATSPEC
+        if [ "${stdenv.hostPlatform.parsed.kernel.name}" = "darwin" ]; then
+          cat > $dest/specifications/nokogiri-1.19.0-universal-darwin.gemspec <<'UNISPEC'
+    Gem::Specification.new do |s|
+      s.name = "nokogiri"
+      s.version = "1.19.0"
+      s.platform = "universal-darwin"
+      s.summary = "nokogiri"
+      s.require_paths = ["lib"]
+      s.bindir = "bin"
+      s.executables = ["nokogiri"]
+      s.files = []
+    end
+    UNISPEC
+        fi
         mkdir -p $dest/bin
         cat > $dest/bin/nokogiri <<'BINSTUB'
     #!/usr/bin/env ruby

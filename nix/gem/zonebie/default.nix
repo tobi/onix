@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # zonebie
 #
-# Available versions:
-#   0.6.1
-#
-# Usage:
-#   zonebie { version = "0.6.1"; }
-#   zonebie { }  # latest (0.6.1)
+# Versions: 0.6.1
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "zonebie: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "zonebie: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "zonebie: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "zonebie: unknown version '${version}'")

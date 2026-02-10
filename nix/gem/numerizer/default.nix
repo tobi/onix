@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # numerizer
 #
-# Available versions:
-#   0.1.0
-#   0.1.1
-#   0.2.0
-#
-# Usage:
-#   numerizer { version = "0.2.0"; }
-#   numerizer { }  # latest (0.2.0)
+# Versions: 0.1.0, 0.1.1, 0.2.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "numerizer: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "numerizer: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "numerizer: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "numerizer: unknown version '${version}'")

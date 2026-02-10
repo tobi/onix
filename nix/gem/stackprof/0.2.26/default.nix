@@ -1,6 +1,6 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # stackprof 0.2.26
@@ -36,11 +36,13 @@ stdenv.mkDerivation {
       dir=$(dirname "$makefile")
       target_name=$(sed -n 's/^TARGET = //p' "$makefile")
       target_prefix=$(sed -n 's/^target_prefix = //p' "$makefile")
-      if [ -n "$target_name" ] && [ -f "$dir/$target_name.so" ]; then
-        mkdir -p "lib$target_prefix"
-        cp "$dir/$target_name.so" "lib$target_prefix/$target_name.so"
-        echo "Installed $dir/$target_name.so -> lib$target_prefix/$target_name.so"
-      fi
+      for ext in so bundle; do
+        if [ -n "$target_name" ] && [ -f "$dir/$target_name.$ext" ]; then
+          mkdir -p "lib$target_prefix"
+          cp "$dir/$target_name.$ext" "lib$target_prefix/$target_name.$ext"
+          echo "Installed $dir/$target_name.$ext -> lib$target_prefix/$target_name.$ext"
+        fi
+      done
     done
   '';
 
@@ -54,15 +56,21 @@ stdenv.mkDerivation {
         cp -r . $dest/gems/stackprof-0.2.26/
         local extdir=$dest/extensions/${arch}/${rubyVersion}/stackprof-0.2.26
         mkdir -p $extdir
-        find . -name '*.so' -path '*/lib/*' | while read so; do
+        find . \( -name '*.so' -o -name '*.bundle' \) -path '*/lib/*' | while read so; do
           cp "$so" "$extdir/"
         done
-        local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+        local cpu="${stdenv.hostPlatform.parsed.cpu.name}"
+        if [ "$cpu" = "aarch64" ]; then cpu="arm64"; fi
+        local gp="$cpu-${stdenv.hostPlatform.parsed.kernel.name}"
         if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
           gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
         fi
         ln -s stackprof-0.2.26 $dest/gems/stackprof-0.2.26-$gp
         ln -s stackprof-0.2.26 $dest/extensions/${arch}/${rubyVersion}/stackprof-0.2.26-$gp
+        if [ "${stdenv.hostPlatform.parsed.kernel.name}" = "darwin" ]; then
+          ln -sf stackprof-0.2.26 $dest/gems/stackprof-0.2.26-universal-darwin
+          ln -sf stackprof-0.2.26 $dest/extensions/${arch}/${rubyVersion}/stackprof-0.2.26-universal-darwin
+        fi
         mkdir -p $dest/specifications
         cat > $dest/specifications/stackprof-0.2.26.gemspec <<'EOF'
     Gem::Specification.new do |s|
@@ -87,6 +95,20 @@ stdenv.mkDerivation {
       s.files = []
     end
     PLATSPEC
+        if [ "${stdenv.hostPlatform.parsed.kernel.name}" = "darwin" ]; then
+          cat > $dest/specifications/stackprof-0.2.26-universal-darwin.gemspec <<'UNISPEC'
+    Gem::Specification.new do |s|
+      s.name = "stackprof"
+      s.version = "0.2.26"
+      s.platform = "universal-darwin"
+      s.summary = "stackprof"
+      s.require_paths = ["lib"]
+      s.bindir = "bin"
+      s.executables = ["stackprof", "stackprof-flamegraph.pl", "stackprof-gprof2dot.py"]
+      s.files = []
+    end
+    UNISPEC
+        fi
         mkdir -p $dest/bin
         cat > $dest/bin/stackprof <<'BINSTUB'
     #!/usr/bin/env ruby

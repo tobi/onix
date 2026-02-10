@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # spreadsheet
 #
-# Available versions:
-#   1.3.2
-#   1.3.3
-#   1.3.4
-#
-# Usage:
-#   spreadsheet { version = "1.3.4"; }
-#   spreadsheet { }  # latest (1.3.4)
+# Versions: 1.3.2, 1.3.3, 1.3.4
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "spreadsheet: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "spreadsheet: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "spreadsheet: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "spreadsheet: unknown version '${version}'")

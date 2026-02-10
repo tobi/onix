@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rpush
 #
-# Available versions:
-#   7.0.1
-#
-# Usage:
-#   rpush { version = "7.0.1"; }
-#   rpush { }  # latest (7.0.1)
+# Versions: 7.0.1
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rpush: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rpush: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rpush: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rpush: unknown version '${version}'")

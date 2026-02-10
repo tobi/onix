@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # tailwindcss-ruby
 #
-# Available versions:
-#   3.4.17
-#   3.4.19
-#   4.1.18
-#
-# Usage:
-#   tailwindcss-ruby { version = "4.1.18"; }
-#   tailwindcss-ruby { }  # latest (4.1.18)
+# Versions: 3.4.17, 3.4.19, 4.1.18
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "tailwindcss-ruby: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "tailwindcss-ruby: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "tailwindcss-ruby: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "tailwindcss-ruby: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # tty-reader
 #
-# Available versions:
-#   0.7.0
-#   0.8.0
-#   0.9.0
-#
-# Usage:
-#   tty-reader { version = "0.9.0"; }
-#   tty-reader { }  # latest (0.9.0)
+# Versions: 0.7.0, 0.8.0, 0.9.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "tty-reader: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "tty-reader: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "tty-reader: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "tty-reader: unknown version '${version}'")

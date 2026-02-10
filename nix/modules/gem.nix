@@ -1,15 +1,9 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # 1414 gems
-#
-# Usage:
-#   gems = import ./nix/modules/gem.nix { inherit pkgs ruby; };
-#   gems.rails { version = "7.1.5.2"; }
-#   gems.rails { git.rev = "60d92e4e7dfe"; }
-#   gems.rack {}  # latest
 #
 { pkgs, ruby }:
 
@@ -18,14 +12,7 @@ let
   gem =
     name: args:
     import (../gem + "/${name}") (
-      {
-        inherit
-          lib
-          stdenv
-          ruby
-          pkgs
-          ;
-      }
+      { inherit lib stdenv ruby pkgs; }
       // args
     );
 in

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # celluloid
 #
-# Available versions:
-#   0.17.3
-#   0.17.4
-#   0.18.0
-#
-# Usage:
-#   celluloid { version = "0.18.0"; }
-#   celluloid { }  # latest (0.18.0)
+# Versions: 0.17.3, 0.17.4, 0.18.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "celluloid: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "celluloid: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "celluloid: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "celluloid: unknown version '${version}'")

@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # datadog-ruby_core_source
 #
-# Available versions:
-#   3.4.1
-#
-# Usage:
-#   datadog-ruby_core_source { version = "3.4.1"; }
-#   datadog-ruby_core_source { }  # latest (3.4.1)
+# Versions: 3.4.1
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "datadog-ruby_core_source: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "datadog-ruby_core_source: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "datadog-ruby_core_source: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "datadog-ruby_core_source: unknown version '${version}'")

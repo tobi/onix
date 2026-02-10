@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # tzinfo
 #
-# Available versions:
-#   2.0.4
-#   2.0.5
-#   2.0.6
-#
-# Usage:
-#   tzinfo { version = "2.0.6"; }
-#   tzinfo { }  # latest (2.0.6)
+# Versions: 2.0.4, 2.0.5, 2.0.6
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "tzinfo: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "tzinfo: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "tzinfo: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "tzinfo: unknown version '${version}'")

@@ -1,6 +1,6 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # idn-ruby 0.1.5
@@ -58,11 +58,13 @@ stdenv.mkDerivation {
           dir=$(dirname "$makefile")
           target_name=$(sed -n 's/^TARGET = //p' "$makefile")
           target_prefix=$(sed -n 's/^target_prefix = //p' "$makefile")
-          if [ -n "$target_name" ] && [ -f "$dir/$target_name.so" ]; then
-            mkdir -p "lib$target_prefix"
-            cp "$dir/$target_name.so" "lib$target_prefix/$target_name.so"
-            echo "Installed $dir/$target_name.so -> lib$target_prefix/$target_name.so"
-          fi
+          for ext in so bundle; do
+            if [ -n "$target_name" ] && [ -f "$dir/$target_name.$ext" ]; then
+              mkdir -p "lib$target_prefix"
+              cp "$dir/$target_name.$ext" "lib$target_prefix/$target_name.$ext"
+              echo "Installed $dir/$target_name.$ext -> lib$target_prefix/$target_name.$ext"
+            fi
+          done
         done
         ${overlayAfterBuild}
       '';
@@ -77,15 +79,21 @@ stdenv.mkDerivation {
         cp -r . $dest/gems/idn-ruby-0.1.5/
         local extdir=$dest/extensions/${arch}/${rubyVersion}/idn-ruby-0.1.5
         mkdir -p $extdir
-        find . -name '*.so' -path '*/lib/*' | while read so; do
+        find . \( -name '*.so' -o -name '*.bundle' \) -path '*/lib/*' | while read so; do
           cp "$so" "$extdir/"
         done
-        local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+        local cpu="${stdenv.hostPlatform.parsed.cpu.name}"
+        if [ "$cpu" = "aarch64" ]; then cpu="arm64"; fi
+        local gp="$cpu-${stdenv.hostPlatform.parsed.kernel.name}"
         if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
           gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
         fi
         ln -s idn-ruby-0.1.5 $dest/gems/idn-ruby-0.1.5-$gp
         ln -s idn-ruby-0.1.5 $dest/extensions/${arch}/${rubyVersion}/idn-ruby-0.1.5-$gp
+        if [ "${stdenv.hostPlatform.parsed.kernel.name}" = "darwin" ]; then
+          ln -sf idn-ruby-0.1.5 $dest/gems/idn-ruby-0.1.5-universal-darwin
+          ln -sf idn-ruby-0.1.5 $dest/extensions/${arch}/${rubyVersion}/idn-ruby-0.1.5-universal-darwin
+        fi
         mkdir -p $dest/specifications
         cat > $dest/specifications/idn-ruby-0.1.5.gemspec <<'EOF'
     Gem::Specification.new do |s|
@@ -106,6 +114,18 @@ stdenv.mkDerivation {
       s.files = []
     end
     PLATSPEC
+        if [ "${stdenv.hostPlatform.parsed.kernel.name}" = "darwin" ]; then
+          cat > $dest/specifications/idn-ruby-0.1.5-universal-darwin.gemspec <<'UNISPEC'
+    Gem::Specification.new do |s|
+      s.name = "idn-ruby"
+      s.version = "0.1.5"
+      s.platform = "universal-darwin"
+      s.summary = "idn-ruby"
+      s.require_paths = ["/home/tobi/.local/share/mise/installs/ruby/3.4.7/lib/ruby/gems/3.4.0/extensions/x86_64-linux/3.4.0-static/idn-ruby-0.1.5", "lib"]
+      s.files = []
+    end
+    UNISPEC
+        fi
         ${overlayPostInstall}
   '';
 }

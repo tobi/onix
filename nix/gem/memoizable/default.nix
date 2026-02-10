@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # memoizable
 #
-# Available versions:
-#   0.4.0
-#   0.4.1
-#   0.4.2
-#
-# Usage:
-#   memoizable { version = "0.4.2"; }
-#   memoizable { }  # latest (0.4.2)
+# Versions: 0.4.0, 0.4.1, 0.4.2
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "memoizable: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "memoizable: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "memoizable: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "memoizable: unknown version '${version}'")

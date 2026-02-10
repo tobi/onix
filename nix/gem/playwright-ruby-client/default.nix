@@ -1,17 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # playwright-ruby-client
 #
-# Available versions:
-#   1.57.0
-#   1.57.1
-#
-# Usage:
-#   playwright-ruby-client { version = "1.57.1"; }
-#   playwright-ruby-client { }  # latest (1.57.1)
+# Versions: 1.57.0, 1.57.1
 #
 {
   lib,
@@ -32,7 +26,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "playwright-ruby-client: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "playwright-ruby-client: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "playwright-ruby-client: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "playwright-ruby-client: unknown version '${version}'")

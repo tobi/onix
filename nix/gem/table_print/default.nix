@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # table_print
 #
-# Available versions:
-#   1.5.5
-#   1.5.6
-#   1.5.7
-#
-# Usage:
-#   table_print { version = "1.5.7"; }
-#   table_print { }  # latest (1.5.7)
+# Versions: 1.5.5, 1.5.6, 1.5.7
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "table_print: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "table_print: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "table_print: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "table_print: unknown version '${version}'")

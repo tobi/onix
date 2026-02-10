@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # openssl
 #
-# Available versions:
-#   3.2.0
-#   3.3.1
-#   3.3.2
-#   4.0.0
-#
-# Usage:
-#   openssl { version = "4.0.0"; }
-#   openssl { }  # latest (4.0.0)
+# Versions: 3.2.0, 3.3.1, 3.3.2, 4.0.0
 #
 {
   lib,
@@ -25,38 +17,10 @@
 }:
 let
   versions = {
-    "3.2.0" = import ./3.2.0 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
-    "3.3.1" = import ./3.3.1 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
-    "3.3.2" = import ./3.3.2 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
-    "4.0.0" = import ./4.0.0 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
+    "3.2.0" = import ./3.2.0 { inherit lib stdenv ruby pkgs; };
+    "3.3.1" = import ./3.3.1 { inherit lib stdenv ruby pkgs; };
+    "3.3.2" = import ./3.3.2 { inherit lib stdenv ruby pkgs; };
+    "4.0.0" = import ./4.0.0 { inherit lib stdenv ruby pkgs; };
   };
 
   gitRevs = {
@@ -64,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "openssl: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "openssl: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "openssl: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "openssl: unknown version '${version}'")

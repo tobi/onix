@@ -1,22 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # connection_pool
 #
-# Available versions:
-#   2.4.1
-#   2.5.3
-#   2.5.4
-#   2.5.5
-#   3.0.0
-#   3.0.1
-#   3.0.2
-#
-# Usage:
-#   connection_pool { version = "3.0.2"; }
-#   connection_pool { }  # latest (3.0.2)
+# Versions: 2.4.1, 2.5.3, 2.5.4, 2.5.5, 3.0.0, 3.0.1, 3.0.2
 #
 {
   lib,
@@ -42,7 +31,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "connection_pool: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "connection_pool: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "connection_pool: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "connection_pool: unknown version '${version}'")

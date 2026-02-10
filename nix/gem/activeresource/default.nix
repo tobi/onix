@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # activeresource
 #
-# Available versions:
-#   6.1.3
-#   6.1.4
-#   6.2.0
-#
-# Usage:
-#   activeresource { version = "6.2.0"; }
-#   activeresource { }  # latest (6.2.0)
+# Versions: 6.1.3, 6.1.4, 6.2.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "activeresource: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "activeresource: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "activeresource: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "activeresource: unknown version '${version}'")

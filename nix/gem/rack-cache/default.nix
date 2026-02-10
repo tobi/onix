@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rack-cache
 #
-# Available versions:
-#   1.15.0
-#   1.16.0
-#   1.17.0
-#
-# Usage:
-#   rack-cache { version = "1.17.0"; }
-#   rack-cache { }  # latest (1.17.0)
+# Versions: 1.15.0, 1.16.0, 1.17.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rack-cache: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rack-cache: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rack-cache: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rack-cache: unknown version '${version}'")

@@ -1,10 +1,9 @@
 #
-# ╔═══════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/import to refresh ║
-# ╚═══════════════════════════════════════════════════════╝
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run gemset2nix import to regen  ║
+# ╚══════════════════════════════════════════════════════════════╝
 #
 # DISCOURSE — 296 gems
-# Generated from Gemfile.lock
 #
 [
   { name = "Ascii85"; version = "2.0.1"; }

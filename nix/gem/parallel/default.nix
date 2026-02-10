@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # parallel
 #
-# Available versions:
-#   1.24.0
-#   1.26.2
-#   1.26.3
-#   1.27.0
-#
-# Usage:
-#   parallel { version = "1.27.0"; }
-#   parallel { }  # latest (1.27.0)
+# Versions: 1.24.0, 1.26.2, 1.26.3, 1.27.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "parallel: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "parallel: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "parallel: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "parallel: unknown version '${version}'")

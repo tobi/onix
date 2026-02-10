@@ -1,21 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # irb
 #
-# Available versions:
-#   1.7.2
-#   1.12.0
-#   1.15.2
-#   1.15.3
-#   1.16.0
-#   1.17.0
-#
-# Usage:
-#   irb { version = "1.17.0"; }
-#   irb { }  # latest (1.17.0)
+# Versions: 1.7.2, 1.12.0, 1.15.2, 1.15.3, 1.16.0, 1.17.0
 #
 {
   lib,
@@ -40,7 +30,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "irb: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "irb: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "irb: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "irb: unknown version '${version}'")

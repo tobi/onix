@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # fluent-plugin-s3
 #
-# Available versions:
-#   1.8.1
-#   1.8.2
-#   1.8.3
-#
-# Usage:
-#   fluent-plugin-s3 { version = "1.8.3"; }
-#   fluent-plugin-s3 { }  # latest (1.8.3)
+# Versions: 1.8.1, 1.8.2, 1.8.3
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "fluent-plugin-s3: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "fluent-plugin-s3: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "fluent-plugin-s3: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "fluent-plugin-s3: unknown version '${version}'")

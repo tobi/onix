@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # libxml-ruby
 #
-# Available versions:
-#   5.0.4
-#
-# Usage:
-#   libxml-ruby { version = "5.0.4"; }
-#   libxml-ruby { }  # latest (5.0.4)
+# Versions: 5.0.4
 #
 {
   lib,
@@ -22,14 +17,7 @@
 }:
 let
   versions = {
-    "5.0.4" = import ./5.0.4 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
+    "5.0.4" = import ./5.0.4 { inherit lib stdenv ruby pkgs; };
   };
 
   gitRevs = {
@@ -37,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "libxml-ruby: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "libxml-ruby: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "libxml-ruby: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "libxml-ruby: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # aes_key_wrap
 #
-# Available versions:
-#   1.0.0
-#   1.0.1
-#   1.1.0
-#
-# Usage:
-#   aes_key_wrap { version = "1.1.0"; }
-#   aes_key_wrap { }  # latest (1.1.0)
+# Versions: 1.0.0, 1.0.1, 1.1.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "aes_key_wrap: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "aes_key_wrap: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "aes_key_wrap: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "aes_key_wrap: unknown version '${version}'")

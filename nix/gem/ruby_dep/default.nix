@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # ruby_dep
 #
-# Available versions:
-#   1.3.1
-#   1.4.0
-#   1.5.0
-#
-# Usage:
-#   ruby_dep { version = "1.5.0"; }
-#   ruby_dep { }  # latest (1.5.0)
+# Versions: 1.3.1, 1.4.0, 1.5.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "ruby_dep: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "ruby_dep: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "ruby_dep: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "ruby_dep: unknown version '${version}'")

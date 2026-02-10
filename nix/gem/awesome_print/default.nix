@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # awesome_print
 #
-# Available versions:
-#   1.7.0
-#   1.8.0
-#   1.9.2
-#   2.0.0.pre2
-#
-# Usage:
-#   awesome_print { version = "2.0.0.pre2"; }
-#   awesome_print { }  # latest (2.0.0.pre2)
+# Versions: 1.7.0, 1.8.0, 1.9.2, 2.0.0.pre2
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "awesome_print: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "awesome_print: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "awesome_print: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "awesome_print: unknown version '${version}'")

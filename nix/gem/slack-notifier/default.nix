@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # slack-notifier
 #
-# Available versions:
-#   2.3.1
-#   2.3.2
-#   2.4.0
-#
-# Usage:
-#   slack-notifier { version = "2.4.0"; }
-#   slack-notifier { }  # latest (2.4.0)
+# Versions: 2.3.1, 2.3.2, 2.4.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "slack-notifier: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "slack-notifier: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "slack-notifier: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "slack-notifier: unknown version '${version}'")

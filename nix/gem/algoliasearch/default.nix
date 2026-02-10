@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # algoliasearch
 #
-# Available versions:
-#   1.27.3
-#   1.27.4
-#   1.27.5
-#
-# Usage:
-#   algoliasearch { version = "1.27.5"; }
-#   algoliasearch { }  # latest (1.27.5)
+# Versions: 1.27.3, 1.27.4, 1.27.5
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "algoliasearch: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "algoliasearch: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "algoliasearch: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "algoliasearch: unknown version '${version}'")

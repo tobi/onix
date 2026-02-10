@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # gli
 #
-# Available versions:
-#   2.22.0
-#   2.22.1
-#   2.22.2
-#
-# Usage:
-#   gli { version = "2.22.2"; }
-#   gli { }  # latest (2.22.2)
+# Versions: 2.22.0, 2.22.1, 2.22.2
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "gli: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "gli: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "gli: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "gli: unknown version '${version}'")

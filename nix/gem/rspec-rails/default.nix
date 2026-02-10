@@ -1,21 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rspec-rails
 #
-# Available versions:
-#   6.0.4
-#   6.1.1
-#   7.0.1
-#   8.0.0
-#   8.0.1
-#   8.0.2
-#
-# Usage:
-#   rspec-rails { version = "8.0.2"; }
-#   rspec-rails { }  # latest (8.0.2)
+# Versions: 6.0.4, 6.1.1, 7.0.1, 8.0.0, 8.0.1, 8.0.2
 #
 {
   lib,
@@ -40,7 +30,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rspec-rails: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rspec-rails: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rspec-rails: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rspec-rails: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # sendgrid-ruby
 #
-# Available versions:
-#   6.6.1
-#   6.6.2
-#   6.7.0
-#
-# Usage:
-#   sendgrid-ruby { version = "6.7.0"; }
-#   sendgrid-ruby { }  # latest (6.7.0)
+# Versions: 6.6.1, 6.6.2, 6.7.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "sendgrid-ruby: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "sendgrid-ruby: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "sendgrid-ruby: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "sendgrid-ruby: unknown version '${version}'")

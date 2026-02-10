@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # bugsnag
 #
-# Available versions:
-#   6.27.1
-#   6.28.0
-#   6.29.0
-#
-# Usage:
-#   bugsnag { version = "6.29.0"; }
-#   bugsnag { }  # latest (6.29.0)
+# Versions: 6.27.1, 6.28.0, 6.29.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "bugsnag: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "bugsnag: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "bugsnag: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "bugsnag: unknown version '${version}'")

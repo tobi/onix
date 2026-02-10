@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rb-inotify
 #
-# Available versions:
-#   0.10.1
-#   0.11.0
-#   0.11.1
-#
-# Usage:
-#   rb-inotify { version = "0.11.1"; }
-#   rb-inotify { }  # latest (0.11.1)
+# Versions: 0.10.1, 0.11.0, 0.11.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rb-inotify: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rb-inotify: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rb-inotify: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rb-inotify: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # kaminari
 #
-# Available versions:
-#   1.2.0
-#   1.2.1
-#   1.2.2
-#
-# Usage:
-#   kaminari { version = "1.2.2"; }
-#   kaminari { }  # latest (1.2.2)
+# Versions: 1.2.0, 1.2.1, 1.2.2
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "kaminari: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "kaminari: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "kaminari: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "kaminari: unknown version '${version}'")

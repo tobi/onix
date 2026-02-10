@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # aws-sdk-managedblockchain
 #
-# Available versions:
-#   1.80.0
-#   1.81.0
-#   1.82.0
-#
-# Usage:
-#   aws-sdk-managedblockchain { version = "1.82.0"; }
-#   aws-sdk-managedblockchain { }  # latest (1.82.0)
+# Versions: 1.80.0, 1.81.0, 1.82.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "aws-sdk-managedblockchain: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "aws-sdk-managedblockchain: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "aws-sdk-managedblockchain: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "aws-sdk-managedblockchain: unknown version '${version}'")

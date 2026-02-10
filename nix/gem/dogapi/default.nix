@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # dogapi
 #
-# Available versions:
-#   1.43.0
-#   1.44.0
-#   1.45.0
-#
-# Usage:
-#   dogapi { version = "1.45.0"; }
-#   dogapi { }  # latest (1.45.0)
+# Versions: 1.43.0, 1.44.0, 1.45.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "dogapi: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "dogapi: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "dogapi: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "dogapi: unknown version '${version}'")

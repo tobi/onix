@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # atomos
 #
-# Available versions:
-#   0.1.2
-#   0.1.3
-#   1.0.0
-#
-# Usage:
-#   atomos { version = "1.0.0"; }
-#   atomos { }  # latest (1.0.0)
+# Versions: 0.1.2, 0.1.3, 1.0.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "atomos: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "atomos: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "atomos: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "atomos: unknown version '${version}'")

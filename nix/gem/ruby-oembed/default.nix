@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # ruby-oembed
 #
-# Available versions:
-#   0.18.1
-#
-# Usage:
-#   ruby-oembed { version = "0.18.1"; }
-#   ruby-oembed { }  # latest (0.18.1)
+# Versions: 0.18.1
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "ruby-oembed: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "ruby-oembed: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "ruby-oembed: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "ruby-oembed: unknown version '${version}'")

@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # ruby-readability
 #
-# Available versions:
-#   0.7.2
-#
-# Usage:
-#   ruby-readability { version = "0.7.2"; }
-#   ruby-readability { }  # latest (0.7.2)
+# Versions: 0.7.2
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "ruby-readability: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "ruby-readability: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "ruby-readability: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "ruby-readability: unknown version '${version}'")

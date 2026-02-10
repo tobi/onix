@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # google-cloud-core
 #
-# Available versions:
-#   1.7.0
-#   1.7.1
-#   1.8.0
-#
-# Usage:
-#   google-cloud-core { version = "1.8.0"; }
-#   google-cloud-core { }  # latest (1.8.0)
+# Versions: 1.7.0, 1.7.1, 1.8.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "google-cloud-core: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "google-cloud-core: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "google-cloud-core: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "google-cloud-core: unknown version '${version}'")

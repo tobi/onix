@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # mini_suffix
 #
-# Available versions:
-#   0.3.3
-#
-# Usage:
-#   mini_suffix { version = "0.3.3"; }
-#   mini_suffix { }  # latest (0.3.3)
+# Versions: 0.3.3
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "mini_suffix: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "mini_suffix: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "mini_suffix: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "mini_suffix: unknown version '${version}'")

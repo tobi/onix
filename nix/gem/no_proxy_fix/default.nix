@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # no_proxy_fix
 #
-# Available versions:
-#   0.1.0
-#   0.1.1
-#   0.1.2
-#
-# Usage:
-#   no_proxy_fix { version = "0.1.2"; }
-#   no_proxy_fix { }  # latest (0.1.2)
+# Versions: 0.1.0, 0.1.1, 0.1.2
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "no_proxy_fix: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "no_proxy_fix: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "no_proxy_fix: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "no_proxy_fix: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # logging
 #
-# Available versions:
-#   2.3.0
-#   2.3.1
-#   2.4.0
-#
-# Usage:
-#   logging { version = "2.4.0"; }
-#   logging { }  # latest (2.4.0)
+# Versions: 2.3.0, 2.3.1, 2.4.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "logging: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "logging: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "logging: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "logging: unknown version '${version}'")

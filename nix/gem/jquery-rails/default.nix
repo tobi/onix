@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # jquery-rails
 #
-# Available versions:
-#   4.5.1
-#   4.6.0
-#   4.6.1
-#
-# Usage:
-#   jquery-rails { version = "4.6.1"; }
-#   jquery-rails { }  # latest (4.6.1)
+# Versions: 4.5.1, 4.6.0, 4.6.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "jquery-rails: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "jquery-rails: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "jquery-rails: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "jquery-rails: unknown version '${version}'")

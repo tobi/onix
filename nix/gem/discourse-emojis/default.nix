@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # discourse-emojis
 #
-# Available versions:
-#   1.0.44
-#
-# Usage:
-#   discourse-emojis { version = "1.0.44"; }
-#   discourse-emojis { }  # latest (1.0.44)
+# Versions: 1.0.44
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "discourse-emojis: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "discourse-emojis: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "discourse-emojis: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "discourse-emojis: unknown version '${version}'")

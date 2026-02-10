@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # license_finder
 #
-# Available versions:
-#   7.1.0
-#   7.2.0
-#   7.2.1
-#
-# Usage:
-#   license_finder { version = "7.2.1"; }
-#   license_finder { }  # latest (7.2.1)
+# Versions: 7.1.0, 7.2.0, 7.2.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "license_finder: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "license_finder: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "license_finder: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "license_finder: unknown version '${version}'")

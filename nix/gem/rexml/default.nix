@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rexml
 #
-# Available versions:
-#   3.4.0
-#   3.4.2
-#   3.4.3
-#   3.4.4
-#
-# Usage:
-#   rexml { version = "3.4.4"; }
-#   rexml { }  # latest (3.4.4)
+# Versions: 3.4.0, 3.4.2, 3.4.3, 3.4.4
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rexml: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rexml: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rexml: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rexml: unknown version '${version}'")

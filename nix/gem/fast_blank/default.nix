@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # fast_blank
 #
-# Available versions:
-#   0.0.2
-#   1.0.0
-#   1.0.1
-#
-# Usage:
-#   fast_blank { version = "1.0.1"; }
-#   fast_blank { }  # latest (1.0.1)
+# Versions: 0.0.2, 1.0.0, 1.0.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "fast_blank: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "fast_blank: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "fast_blank: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "fast_blank: unknown version '${version}'")

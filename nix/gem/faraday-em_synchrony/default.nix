@@ -1,17 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # faraday-em_synchrony
 #
-# Available versions:
-#   1.0.0
-#   1.0.1
-#
-# Usage:
-#   faraday-em_synchrony { version = "1.0.1"; }
-#   faraday-em_synchrony { }  # latest (1.0.1)
+# Versions: 1.0.0, 1.0.1
 #
 {
   lib,
@@ -32,7 +26,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "faraday-em_synchrony: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "faraday-em_synchrony: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "faraday-em_synchrony: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "faraday-em_synchrony: unknown version '${version}'")

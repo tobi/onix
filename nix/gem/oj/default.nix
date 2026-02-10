@@ -1,21 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # oj
 #
-# Available versions:
-#   3.16.3
-#   3.16.10
-#   3.16.12
-#   3.16.13
-#   3.16.14
-#   3.16.15
-#
-# Usage:
-#   oj { version = "3.16.15"; }
-#   oj { }  # latest (3.16.15)
+# Versions: 3.16.3, 3.16.10, 3.16.12, 3.16.13, 3.16.14, 3.16.15
 #
 {
   lib,
@@ -40,7 +30,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "oj: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "oj: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "oj: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "oj: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # elasticsearch-transport
 #
-# Available versions:
-#   7.17.9
-#   7.17.10
-#   7.17.11
-#
-# Usage:
-#   elasticsearch-transport { version = "7.17.11"; }
-#   elasticsearch-transport { }  # latest (7.17.11)
+# Versions: 7.17.9, 7.17.10, 7.17.11
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "elasticsearch-transport: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "elasticsearch-transport: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "elasticsearch-transport: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "elasticsearch-transport: unknown version '${version}'")

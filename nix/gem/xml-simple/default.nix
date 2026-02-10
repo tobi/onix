@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # xml-simple
 #
-# Available versions:
-#   1.1.7
-#   1.1.8
-#   1.1.9
-#
-# Usage:
-#   xml-simple { version = "1.1.9"; }
-#   xml-simple { }  # latest (1.1.9)
+# Versions: 1.1.7, 1.1.8, 1.1.9
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "xml-simple: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "xml-simple: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "xml-simple: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "xml-simple: unknown version '${version}'")

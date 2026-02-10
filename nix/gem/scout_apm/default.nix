@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # scout_apm
 #
-# Available versions:
-#   5.3.3
-#
-# Usage:
-#   scout_apm { version = "5.3.3"; }
-#   scout_apm { }  # latest (5.3.3)
+# Versions: 5.3.3
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "scout_apm: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "scout_apm: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "scout_apm: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "scout_apm: unknown version '${version}'")

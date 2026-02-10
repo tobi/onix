@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # unicode-display_width
 #
-# Available versions:
-#   2.5.0
-#   3.1.4
-#   3.1.5
-#   3.2.0
-#
-# Usage:
-#   unicode-display_width { version = "3.2.0"; }
-#   unicode-display_width { }  # latest (3.2.0)
+# Versions: 2.5.0, 3.1.4, 3.1.5, 3.2.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "unicode-display_width: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "unicode-display_width: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "unicode-display_width: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "unicode-display_width: unknown version '${version}'")

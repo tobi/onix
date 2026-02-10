@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # asciidoctor
 #
-# Available versions:
-#   2.0.24
-#   2.0.25
-#   2.0.26
-#
-# Usage:
-#   asciidoctor { version = "2.0.26"; }
-#   asciidoctor { }  # latest (2.0.26)
+# Versions: 2.0.24, 2.0.25, 2.0.26
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "asciidoctor: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "asciidoctor: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "asciidoctor: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "asciidoctor: unknown version '${version}'")

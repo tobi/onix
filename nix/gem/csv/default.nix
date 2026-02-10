@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # csv
 #
-# Available versions:
-#   3.3.0
-#   3.3.3
-#   3.3.4
-#   3.3.5
-#
-# Usage:
-#   csv { version = "3.3.5"; }
-#   csv { }  # latest (3.3.5)
+# Versions: 3.3.0, 3.3.3, 3.3.4, 3.3.5
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "csv: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "csv: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "csv: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "csv: unknown version '${version}'")

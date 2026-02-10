@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # libv8-node
 #
-# Available versions:
-#   24.1.0.0
-#
-# Usage:
-#   libv8-node { version = "24.1.0.0"; }
-#   libv8-node { }  # latest (24.1.0.0)
+# Versions: 24.1.0.0
 #
 {
   lib,
@@ -22,14 +17,7 @@
 }:
 let
   versions = {
-    "24.1.0.0" = import ./24.1.0.0 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
+    "24.1.0.0" = import ./24.1.0.0 { inherit lib stdenv ruby pkgs; };
   };
 
   gitRevs = {
@@ -37,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "libv8-node: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "libv8-node: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "libv8-node: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "libv8-node: unknown version '${version}'")

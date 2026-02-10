@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # attr_encrypted
 #
-# Available versions:
-#   4.1.0
-#   4.1.1
-#   4.2.0
-#
-# Usage:
-#   attr_encrypted { version = "4.2.0"; }
-#   attr_encrypted { }  # latest (4.2.0)
+# Versions: 4.1.0, 4.1.1, 4.2.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "attr_encrypted: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "attr_encrypted: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "attr_encrypted: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "attr_encrypted: unknown version '${version}'")

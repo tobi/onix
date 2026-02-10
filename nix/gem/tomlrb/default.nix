@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # tomlrb
 #
-# Available versions:
-#   2.0.2
-#   2.0.3
-#   2.0.4
-#
-# Usage:
-#   tomlrb { version = "2.0.4"; }
-#   tomlrb { }  # latest (2.0.4)
+# Versions: 2.0.2, 2.0.3, 2.0.4
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "tomlrb: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "tomlrb: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "tomlrb: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "tomlrb: unknown version '${version}'")

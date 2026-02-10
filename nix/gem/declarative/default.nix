@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # declarative
 #
-# Available versions:
-#   0.0.9
-#   0.0.10
-#   0.0.20
-#
-# Usage:
-#   declarative { version = "0.0.20"; }
-#   declarative { }  # latest (0.0.20)
+# Versions: 0.0.9, 0.0.10, 0.0.20
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "declarative: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "declarative: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "declarative: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "declarative: unknown version '${version}'")

@@ -1,21 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rubocop-ast
 #
-# Available versions:
-#   1.31.2
-#   1.44.1
-#   1.46.0
-#   1.47.1
-#   1.48.0
-#   1.49.0
-#
-# Usage:
-#   rubocop-ast { version = "1.49.0"; }
-#   rubocop-ast { }  # latest (1.49.0)
+# Versions: 1.31.2, 1.44.1, 1.46.0, 1.47.1, 1.48.0, 1.49.0
 #
 {
   lib,
@@ -40,7 +30,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rubocop-ast: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rubocop-ast: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rubocop-ast: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rubocop-ast: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # ruby-ole
 #
-# Available versions:
-#   1.2.12.2
-#   1.2.13
-#   1.2.13.1
-#
-# Usage:
-#   ruby-ole { version = "1.2.13.1"; }
-#   ruby-ole { }  # latest (1.2.13.1)
+# Versions: 1.2.12.2, 1.2.13, 1.2.13.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "ruby-ole: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "ruby-ole: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "ruby-ole: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "ruby-ole: unknown version '${version}'")

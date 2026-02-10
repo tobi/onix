@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # wkhtmltopdf-binary
 #
-# Available versions:
-#   0.12.6.8
-#   0.12.6.9
-#   0.12.6.10
-#
-# Usage:
-#   wkhtmltopdf-binary { version = "0.12.6.10"; }
-#   wkhtmltopdf-binary { }  # latest (0.12.6.10)
+# Versions: 0.12.6.8, 0.12.6.9, 0.12.6.10
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "wkhtmltopdf-binary: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "wkhtmltopdf-binary: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "wkhtmltopdf-binary: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "wkhtmltopdf-binary: unknown version '${version}'")

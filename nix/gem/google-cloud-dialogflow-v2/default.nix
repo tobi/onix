@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # google-cloud-dialogflow-v2
 #
-# Available versions:
-#   0.31.0
-#
-# Usage:
-#   google-cloud-dialogflow-v2 { version = "0.31.0"; }
-#   google-cloud-dialogflow-v2 { }  # latest (0.31.0)
+# Versions: 0.31.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "google-cloud-dialogflow-v2: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "google-cloud-dialogflow-v2: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "google-cloud-dialogflow-v2: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "google-cloud-dialogflow-v2: unknown version '${version}'")

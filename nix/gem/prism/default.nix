@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # prism
 #
-# Available versions:
-#   1.4.0
-#   1.6.0
-#   1.7.0
-#   1.8.0
-#   1.9.0
-#
-# Usage:
-#   prism { version = "1.9.0"; }
-#   prism { }  # latest (1.9.0)
+# Versions: 1.4.0, 1.6.0, 1.7.0, 1.8.0, 1.9.0
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "prism: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "prism: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "prism: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "prism: unknown version '${version}'")

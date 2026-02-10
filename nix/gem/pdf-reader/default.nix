@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # pdf-reader
 #
-# Available versions:
-#   2.14.1
-#   2.15.0
-#   2.15.1
-#
-# Usage:
-#   pdf-reader { version = "2.15.1"; }
-#   pdf-reader { }  # latest (2.15.1)
+# Versions: 2.14.1, 2.15.0, 2.15.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "pdf-reader: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "pdf-reader: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "pdf-reader: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "pdf-reader: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # backports
 #
-# Available versions:
-#   3.25.1
-#   3.25.2
-#   3.25.3
-#
-# Usage:
-#   backports { version = "3.25.3"; }
-#   backports { }  # latest (3.25.3)
+# Versions: 3.25.1, 3.25.2, 3.25.3
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "backports: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "backports: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "backports: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "backports: unknown version '${version}'")

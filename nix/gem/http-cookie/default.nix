@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # http-cookie
 #
-# Available versions:
-#   1.0.5
-#   1.0.7
-#   1.0.8
-#   1.1.0
-#
-# Usage:
-#   http-cookie { version = "1.1.0"; }
-#   http-cookie { }  # latest (1.1.0)
+# Versions: 1.0.5, 1.0.7, 1.0.8, 1.1.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "http-cookie: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "http-cookie: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "http-cookie: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "http-cookie: unknown version '${version}'")

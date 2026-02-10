@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # systemu
 #
-# Available versions:
-#   2.6.3
-#   2.6.4
-#   2.6.5
-#
-# Usage:
-#   systemu { version = "2.6.5"; }
-#   systemu { }  # latest (2.6.5)
+# Versions: 2.6.3, 2.6.4, 2.6.5
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "systemu: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "systemu: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "systemu: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "systemu: unknown version '${version}'")

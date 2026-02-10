@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # capistrano-bundler
 #
-# Available versions:
-#   2.1.0
-#   2.1.1
-#   2.2.0
-#
-# Usage:
-#   capistrano-bundler { version = "2.2.0"; }
-#   capistrano-bundler { }  # latest (2.2.0)
+# Versions: 2.1.0, 2.1.1, 2.2.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "capistrano-bundler: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "capistrano-bundler: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "capistrano-bundler: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "capistrano-bundler: unknown version '${version}'")

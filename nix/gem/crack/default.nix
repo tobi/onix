@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # crack
 #
-# Available versions:
-#   0.4.6
-#   1.0.0
-#   1.0.1
-#
-# Usage:
-#   crack { version = "1.0.1"; }
-#   crack { }  # latest (1.0.1)
+# Versions: 0.4.6, 1.0.0, 1.0.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "crack: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "crack: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "crack: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "crack: unknown version '${version}'")

@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rubocop-i18n
 #
-# Available versions:
-#   3.2.3
-#
-# Usage:
-#   rubocop-i18n { version = "3.2.3"; }
-#   rubocop-i18n { }  # latest (3.2.3)
+# Versions: 3.2.3
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rubocop-i18n: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rubocop-i18n: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rubocop-i18n: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rubocop-i18n: unknown version '${version}'")

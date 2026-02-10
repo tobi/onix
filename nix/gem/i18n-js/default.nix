@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # i18n-js
 #
-# Available versions:
-#   3.9.2
-#
-# Usage:
-#   i18n-js { version = "3.9.2"; }
-#   i18n-js { }  # latest (3.9.2)
+# Versions: 3.9.2
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "i18n-js: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "i18n-js: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "i18n-js: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "i18n-js: unknown version '${version}'")

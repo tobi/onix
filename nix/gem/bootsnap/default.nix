@@ -1,23 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # bootsnap
 #
-# Available versions:
-#   1.16.0
-#   1.18.3
-#   1.18.4
-#   1.19.0
-#   1.20.1
-#   1.21.0
-#   1.21.1
-#   1.22.0
-#
-# Usage:
-#   bootsnap { version = "1.22.0"; }
-#   bootsnap { }  # latest (1.22.0)
+# Versions: 1.16.0, 1.18.3, 1.18.4, 1.19.0, 1.20.1, 1.21.0, 1.21.1, 1.22.0
 #
 {
   lib,
@@ -44,7 +32,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "bootsnap: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "bootsnap: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "bootsnap: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "bootsnap: unknown version '${version}'")

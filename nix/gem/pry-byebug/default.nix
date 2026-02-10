@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # pry-byebug
 #
-# Available versions:
-#   3.10.1
-#   3.11.0
-#   3.12.0
-#
-# Usage:
-#   pry-byebug { version = "3.12.0"; }
-#   pry-byebug { }  # latest (3.12.0)
+# Versions: 3.10.1, 3.11.0, 3.12.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "pry-byebug: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "pry-byebug: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "pry-byebug: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "pry-byebug: unknown version '${version}'")

@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # reline
 #
-# Available versions:
-#   0.3.6
-#   0.5.3
-#   0.6.1
-#   0.6.2
-#   0.6.3
-#
-# Usage:
-#   reline { version = "0.6.3"; }
-#   reline { }  # latest (0.6.3)
+# Versions: 0.3.6, 0.5.3, 0.6.1, 0.6.2, 0.6.3
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "reline: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "reline: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "reline: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "reline: unknown version '${version}'")

@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # zlib
 #
-# Available versions:
-#   2.1.1
-#
-# Usage:
-#   zlib { version = "2.1.1"; }
-#   zlib { }  # latest (2.1.1)
+# Versions: 2.1.1
 #
 {
   lib,
@@ -22,14 +17,7 @@
 }:
 let
   versions = {
-    "2.1.1" = import ./2.1.1 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
+    "2.1.1" = import ./2.1.1 { inherit lib stdenv ruby pkgs; };
   };
 
   gitRevs = {
@@ -37,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "zlib: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "zlib: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "zlib: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "zlib: unknown version '${version}'")

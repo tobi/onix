@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # danger
 #
-# Available versions:
-#   9.5.1
-#   9.5.2
-#   9.5.3
-#
-# Usage:
-#   danger { version = "9.5.3"; }
-#   danger { }  # latest (9.5.3)
+# Versions: 9.5.1, 9.5.2, 9.5.3
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "danger: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "danger: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "danger: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "danger: unknown version '${version}'")

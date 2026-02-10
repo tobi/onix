@@ -1,21 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # ruby-vips
 #
-# Available versions:
-#   2.1.4
-#   2.2.1
-#   2.2.2
-#   2.2.4
-#   2.2.5
-#   2.3.0
-#
-# Usage:
-#   ruby-vips { version = "2.3.0"; }
-#   ruby-vips { }  # latest (2.3.0)
+# Versions: 2.1.4, 2.2.1, 2.2.2, 2.2.4, 2.2.5, 2.3.0
 #
 {
   lib,
@@ -40,7 +30,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "ruby-vips: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "ruby-vips: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "ruby-vips: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "ruby-vips: unknown version '${version}'")

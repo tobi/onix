@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # dotenv-rails
 #
-# Available versions:
-#   2.8.1
-#   3.1.2
-#   3.1.7
-#   3.1.8
-#   3.2.0
-#
-# Usage:
-#   dotenv-rails { version = "3.2.0"; }
-#   dotenv-rails { }  # latest (3.2.0)
+# Versions: 2.8.1, 3.1.2, 3.1.7, 3.1.8, 3.2.0
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "dotenv-rails: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "dotenv-rails: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "dotenv-rails: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "dotenv-rails: unknown version '${version}'")

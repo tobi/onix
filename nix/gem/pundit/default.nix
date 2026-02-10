@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # pundit
 #
-# Available versions:
-#   2.3.0
-#   2.3.1
-#   2.5.0
-#   2.5.1
-#   2.5.2
-#
-# Usage:
-#   pundit { version = "2.5.2"; }
-#   pundit { }  # latest (2.5.2)
+# Versions: 2.3.0, 2.3.1, 2.5.0, 2.5.1, 2.5.2
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "pundit: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "pundit: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "pundit: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "pundit: unknown version '${version}'")

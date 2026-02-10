@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # mobility-ransack
 #
-# Available versions:
-#   1.2.2
-#
-# Usage:
-#   mobility-ransack { version = "1.2.2"; }
-#   mobility-ransack { }  # latest (1.2.2)
+# Versions: 1.2.2
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "mobility-ransack: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "mobility-ransack: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "mobility-ransack: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "mobility-ransack: unknown version '${version}'")

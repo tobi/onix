@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # image_optim
 #
-# Available versions:
-#   0.31.4
-#
-# Usage:
-#   image_optim { version = "0.31.4"; }
-#   image_optim { }  # latest (0.31.4)
+# Versions: 0.31.4
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "image_optim: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "image_optim: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "image_optim: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "image_optim: unknown version '${version}'")

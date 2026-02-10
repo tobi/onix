@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # byebug
 #
-# Available versions:
-#   11.1.3
-#   12.0.0
-#   13.0.0
-#
-# Usage:
-#   byebug { version = "13.0.0"; }
-#   byebug { }  # latest (13.0.0)
+# Versions: 11.1.3, 12.0.0, 13.0.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "byebug: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "byebug: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "byebug: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "byebug: unknown version '${version}'")

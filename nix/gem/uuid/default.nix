@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # uuid
 #
-# Available versions:
-#   2.3.7
-#   2.3.8
-#   2.3.9
-#
-# Usage:
-#   uuid { version = "2.3.9"; }
-#   uuid { }  # latest (2.3.9)
+# Versions: 2.3.7, 2.3.8, 2.3.9
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "uuid: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "uuid: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "uuid: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "uuid: unknown version '${version}'")

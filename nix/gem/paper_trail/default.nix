@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # paper_trail
 #
-# Available versions:
-#   15.2.0
-#   16.0.0
-#   17.0.0
-#
-# Usage:
-#   paper_trail { version = "17.0.0"; }
-#   paper_trail { }  # latest (17.0.0)
+# Versions: 15.2.0, 16.0.0, 17.0.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "paper_trail: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "paper_trail: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "paper_trail: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "paper_trail: unknown version '${version}'")

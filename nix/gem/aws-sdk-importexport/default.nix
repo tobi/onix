@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # aws-sdk-importexport
 #
-# Available versions:
-#   1.68.0
-#   1.69.0
-#   1.70.0
-#
-# Usage:
-#   aws-sdk-importexport { version = "1.70.0"; }
-#   aws-sdk-importexport { }  # latest (1.70.0)
+# Versions: 1.68.0, 1.69.0, 1.70.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "aws-sdk-importexport: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "aws-sdk-importexport: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "aws-sdk-importexport: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "aws-sdk-importexport: unknown version '${version}'")

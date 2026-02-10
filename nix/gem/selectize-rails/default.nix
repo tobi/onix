@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # selectize-rails
 #
-# Available versions:
-#   0.12.6
-#
-# Usage:
-#   selectize-rails { version = "0.12.6"; }
-#   selectize-rails { }  # latest (0.12.6)
+# Versions: 0.12.6
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "selectize-rails: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "selectize-rails: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "selectize-rails: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "selectize-rails: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # redcarpet
 #
-# Available versions:
-#   3.5.1
-#   3.6.0
-#   3.6.1
-#
-# Usage:
-#   redcarpet { version = "3.6.1"; }
-#   redcarpet { }  # latest (3.6.1)
+# Versions: 3.5.1, 3.6.0, 3.6.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "redcarpet: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "redcarpet: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "redcarpet: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "redcarpet: unknown version '${version}'")

@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # capybara
 #
-# Available versions:
-#   3.37.1
-#   3.39.1
-#   3.39.2
-#   3.40.0
-#
-# Usage:
-#   capybara { version = "3.40.0"; }
-#   capybara { }  # latest (3.40.0)
+# Versions: 3.37.1, 3.39.1, 3.39.2, 3.40.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "capybara: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "capybara: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "capybara: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "capybara: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # warden
 #
-# Available versions:
-#   1.2.7
-#   1.2.8
-#   1.2.9
-#
-# Usage:
-#   warden { version = "1.2.9"; }
-#   warden { }  # latest (1.2.9)
+# Versions: 1.2.7, 1.2.8, 1.2.9
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "warden: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "warden: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "warden: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "warden: unknown version '${version}'")

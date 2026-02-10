@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # friendly_id
 #
-# Available versions:
-#   5.5.0
-#   5.5.1
-#   5.6.0
-#
-# Usage:
-#   friendly_id { version = "5.6.0"; }
-#   friendly_id { }  # latest (5.6.0)
+# Versions: 5.5.0, 5.5.1, 5.6.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "friendly_id: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "friendly_id: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "friendly_id: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "friendly_id: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # mixlib-config
 #
-# Available versions:
-#   3.0.6
-#   3.0.9
-#   3.0.27
-#
-# Usage:
-#   mixlib-config { version = "3.0.27"; }
-#   mixlib-config { }  # latest (3.0.27)
+# Versions: 3.0.6, 3.0.9, 3.0.27
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "mixlib-config: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "mixlib-config: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "mixlib-config: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "mixlib-config: unknown version '${version}'")

@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # uri
 #
-# Available versions:
-#   0.13.0
-#   1.0.3
-#   1.0.4
-#   1.1.0
-#   1.1.1
-#
-# Usage:
-#   uri { version = "1.1.1"; }
-#   uri { }  # latest (1.1.1)
+# Versions: 0.13.0, 1.0.3, 1.0.4, 1.1.0, 1.1.1
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "uri: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "uri: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "uri: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "uri: unknown version '${version}'")

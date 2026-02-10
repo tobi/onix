@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # thrift
 #
-# Available versions:
-#   0.20.0
-#   0.21.0
-#   0.22.0
-#
-# Usage:
-#   thrift { version = "0.22.0"; }
-#   thrift { }  # latest (0.22.0)
+# Versions: 0.20.0, 0.21.0, 0.22.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "thrift: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "thrift: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "thrift: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "thrift: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # docile
 #
-# Available versions:
-#   1.3.5
-#   1.4.0
-#   1.4.1
-#
-# Usage:
-#   docile { version = "1.4.1"; }
-#   docile { }  # latest (1.4.1)
+# Versions: 1.3.5, 1.4.0, 1.4.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "docile: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "docile: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "docile: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "docile: unknown version '${version}'")

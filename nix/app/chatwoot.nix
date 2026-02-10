@@ -1,10 +1,9 @@
 #
-# ╔═══════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/import to refresh ║
-# ╚═══════════════════════════════════════════════════════╝
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run gemset2nix import to regen  ║
+# ╚══════════════════════════════════════════════════════════════╝
 #
 # CHATWOOT — 364 gems
-# Generated from Gemfile.lock
 #
 [
   { name = "actioncable"; version = "7.1.5.2"; }

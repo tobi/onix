@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rack-mini-profiler
 #
-# Available versions:
-#   3.2.0
-#   3.3.1
-#   4.0.0
-#   4.0.1
-#
-# Usage:
-#   rack-mini-profiler { version = "4.0.1"; }
-#   rack-mini-profiler { }  # latest (4.0.1)
+# Versions: 3.2.0, 3.3.1, 4.0.0, 4.0.1
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rack-mini-profiler: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rack-mini-profiler: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rack-mini-profiler: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rack-mini-profiler: unknown version '${version}'")

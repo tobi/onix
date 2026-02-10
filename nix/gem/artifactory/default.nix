@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # artifactory
 #
-# Available versions:
-#   3.0.13
-#   3.0.15
-#   3.0.17
-#
-# Usage:
-#   artifactory { version = "3.0.17"; }
-#   artifactory { }  # latest (3.0.17)
+# Versions: 3.0.13, 3.0.15, 3.0.17
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "artifactory: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "artifactory: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "artifactory: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "artifactory: unknown version '${version}'")

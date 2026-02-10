@@ -1,17 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # solid_cache
 #
-# Available versions:
-#   1.0.6
-#   1.0.10
-#
-# Usage:
-#   solid_cache { version = "1.0.10"; }
-#   solid_cache { }  # latest (1.0.10)
+# Versions: 1.0.6, 1.0.10
 #
 {
   lib,
@@ -32,7 +26,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "solid_cache: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "solid_cache: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "solid_cache: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "solid_cache: unknown version '${version}'")

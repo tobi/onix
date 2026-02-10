@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # judoscale-ruby
 #
-# Available versions:
-#   1.8.2
-#
-# Usage:
-#   judoscale-ruby { version = "1.8.2"; }
-#   judoscale-ruby { }  # latest (1.8.2)
+# Versions: 1.8.2
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "judoscale-ruby: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "judoscale-ruby: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "judoscale-ruby: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "judoscale-ruby: unknown version '${version}'")

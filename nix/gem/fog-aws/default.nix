@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # fog-aws
 #
-# Available versions:
-#   3.21.0
-#   3.32.0
-#   3.33.0
-#   3.33.1
-#
-# Usage:
-#   fog-aws { version = "3.33.1"; }
-#   fog-aws { }  # latest (3.33.1)
+# Versions: 3.21.0, 3.32.0, 3.33.0, 3.33.1
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "fog-aws: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "fog-aws: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "fog-aws: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "fog-aws: unknown version '${version}'")

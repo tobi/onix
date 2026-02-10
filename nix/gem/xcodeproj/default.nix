@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # xcodeproj
 #
-# Available versions:
-#   1.25.1
-#   1.26.0
-#   1.27.0
-#
-# Usage:
-#   xcodeproj { version = "1.27.0"; }
-#   xcodeproj { }  # latest (1.27.0)
+# Versions: 1.25.1, 1.26.0, 1.27.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "xcodeproj: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "xcodeproj: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "xcodeproj: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "xcodeproj: unknown version '${version}'")

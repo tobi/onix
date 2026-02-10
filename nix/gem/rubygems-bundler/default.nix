@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rubygems-bundler
 #
-# Available versions:
-#   1.4.5
-#
-# Usage:
-#   rubygems-bundler { version = "1.4.5"; }
-#   rubygems-bundler { }  # latest (1.4.5)
+# Versions: 1.4.5
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rubygems-bundler: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rubygems-bundler: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rubygems-bundler: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rubygems-bundler: unknown version '${version}'")

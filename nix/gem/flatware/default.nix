@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # flatware
 #
-# Available versions:
-#   2.3.4
-#
-# Usage:
-#   flatware { version = "2.3.4"; }
-#   flatware { }  # latest (2.3.4)
+# Versions: 2.3.4
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "flatware: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "flatware: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "flatware: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "flatware: unknown version '${version}'")

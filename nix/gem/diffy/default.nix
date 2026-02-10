@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # diffy
 #
-# Available versions:
-#   3.4.2
-#   3.4.3
-#   3.4.4
-#
-# Usage:
-#   diffy { version = "3.4.4"; }
-#   diffy { }  # latest (3.4.4)
+# Versions: 3.4.2, 3.4.3, 3.4.4
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "diffy: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "diffy: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "diffy: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "diffy: unknown version '${version}'")

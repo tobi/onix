@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # image_processing
 #
-# Available versions:
-#   1.12.2
-#   1.13.0
-#   1.14.0
-#
-# Usage:
-#   image_processing { version = "1.14.0"; }
-#   image_processing { }  # latest (1.14.0)
+# Versions: 1.12.2, 1.13.0, 1.14.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "image_processing: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "image_processing: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "image_processing: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "image_processing: unknown version '${version}'")

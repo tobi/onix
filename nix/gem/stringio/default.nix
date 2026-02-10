@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # stringio
 #
-# Available versions:
-#   3.1.0
-#   3.1.7
-#   3.1.8
-#   3.1.9
-#   3.2.0
-#
-# Usage:
-#   stringio { version = "3.2.0"; }
-#   stringio { }  # latest (3.2.0)
+# Versions: 3.1.0, 3.1.7, 3.1.8, 3.1.9, 3.2.0
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "stringio: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "stringio: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "stringio: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "stringio: unknown version '${version}'")

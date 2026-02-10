@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # discourse_dev_assets
 #
-# Available versions:
-#   0.0.6
-#
-# Usage:
-#   discourse_dev_assets { version = "0.0.6"; }
-#   discourse_dev_assets { }  # latest (0.0.6)
+# Versions: 0.0.6
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "discourse_dev_assets: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "discourse_dev_assets: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "discourse_dev_assets: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "discourse_dev_assets: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # tailwindcss-rails
 #
-# Available versions:
-#   3.2.0
-#   3.3.2
-#   4.4.0
-#
-# Usage:
-#   tailwindcss-rails { version = "4.4.0"; }
-#   tailwindcss-rails { }  # latest (4.4.0)
+# Versions: 3.2.0, 3.3.2, 4.4.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "tailwindcss-rails: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "tailwindcss-rails: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "tailwindcss-rails: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "tailwindcss-rails: unknown version '${version}'")

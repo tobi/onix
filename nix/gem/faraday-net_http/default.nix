@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # faraday-net_http
 #
-# Available versions:
-#   3.1.0
-#   3.4.0
-#   3.4.1
-#   3.4.2
-#
-# Usage:
-#   faraday-net_http { version = "3.4.2"; }
-#   faraday-net_http { }  # latest (3.4.2)
+# Versions: 3.1.0, 3.4.0, 3.4.1, 3.4.2
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "faraday-net_http: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "faraday-net_http: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "faraday-net_http: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "faraday-net_http: unknown version '${version}'")

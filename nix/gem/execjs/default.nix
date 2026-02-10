@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # execjs
 #
-# Available versions:
-#   2.8.1
-#   2.9.0
-#   2.9.1
-#   2.10.0
-#
-# Usage:
-#   execjs { version = "2.10.0"; }
-#   execjs { }  # latest (2.10.0)
+# Versions: 2.8.1, 2.9.0, 2.9.1, 2.10.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "execjs: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "execjs: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "execjs: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "execjs: unknown version '${version}'")

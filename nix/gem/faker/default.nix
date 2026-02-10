@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # faker
 #
-# Available versions:
-#   3.2.0
-#   3.5.1
-#   3.5.2
-#   3.5.3
-#   3.6.0
-#
-# Usage:
-#   faker { version = "3.6.0"; }
-#   faker { }  # latest (3.6.0)
+# Versions: 3.2.0, 3.5.1, 3.5.2, 3.5.3, 3.6.0
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "faker: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "faker: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "faker: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "faker: unknown version '${version}'")

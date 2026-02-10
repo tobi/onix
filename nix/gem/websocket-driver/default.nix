@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # websocket-driver
 #
-# Available versions:
-#   0.7.6
-#   0.7.7
-#   0.8.0
-#
-# Usage:
-#   websocket-driver { version = "0.8.0"; }
-#   websocket-driver { }  # latest (0.8.0)
+# Versions: 0.7.6, 0.7.7, 0.8.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "websocket-driver: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "websocket-driver: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "websocket-driver: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "websocket-driver: unknown version '${version}'")

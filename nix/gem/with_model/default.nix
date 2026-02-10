@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # with_model
 #
-# Available versions:
-#   2.1.7
-#
-# Usage:
-#   with_model { version = "2.1.7"; }
-#   with_model { }  # latest (2.1.7)
+# Versions: 2.1.7
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "with_model: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "with_model: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "with_model: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "with_model: unknown version '${version}'")

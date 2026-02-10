@@ -1,17 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rb_sys
 #
-# Available versions:
-#   0.9.119
-#   0.9.124
-#
-# Usage:
-#   rb_sys { version = "0.9.124"; }
-#   rb_sys { }  # latest (0.9.124)
+# Versions: 0.9.119, 0.9.124
 #
 {
   lib,
@@ -32,7 +26,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rb_sys: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rb_sys: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rb_sys: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rb_sys: unknown version '${version}'")

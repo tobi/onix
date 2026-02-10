@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # slack-ruby-client
 #
-# Available versions:
-#   2.7.0
-#   3.0.0
-#   3.1.0
-#
-# Usage:
-#   slack-ruby-client { version = "3.1.0"; }
-#   slack-ruby-client { }  # latest (3.1.0)
+# Versions: 2.7.0, 3.0.0, 3.1.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "slack-ruby-client: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "slack-ruby-client: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "slack-ruby-client: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "slack-ruby-client: unknown version '${version}'")

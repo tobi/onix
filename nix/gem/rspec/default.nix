@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rspec
 #
-# Available versions:
-#   3.12.0
-#   3.13.0
-#   3.13.1
-#   3.13.2
-#
-# Usage:
-#   rspec { version = "3.13.2"; }
-#   rspec { }  # latest (3.13.2)
+# Versions: 3.12.0, 3.13.0, 3.13.1, 3.13.2
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rspec: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rspec: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rspec: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rspec: unknown version '${version}'")

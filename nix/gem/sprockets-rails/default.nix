@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # sprockets-rails
 #
-# Available versions:
-#   3.4.2
-#   3.5.0
-#   3.5.1
-#   3.5.2
-#
-# Usage:
-#   sprockets-rails { version = "3.5.2"; }
-#   sprockets-rails { }  # latest (3.5.2)
+# Versions: 3.4.2, 3.5.0, 3.5.1, 3.5.2
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "sprockets-rails: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "sprockets-rails: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "sprockets-rails: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "sprockets-rails: unknown version '${version}'")

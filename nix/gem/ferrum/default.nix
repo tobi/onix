@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # ferrum
 #
-# Available versions:
-#   0.14
-#
-# Usage:
-#   ferrum { version = "0.14"; }
-#   ferrum { }  # latest (0.14)
+# Versions: 0.14
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "ferrum: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "ferrum: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "ferrum: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "ferrum: unknown version '${version}'")

@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # omniauth-google-oauth2
 #
-# Available versions:
-#   1.0.1
-#   1.1.2
-#   1.1.3
-#   1.2.0
-#   1.2.1
-#
-# Usage:
-#   omniauth-google-oauth2 { version = "1.2.1"; }
-#   omniauth-google-oauth2 { }  # latest (1.2.1)
+# Versions: 1.0.1, 1.1.2, 1.1.3, 1.2.0, 1.2.1
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "omniauth-google-oauth2: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "omniauth-google-oauth2: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "omniauth-google-oauth2: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "omniauth-google-oauth2: unknown version '${version}'")

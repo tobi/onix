@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # arr-pm
 #
-# Available versions:
-#   0.0.10
-#   0.0.11
-#   0.0.12
-#
-# Usage:
-#   arr-pm { version = "0.0.12"; }
-#   arr-pm { }  # latest (0.0.12)
+# Versions: 0.0.10, 0.0.11, 0.0.12
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "arr-pm: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "arr-pm: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "arr-pm: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "arr-pm: unknown version '${version}'")

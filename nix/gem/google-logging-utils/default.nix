@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # google-logging-utils
 #
-# Available versions:
-#   0.1.0
-#
-# Usage:
-#   google-logging-utils { version = "0.1.0"; }
-#   google-logging-utils { }  # latest (0.1.0)
+# Versions: 0.1.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "google-logging-utils: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "google-logging-utils: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "google-logging-utils: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "google-logging-utils: unknown version '${version}'")

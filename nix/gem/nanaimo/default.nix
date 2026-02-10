@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # nanaimo
 #
-# Available versions:
-#   0.2.6
-#   0.3.0
-#   0.4.0
-#
-# Usage:
-#   nanaimo { version = "0.4.0"; }
-#   nanaimo { }  # latest (0.4.0)
+# Versions: 0.2.6, 0.3.0, 0.4.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "nanaimo: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "nanaimo: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "nanaimo: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "nanaimo: unknown version '${version}'")

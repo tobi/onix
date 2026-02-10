@@ -1,17 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # vite_ruby
 #
-# Available versions:
-#   3.8.0
-#   3.9.2
-#
-# Usage:
-#   vite_ruby { version = "3.9.2"; }
-#   vite_ruby { }  # latest (3.9.2)
+# Versions: 3.8.0, 3.9.2
 #
 {
   lib,
@@ -32,7 +26,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "vite_ruby: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "vite_ruby: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "vite_ruby: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "vite_ruby: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # encryptor
 #
-# Available versions:
-#   1.3.0
-#   2.0.0
-#   3.0.0
-#
-# Usage:
-#   encryptor { version = "3.0.0"; }
-#   encryptor { }  # latest (3.0.0)
+# Versions: 1.3.0, 2.0.0, 3.0.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "encryptor: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "encryptor: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "encryptor: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "encryptor: unknown version '${version}'")

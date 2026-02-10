@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # mutex_m
 #
-# Available versions:
-#   0.1.2
-#   0.2.0
-#   0.3.0
-#
-# Usage:
-#   mutex_m { version = "0.3.0"; }
-#   mutex_m { }  # latest (0.3.0)
+# Versions: 0.1.2, 0.2.0, 0.3.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "mutex_m: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "mutex_m: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "mutex_m: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "mutex_m: unknown version '${version}'")

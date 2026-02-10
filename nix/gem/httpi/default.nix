@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # httpi
 #
-# Available versions:
-#   4.0.2
-#   4.0.3
-#   4.0.4
-#
-# Usage:
-#   httpi { version = "4.0.4"; }
-#   httpi { }  # latest (4.0.4)
+# Versions: 4.0.2, 4.0.3, 4.0.4
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "httpi: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "httpi: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "httpi: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "httpi: unknown version '${version}'")

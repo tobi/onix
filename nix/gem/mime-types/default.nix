@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # mime-types
 #
-# Available versions:
-#   3.4.1
-#   3.5.2
-#   3.6.1
-#   3.6.2
-#   3.7.0
-#
-# Usage:
-#   mime-types { version = "3.7.0"; }
-#   mime-types { }  # latest (3.7.0)
+# Versions: 3.4.1, 3.5.2, 3.6.1, 3.6.2, 3.7.0
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "mime-types: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "mime-types: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "mime-types: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "mime-types: unknown version '${version}'")

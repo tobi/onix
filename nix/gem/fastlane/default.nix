@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # fastlane
 #
-# Available versions:
-#   2.231.0
-#   2.231.1
-#   2.232.0
-#
-# Usage:
-#   fastlane { version = "2.232.0"; }
-#   fastlane { }  # latest (2.232.0)
+# Versions: 2.231.0, 2.231.1, 2.232.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "fastlane: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "fastlane: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "fastlane: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "fastlane: unknown version '${version}'")

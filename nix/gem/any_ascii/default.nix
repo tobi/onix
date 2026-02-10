@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # any_ascii
 #
-# Available versions:
-#   0.3.3
-#
-# Usage:
-#   any_ascii { version = "0.3.3"; }
-#   any_ascii { }  # latest (0.3.3)
+# Versions: 0.3.3
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "any_ascii: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "any_ascii: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "any_ascii: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "any_ascii: unknown version '${version}'")

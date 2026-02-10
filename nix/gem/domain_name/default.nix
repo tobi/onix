@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # domain_name
 #
-# Available versions:
-#   0.5.20190701
-#   0.6.20231109
-#   0.6.20240107
-#
-# Usage:
-#   domain_name { version = "0.6.20240107"; }
-#   domain_name { }  # latest (0.6.20240107)
+# Versions: 0.5.20190701, 0.6.20231109, 0.6.20240107
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "domain_name: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "domain_name: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "domain_name: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "domain_name: unknown version '${version}'")

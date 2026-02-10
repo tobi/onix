@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # facter
 #
-# Available versions:
-#   4.8.0
-#   4.9.0
-#   4.10.0
-#
-# Usage:
-#   facter { version = "4.10.0"; }
-#   facter { }  # latest (4.10.0)
+# Versions: 4.8.0, 4.9.0, 4.10.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "facter: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "facter: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "facter: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "facter: unknown version '${version}'")

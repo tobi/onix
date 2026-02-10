@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # aws-sdk-dynamodb
 #
-# Available versions:
-#   1.160.0
-#   1.161.0
-#   1.162.0
-#
-# Usage:
-#   aws-sdk-dynamodb { version = "1.162.0"; }
-#   aws-sdk-dynamodb { }  # latest (1.162.0)
+# Versions: 1.160.0, 1.161.0, 1.162.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "aws-sdk-dynamodb: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "aws-sdk-dynamodb: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "aws-sdk-dynamodb: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "aws-sdk-dynamodb: unknown version '${version}'")

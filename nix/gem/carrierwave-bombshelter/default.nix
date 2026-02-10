@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # carrierwave-bombshelter
 #
-# Available versions:
-#   0.2.2
-#
-# Usage:
-#   carrierwave-bombshelter { version = "0.2.2"; }
-#   carrierwave-bombshelter { }  # latest (0.2.2)
+# Versions: 0.2.2
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "carrierwave-bombshelter: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "carrierwave-bombshelter: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "carrierwave-bombshelter: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "carrierwave-bombshelter: unknown version '${version}'")

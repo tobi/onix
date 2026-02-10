@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # sidekiq-scheduler
 #
-# Available versions:
-#   6.0.1
-#
-# Usage:
-#   sidekiq-scheduler { version = "6.0.1"; }
-#   sidekiq-scheduler { }  # latest (6.0.1)
+# Versions: 6.0.1
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "sidekiq-scheduler: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "sidekiq-scheduler: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "sidekiq-scheduler: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "sidekiq-scheduler: unknown version '${version}'")

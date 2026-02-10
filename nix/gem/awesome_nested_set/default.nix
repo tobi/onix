@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # awesome_nested_set
 #
-# Available versions:
-#   3.9.0
-#
-# Usage:
-#   awesome_nested_set { version = "3.9.0"; }
-#   awesome_nested_set { }  # latest (3.9.0)
+# Versions: 3.9.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "awesome_nested_set: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "awesome_nested_set: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "awesome_nested_set: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "awesome_nested_set: unknown version '${version}'")

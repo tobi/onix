@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # validate_email
 #
-# Available versions:
-#   0.1.6
-#
-# Usage:
-#   validate_email { version = "0.1.6"; }
-#   validate_email { }  # latest (0.1.6)
+# Versions: 0.1.6
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "validate_email: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "validate_email: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "validate_email: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "validate_email: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rubygems-update
 #
-# Available versions:
-#   4.0.4
-#   4.0.5
-#   4.0.6
-#
-# Usage:
-#   rubygems-update { version = "4.0.6"; }
-#   rubygems-update { }  # latest (4.0.6)
+# Versions: 4.0.4, 4.0.5, 4.0.6
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rubygems-update: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rubygems-update: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rubygems-update: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rubygems-update: unknown version '${version}'")

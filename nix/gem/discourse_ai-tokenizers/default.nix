@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # discourse_ai-tokenizers
 #
-# Available versions:
-#   0.4
-#
-# Usage:
-#   discourse_ai-tokenizers { version = "0.4"; }
-#   discourse_ai-tokenizers { }  # latest (0.4)
+# Versions: 0.4
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "discourse_ai-tokenizers: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "discourse_ai-tokenizers: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "discourse_ai-tokenizers: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "discourse_ai-tokenizers: unknown version '${version}'")

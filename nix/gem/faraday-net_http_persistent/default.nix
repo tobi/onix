@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # faraday-net_http_persistent
 #
-# Available versions:
-#   2.1.0
-#   2.2.0
-#   2.3.0
-#   2.3.1
-#
-# Usage:
-#   faraday-net_http_persistent { version = "2.3.1"; }
-#   faraday-net_http_persistent { }  # latest (2.3.1)
+# Versions: 2.1.0, 2.2.0, 2.3.0, 2.3.1
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "faraday-net_http_persistent: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "faraday-net_http_persistent: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "faraday-net_http_persistent: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "faraday-net_http_persistent: unknown version '${version}'")

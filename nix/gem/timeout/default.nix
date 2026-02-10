@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # timeout
 #
-# Available versions:
-#   0.4.1
-#   0.4.3
-#   0.4.4
-#   0.5.0
-#   0.6.0
-#
-# Usage:
-#   timeout { version = "0.6.0"; }
-#   timeout { }  # latest (0.6.0)
+# Versions: 0.4.1, 0.4.3, 0.4.4, 0.5.0, 0.6.0
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "timeout: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "timeout: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "timeout: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "timeout: unknown version '${version}'")

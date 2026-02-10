@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # semantic_range
 #
-# Available versions:
-#   2.3.1
-#   3.0.0
-#   3.1.0
-#
-# Usage:
-#   semantic_range { version = "3.1.0"; }
-#   semantic_range { }  # latest (3.1.0)
+# Versions: 2.3.1, 3.0.0, 3.1.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "semantic_range: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "semantic_range: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "semantic_range: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "semantic_range: unknown version '${version}'")

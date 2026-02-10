@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # jaro_winkler
 #
-# Available versions:
-#   1.5.6
-#   1.6.0
-#   1.6.1
-#
-# Usage:
-#   jaro_winkler { version = "1.6.1"; }
-#   jaro_winkler { }  # latest (1.6.1)
+# Versions: 1.5.6, 1.6.0, 1.6.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "jaro_winkler: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "jaro_winkler: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "jaro_winkler: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "jaro_winkler: unknown version '${version}'")

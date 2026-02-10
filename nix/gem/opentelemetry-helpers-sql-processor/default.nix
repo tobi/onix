@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # opentelemetry-helpers-sql-processor
 #
-# Available versions:
-#   0.4.0
-#
-# Usage:
-#   opentelemetry-helpers-sql-processor { version = "0.4.0"; }
-#   opentelemetry-helpers-sql-processor { }  # latest (0.4.0)
+# Versions: 0.4.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "opentelemetry-helpers-sql-processor: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "opentelemetry-helpers-sql-processor: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "opentelemetry-helpers-sql-processor: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "opentelemetry-helpers-sql-processor: unknown version '${version}'")

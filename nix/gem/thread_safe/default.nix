@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # thread_safe
 #
-# Available versions:
-#   0.3.4
-#   0.3.5
-#   0.3.6
-#
-# Usage:
-#   thread_safe { version = "0.3.6"; }
-#   thread_safe { }  # latest (0.3.6)
+# Versions: 0.3.4, 0.3.5, 0.3.6
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "thread_safe: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "thread_safe: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "thread_safe: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "thread_safe: unknown version '${version}'")

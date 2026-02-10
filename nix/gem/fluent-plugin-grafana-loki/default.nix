@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # fluent-plugin-grafana-loki
 #
-# Available versions:
-#   1.2.18
-#   1.2.19
-#   1.2.20
-#
-# Usage:
-#   fluent-plugin-grafana-loki { version = "1.2.20"; }
-#   fluent-plugin-grafana-loki { }  # latest (1.2.20)
+# Versions: 1.2.18, 1.2.19, 1.2.20
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "fluent-plugin-grafana-loki: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "fluent-plugin-grafana-loki: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "fluent-plugin-grafana-loki: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "fluent-plugin-grafana-loki: unknown version '${version}'")

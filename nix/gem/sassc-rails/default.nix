@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # sassc-rails
 #
-# Available versions:
-#   2.1.0
-#   2.1.1
-#   2.1.2
-#
-# Usage:
-#   sassc-rails { version = "2.1.2"; }
-#   sassc-rails { }  # latest (2.1.2)
+# Versions: 2.1.0, 2.1.1, 2.1.2
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "sassc-rails: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "sassc-rails: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "sassc-rails: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "sassc-rails: unknown version '${version}'")

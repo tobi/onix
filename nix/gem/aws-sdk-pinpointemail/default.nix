@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # aws-sdk-pinpointemail
 #
-# Available versions:
-#   1.76.0
-#   1.77.0
-#   1.78.0
-#
-# Usage:
-#   aws-sdk-pinpointemail { version = "1.78.0"; }
-#   aws-sdk-pinpointemail { }  # latest (1.78.0)
+# Versions: 1.76.0, 1.77.0, 1.78.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "aws-sdk-pinpointemail: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "aws-sdk-pinpointemail: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "aws-sdk-pinpointemail: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "aws-sdk-pinpointemail: unknown version '${version}'")

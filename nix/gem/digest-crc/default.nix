@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # digest-crc
 #
-# Available versions:
-#   0.6.4
-#   0.6.5
-#   0.7.0
-#
-# Usage:
-#   digest-crc { version = "0.7.0"; }
-#   digest-crc { }  # latest (0.7.0)
+# Versions: 0.6.4, 0.6.5, 0.7.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "digest-crc: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "digest-crc: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "digest-crc: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "digest-crc: unknown version '${version}'")

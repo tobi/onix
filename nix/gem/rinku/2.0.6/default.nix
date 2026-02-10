@@ -1,6 +1,6 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rinku 2.0.6
@@ -36,11 +36,13 @@ stdenv.mkDerivation {
       dir=$(dirname "$makefile")
       target_name=$(sed -n 's/^TARGET = //p' "$makefile")
       target_prefix=$(sed -n 's/^target_prefix = //p' "$makefile")
-      if [ -n "$target_name" ] && [ -f "$dir/$target_name.so" ]; then
-        mkdir -p "lib$target_prefix"
-        cp "$dir/$target_name.so" "lib$target_prefix/$target_name.so"
-        echo "Installed $dir/$target_name.so -> lib$target_prefix/$target_name.so"
-      fi
+      for ext in so bundle; do
+        if [ -n "$target_name" ] && [ -f "$dir/$target_name.$ext" ]; then
+          mkdir -p "lib$target_prefix"
+          cp "$dir/$target_name.$ext" "lib$target_prefix/$target_name.$ext"
+          echo "Installed $dir/$target_name.$ext -> lib$target_prefix/$target_name.$ext"
+        fi
+      done
     done
   '';
 
@@ -54,15 +56,21 @@ stdenv.mkDerivation {
         cp -r . $dest/gems/rinku-2.0.6/
         local extdir=$dest/extensions/${arch}/${rubyVersion}/rinku-2.0.6
         mkdir -p $extdir
-        find . -name '*.so' -path '*/lib/*' | while read so; do
+        find . \( -name '*.so' -o -name '*.bundle' \) -path '*/lib/*' | while read so; do
           cp "$so" "$extdir/"
         done
-        local gp="${stdenv.hostPlatform.parsed.cpu.name}-${stdenv.hostPlatform.parsed.kernel.name}"
+        local cpu="${stdenv.hostPlatform.parsed.cpu.name}"
+        if [ "$cpu" = "aarch64" ]; then cpu="arm64"; fi
+        local gp="$cpu-${stdenv.hostPlatform.parsed.kernel.name}"
         if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
           gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
         fi
         ln -s rinku-2.0.6 $dest/gems/rinku-2.0.6-$gp
         ln -s rinku-2.0.6 $dest/extensions/${arch}/${rubyVersion}/rinku-2.0.6-$gp
+        if [ "${stdenv.hostPlatform.parsed.kernel.name}" = "darwin" ]; then
+          ln -sf rinku-2.0.6 $dest/gems/rinku-2.0.6-universal-darwin
+          ln -sf rinku-2.0.6 $dest/extensions/${arch}/${rubyVersion}/rinku-2.0.6-universal-darwin
+        fi
         mkdir -p $dest/specifications
         cat > $dest/specifications/rinku-2.0.6.gemspec <<'EOF'
     Gem::Specification.new do |s|
@@ -83,5 +91,17 @@ stdenv.mkDerivation {
       s.files = []
     end
     PLATSPEC
+        if [ "${stdenv.hostPlatform.parsed.kernel.name}" = "darwin" ]; then
+          cat > $dest/specifications/rinku-2.0.6-universal-darwin.gemspec <<'UNISPEC'
+    Gem::Specification.new do |s|
+      s.name = "rinku"
+      s.version = "2.0.6"
+      s.platform = "universal-darwin"
+      s.summary = "rinku"
+      s.require_paths = ["lib"]
+      s.files = []
+    end
+    UNISPEC
+        fi
   '';
 }

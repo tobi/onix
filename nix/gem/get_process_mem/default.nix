@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # get_process_mem
 #
-# Available versions:
-#   0.2.6
-#   0.2.7
-#   1.0.0
-#
-# Usage:
-#   get_process_mem { version = "1.0.0"; }
-#   get_process_mem { }  # latest (1.0.0)
+# Versions: 0.2.6, 0.2.7, 1.0.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "get_process_mem: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "get_process_mem: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "get_process_mem: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "get_process_mem: unknown version '${version}'")

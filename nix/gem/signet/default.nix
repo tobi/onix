@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # signet
 #
-# Available versions:
-#   0.17.0
-#   0.19.0
-#   0.20.0
-#   0.21.0
-#
-# Usage:
-#   signet { version = "0.21.0"; }
-#   signet { }  # latest (0.21.0)
+# Versions: 0.17.0, 0.19.0, 0.20.0, 0.21.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "signet: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "signet: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "signet: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "signet: unknown version '${version}'")

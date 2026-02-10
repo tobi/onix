@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # factory_bot_rails
 #
-# Available versions:
-#   6.2.0
-#   6.4.3
-#   6.4.4
-#   6.5.0
-#   6.5.1
-#
-# Usage:
-#   factory_bot_rails { version = "6.5.1"; }
-#   factory_bot_rails { }  # latest (6.5.1)
+# Versions: 6.2.0, 6.4.3, 6.4.4, 6.5.0, 6.5.1
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "factory_bot_rails: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "factory_bot_rails: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "factory_bot_rails: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "factory_bot_rails: unknown version '${version}'")

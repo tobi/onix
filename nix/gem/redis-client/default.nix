@@ -1,21 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # redis-client
 #
-# Available versions:
-#   0.22.2
-#   0.25.2
-#   0.26.1
-#   0.26.2
-#   0.26.3
-#   0.26.4
-#
-# Usage:
-#   redis-client { version = "0.26.4"; }
-#   redis-client { }  # latest (0.26.4)
+# Versions: 0.22.2, 0.25.2, 0.26.1, 0.26.2, 0.26.3, 0.26.4
 #
 {
   lib,
@@ -40,7 +30,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "redis-client: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "redis-client: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "redis-client: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "redis-client: unknown version '${version}'")

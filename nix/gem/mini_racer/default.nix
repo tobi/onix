@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # mini_racer
 #
-# Available versions:
-#   0.19.1
-#
-# Usage:
-#   mini_racer { version = "0.19.1"; }
-#   mini_racer { }  # latest (0.19.1)
+# Versions: 0.19.1
 #
 {
   lib,
@@ -22,14 +17,7 @@
 }:
 let
   versions = {
-    "0.19.1" = import ./0.19.1 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
+    "0.19.1" = import ./0.19.1 { inherit lib stdenv ruby pkgs; };
   };
 
   gitRevs = {
@@ -37,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "mini_racer: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "mini_racer: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "mini_racer: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "mini_racer: unknown version '${version}'")

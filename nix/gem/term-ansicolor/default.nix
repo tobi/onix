@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # term-ansicolor
 #
-# Available versions:
-#   1.11.1
-#   1.11.2
-#   1.11.3
-#
-# Usage:
-#   term-ansicolor { version = "1.11.3"; }
-#   term-ansicolor { }  # latest (1.11.3)
+# Versions: 1.11.1, 1.11.2, 1.11.3
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "term-ansicolor: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "term-ansicolor: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "term-ansicolor: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "term-ansicolor: unknown version '${version}'")

@@ -1,17 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # web-push
 #
-# Available versions:
-#   3.0.1
-#   3.1.0
-#
-# Usage:
-#   web-push { version = "3.1.0"; }
-#   web-push { }  # latest (3.1.0)
+# Versions: 3.0.1, 3.1.0
 #
 {
   lib,
@@ -32,7 +26,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "web-push: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "web-push: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "web-push: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "web-push: unknown version '${version}'")

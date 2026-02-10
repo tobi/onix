@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rack-timeout
 #
-# Available versions:
-#   0.6.2
-#   0.6.3
-#   0.7.0
-#
-# Usage:
-#   rack-timeout { version = "0.7.0"; }
-#   rack-timeout { }  # latest (0.7.0)
+# Versions: 0.6.2, 0.6.3, 0.7.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rack-timeout: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rack-timeout: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rack-timeout: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rack-timeout: unknown version '${version}'")

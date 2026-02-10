@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # syntax_tree
 #
-# Available versions:
-#   6.3.0
-#
-# Usage:
-#   syntax_tree { version = "6.3.0"; }
-#   syntax_tree { }  # latest (6.3.0)
+# Versions: 6.3.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "syntax_tree: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "syntax_tree: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "syntax_tree: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "syntax_tree: unknown version '${version}'")

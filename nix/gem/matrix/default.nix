@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # matrix
 #
-# Available versions:
-#   0.4.1
-#   0.4.2
-#   0.4.3
-#
-# Usage:
-#   matrix { version = "0.4.3"; }
-#   matrix { }  # latest (0.4.3)
+# Versions: 0.4.1, 0.4.2, 0.4.3
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "matrix: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "matrix: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "matrix: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "matrix: unknown version '${version}'")

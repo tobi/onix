@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # webfinger
 #
-# Available versions:
-#   2.1.1
-#   2.1.2
-#   2.1.3
-#
-# Usage:
-#   webfinger { version = "2.1.3"; }
-#   webfinger { }  # latest (2.1.3)
+# Versions: 2.1.1, 2.1.2, 2.1.3
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "webfinger: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "webfinger: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "webfinger: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "webfinger: unknown version '${version}'")

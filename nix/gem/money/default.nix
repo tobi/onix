@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # money
 #
-# Available versions:
-#   6.19.0
-#   7.0.0
-#   7.0.1
-#   7.0.2
-#
-# Usage:
-#   money { version = "7.0.2"; }
-#   money { }  # latest (7.0.2)
+# Versions: 6.19.0, 7.0.0, 7.0.1, 7.0.2
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "money: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "money: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "money: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "money: unknown version '${version}'")

@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # turbo-rails
 #
-# Available versions:
-#   2.0.11
-#   2.0.21
-#   2.0.22
-#   2.0.23
-#
-# Usage:
-#   turbo-rails { version = "2.0.23"; }
-#   turbo-rails { }  # latest (2.0.23)
+# Versions: 2.0.11, 2.0.21, 2.0.22, 2.0.23
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "turbo-rails: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "turbo-rails: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "turbo-rails: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "turbo-rails: unknown version '${version}'")

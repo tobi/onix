@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # selenium-webdriver
 #
-# Available versions:
-#   4.32.0
-#   4.38.0
-#   4.39.0
-#   4.40.0
-#
-# Usage:
-#   selenium-webdriver { version = "4.40.0"; }
-#   selenium-webdriver { }  # latest (4.40.0)
+# Versions: 4.32.0, 4.38.0, 4.39.0, 4.40.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "selenium-webdriver: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "selenium-webdriver: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "selenium-webdriver: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "selenium-webdriver: unknown version '${version}'")

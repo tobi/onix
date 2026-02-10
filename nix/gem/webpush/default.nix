@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # webpush
 #
-# Available versions:
-#   1.1.0
-#
-# Usage:
-#   webpush { version = "1.1.0"; }
-#   webpush { }  # latest (1.1.0)
+# Versions: 1.1.0
 #
 {
   lib,
@@ -26,12 +21,11 @@ let
   };
 
   gitRevs = {
-    "9631ac63045c" = import ./git-9631ac63045c { inherit lib stdenv ruby; };
   };
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "webpush: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "webpush: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "webpush: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "webpush: unknown version '${version}'")

@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # lz4-ruby
 #
-# Available versions:
-#   0.3.3
-#
-# Usage:
-#   lz4-ruby { version = "0.3.3"; }
-#   lz4-ruby { }  # latest (0.3.3)
+# Versions: 0.3.3
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "lz4-ruby: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "lz4-ruby: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "lz4-ruby: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "lz4-ruby: unknown version '${version}'")

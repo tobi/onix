@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # cocoapods
 #
-# Available versions:
-#   1.16.0
-#   1.16.1
-#   1.16.2
-#
-# Usage:
-#   cocoapods { version = "1.16.2"; }
-#   cocoapods { }  # latest (1.16.2)
+# Versions: 1.16.0, 1.16.1, 1.16.2
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "cocoapods: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "cocoapods: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "cocoapods: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "cocoapods: unknown version '${version}'")

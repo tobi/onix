@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # zip_kit
 #
-# Available versions:
-#   6.3.4
-#
-# Usage:
-#   zip_kit { version = "6.3.4"; }
-#   zip_kit { }  # latest (6.3.4)
+# Versions: 6.3.4
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "zip_kit: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "zip_kit: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "zip_kit: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "zip_kit: unknown version '${version}'")

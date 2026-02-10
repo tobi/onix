@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # snaky_hash
 #
-# Available versions:
-#   2.0.1
-#   2.0.2
-#   2.0.3
-#
-# Usage:
-#   snaky_hash { version = "2.0.3"; }
-#   snaky_hash { }  # latest (2.0.3)
+# Versions: 2.0.1, 2.0.2, 2.0.3
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "snaky_hash: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "snaky_hash: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "snaky_hash: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "snaky_hash: unknown version '${version}'")

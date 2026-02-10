@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # nori
 #
-# Available versions:
-#   2.6.0
-#   2.7.0
-#   2.7.1
-#
-# Usage:
-#   nori { version = "2.7.1"; }
-#   nori { }  # latest (2.7.1)
+# Versions: 2.6.0, 2.7.0, 2.7.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "nori: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "nori: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "nori: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "nori: unknown version '${version}'")

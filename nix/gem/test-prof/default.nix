@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # test-prof
 #
-# Available versions:
-#   1.2.1
-#   1.3.3
-#   1.5.0
-#   1.5.1
-#   1.5.2
-#
-# Usage:
-#   test-prof { version = "1.5.2"; }
-#   test-prof { }  # latest (1.5.2)
+# Versions: 1.2.1, 1.3.3, 1.5.0, 1.5.1, 1.5.2
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "test-prof: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "test-prof: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "test-prof: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "test-prof: unknown version '${version}'")

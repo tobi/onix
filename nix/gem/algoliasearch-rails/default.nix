@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # algoliasearch-rails
 #
-# Available versions:
-#   2.3.2
-#
-# Usage:
-#   algoliasearch-rails { version = "2.3.2"; }
-#   algoliasearch-rails { }  # latest (2.3.2)
+# Versions: 2.3.2
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "algoliasearch-rails: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "algoliasearch-rails: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "algoliasearch-rails: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "algoliasearch-rails: unknown version '${version}'")

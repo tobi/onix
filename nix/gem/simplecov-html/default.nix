@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # simplecov-html
 #
-# Available versions:
-#   0.12.3
-#   0.13.0
-#   0.13.1
-#   0.13.2
-#
-# Usage:
-#   simplecov-html { version = "0.13.2"; }
-#   simplecov-html { }  # latest (0.13.2)
+# Versions: 0.12.3, 0.13.0, 0.13.1, 0.13.2
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "simplecov-html: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "simplecov-html: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "simplecov-html: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "simplecov-html: unknown version '${version}'")

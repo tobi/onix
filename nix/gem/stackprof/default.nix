@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # stackprof
 #
-# Available versions:
-#   0.2.25
-#   0.2.26
-#   0.2.27
-#
-# Usage:
-#   stackprof { version = "0.2.27"; }
-#   stackprof { }  # latest (0.2.27)
+# Versions: 0.2.25, 0.2.26, 0.2.27
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "stackprof: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "stackprof: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "stackprof: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "stackprof: unknown version '${version}'")

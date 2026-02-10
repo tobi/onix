@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # temple
 #
-# Available versions:
-#   0.10.2
-#   0.10.3
-#   0.10.4
-#
-# Usage:
-#   temple { version = "0.10.4"; }
-#   temple { }  # latest (0.10.4)
+# Versions: 0.10.2, 0.10.3, 0.10.4
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "temple: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "temple: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "temple: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "temple: unknown version '${version}'")

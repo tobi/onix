@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # redis-rails
 #
-# Available versions:
-#   5.0.0
-#   5.0.1
-#   5.0.2
-#
-# Usage:
-#   redis-rails { version = "5.0.2"; }
-#   redis-rails { }  # latest (5.0.2)
+# Versions: 5.0.0, 5.0.1, 5.0.2
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "redis-rails: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "redis-rails: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "redis-rails: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "redis-rails: unknown version '${version}'")

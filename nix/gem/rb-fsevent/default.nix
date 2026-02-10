@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rb-fsevent
 #
-# Available versions:
-#   0.11.0
-#   0.11.1
-#   0.11.2
-#
-# Usage:
-#   rb-fsevent { version = "0.11.2"; }
-#   rb-fsevent { }  # latest (0.11.2)
+# Versions: 0.11.0, 0.11.1, 0.11.2
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rb-fsevent: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rb-fsevent: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rb-fsevent: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rb-fsevent: unknown version '${version}'")

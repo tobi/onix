@@ -1,17 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # ruby-lsp
 #
-# Available versions:
-#   0.26.4
-#   0.26.5
-#
-# Usage:
-#   ruby-lsp { version = "0.26.5"; }
-#   ruby-lsp { }  # latest (0.26.5)
+# Versions: 0.26.4, 0.26.5
 #
 {
   lib,
@@ -32,7 +26,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "ruby-lsp: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "ruby-lsp: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "ruby-lsp: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "ruby-lsp: unknown version '${version}'")

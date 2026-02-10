@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # devise_pam_authenticatable2
 #
-# Available versions:
-#   9.2.0
-#
-# Usage:
-#   devise_pam_authenticatable2 { version = "9.2.0"; }
-#   devise_pam_authenticatable2 { }  # latest (9.2.0)
+# Versions: 9.2.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "devise_pam_authenticatable2: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "devise_pam_authenticatable2: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "devise_pam_authenticatable2: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "devise_pam_authenticatable2: unknown version '${version}'")

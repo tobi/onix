@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # aws-sdk-medialive
 #
-# Available versions:
-#   1.176.0
-#   1.177.0
-#   1.178.0
-#
-# Usage:
-#   aws-sdk-medialive { version = "1.178.0"; }
-#   aws-sdk-medialive { }  # latest (1.178.0)
+# Versions: 1.176.0, 1.177.0, 1.178.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "aws-sdk-medialive: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "aws-sdk-medialive: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "aws-sdk-medialive: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "aws-sdk-medialive: unknown version '${version}'")

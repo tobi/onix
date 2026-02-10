@@ -1,7 +1,7 @@
 #
-# ╔═══════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/import to refresh ║
-# ╚═══════════════════════════════════════════════════════╝
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run gemset2nix import to regen  ║
+# ╚══════════════════════════════════════════════════════════════╝
 #
 # Git: acts_as_follower @ 06393d3693a1
 # URI: https://github.com/forem/acts_as_follower.git
@@ -30,8 +30,8 @@ stdenv.mkDerivation {
   passthru = { inherit bundle_path; };
 
   installPhase = ''
-    local dest=$out/${bundle_path}/bundler/gems/acts_as_follower-06393d3693a1
-    mkdir -p $dest
-    cp -r . $dest/
+        local dest=$out/${bundle_path}/bundler/gems/acts_as_follower-06393d3693a1
+        mkdir -p $dest
+        cp -r . $dest/
   '';
 }

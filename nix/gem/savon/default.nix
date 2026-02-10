@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # savon
 #
-# Available versions:
-#   2.14.0
-#   2.15.0
-#   2.15.1
-#
-# Usage:
-#   savon { version = "2.15.1"; }
-#   savon { }  # latest (2.15.1)
+# Versions: 2.14.0, 2.15.0, 2.15.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "savon: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "savon: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "savon: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "savon: unknown version '${version}'")

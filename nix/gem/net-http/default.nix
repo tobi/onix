@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # net-http
 #
-# Available versions:
-#   0.4.1
-#   0.6.0
-#   0.8.0
-#   0.9.0
-#   0.9.1
-#
-# Usage:
-#   net-http { version = "0.9.1"; }
-#   net-http { }  # latest (0.9.1)
+# Versions: 0.4.1, 0.6.0, 0.8.0, 0.9.0, 0.9.1
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "net-http: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "net-http: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "net-http: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "net-http: unknown version '${version}'")

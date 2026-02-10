@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # bouncy-castle-java
 #
-# Available versions:
-#   1.5.0147
-#
-# Usage:
-#   bouncy-castle-java { version = "1.5.0147"; }
-#   bouncy-castle-java { }  # latest (1.5.0147)
+# Versions: 1.5.0147
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "bouncy-castle-java: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "bouncy-castle-java: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "bouncy-castle-java: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "bouncy-castle-java: unknown version '${version}'")

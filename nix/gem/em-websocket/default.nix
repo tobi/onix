@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # em-websocket
 #
-# Available versions:
-#   0.5.1
-#   0.5.2
-#   0.5.3
-#
-# Usage:
-#   em-websocket { version = "0.5.3"; }
-#   em-websocket { }  # latest (0.5.3)
+# Versions: 0.5.1, 0.5.2, 0.5.3
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "em-websocket: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "em-websocket: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "em-websocket: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "em-websocket: unknown version '${version}'")

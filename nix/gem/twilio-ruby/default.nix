@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # twilio-ruby
 #
-# Available versions:
-#   7.6.0
-#   7.9.1
-#   7.10.0
-#   7.10.1
-#
-# Usage:
-#   twilio-ruby { version = "7.10.1"; }
-#   twilio-ruby { }  # latest (7.10.1)
+# Versions: 7.6.0, 7.9.1, 7.10.0, 7.10.1
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "twilio-ruby: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "twilio-ruby: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "twilio-ruby: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "twilio-ruby: unknown version '${version}'")

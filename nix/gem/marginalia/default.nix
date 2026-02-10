@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # marginalia
 #
-# Available versions:
-#   1.10.1
-#   1.11.0
-#   1.11.1
-#
-# Usage:
-#   marginalia { version = "1.11.1"; }
-#   marginalia { }  # latest (1.11.1)
+# Versions: 1.10.1, 1.11.0, 1.11.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "marginalia: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "marginalia: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "marginalia: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "marginalia: unknown version '${version}'")

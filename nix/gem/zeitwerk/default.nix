@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # zeitwerk
 #
-# Available versions:
-#   2.6.13
-#   2.6.17
-#   2.7.2
-#   2.7.3
-#   2.7.4
-#
-# Usage:
-#   zeitwerk { version = "2.7.4"; }
-#   zeitwerk { }  # latest (2.7.4)
+# Versions: 2.6.13, 2.6.17, 2.7.2, 2.7.3, 2.7.4
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "zeitwerk: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "zeitwerk: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "zeitwerk: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "zeitwerk: unknown version '${version}'")

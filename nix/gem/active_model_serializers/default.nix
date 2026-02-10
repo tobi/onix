@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # active_model_serializers
 #
-# Available versions:
-#   0.8.4
-#   0.10.14
-#   0.10.15
-#   0.10.16
-#
-# Usage:
-#   active_model_serializers { version = "0.10.16"; }
-#   active_model_serializers { }  # latest (0.10.16)
+# Versions: 0.8.4, 0.10.14, 0.10.15, 0.10.16
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "active_model_serializers: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "active_model_serializers: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "active_model_serializers: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "active_model_serializers: unknown version '${version}'")

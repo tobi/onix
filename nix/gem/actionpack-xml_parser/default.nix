@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # actionpack-xml_parser
 #
-# Available versions:
-#   2.0.1
-#
-# Usage:
-#   actionpack-xml_parser { version = "2.0.1"; }
-#   actionpack-xml_parser { }  # latest (2.0.1)
+# Versions: 2.0.1
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "actionpack-xml_parser: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "actionpack-xml_parser: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "actionpack-xml_parser: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "actionpack-xml_parser: unknown version '${version}'")

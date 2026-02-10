@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # administrate-field-belongs_to_search
 #
-# Available versions:
-#   0.9.0
-#
-# Usage:
-#   administrate-field-belongs_to_search { version = "0.9.0"; }
-#   administrate-field-belongs_to_search { }  # latest (0.9.0)
+# Versions: 0.9.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "administrate-field-belongs_to_search: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "administrate-field-belongs_to_search: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "administrate-field-belongs_to_search: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "administrate-field-belongs_to_search: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # aws-sdk-mediastore
 #
-# Available versions:
-#   1.82.0
-#   1.83.0
-#   1.84.0
-#
-# Usage:
-#   aws-sdk-mediastore { version = "1.84.0"; }
-#   aws-sdk-mediastore { }  # latest (1.84.0)
+# Versions: 1.82.0, 1.83.0, 1.84.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "aws-sdk-mediastore: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "aws-sdk-mediastore: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "aws-sdk-mediastore: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "aws-sdk-mediastore: unknown version '${version}'")

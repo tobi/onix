@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # aws-sigv2
 #
-# Available versions:
-#   1.2.0
-#   1.3.0
-#   1.3.1
-#
-# Usage:
-#   aws-sigv2 { version = "1.3.1"; }
-#   aws-sigv2 { }  # latest (1.3.1)
+# Versions: 1.2.0, 1.3.0, 1.3.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "aws-sigv2: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "aws-sigv2: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "aws-sigv2: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "aws-sigv2: unknown version '${version}'")

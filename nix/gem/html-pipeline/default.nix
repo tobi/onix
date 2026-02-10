@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # html-pipeline
 #
-# Available versions:
-#   3.2.2
-#   3.2.3
-#   3.2.4
-#
-# Usage:
-#   html-pipeline { version = "3.2.4"; }
-#   html-pipeline { }  # latest (3.2.4)
+# Versions: 3.2.2, 3.2.3, 3.2.4
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "html-pipeline: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "html-pipeline: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "html-pipeline: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "html-pipeline: unknown version '${version}'")

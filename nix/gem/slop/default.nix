@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # slop
 #
-# Available versions:
-#   4.9.3
-#   4.10.0
-#   4.10.1
-#
-# Usage:
-#   slop { version = "4.10.1"; }
-#   slop { }  # latest (4.10.1)
+# Versions: 4.9.3, 4.10.0, 4.10.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "slop: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "slop: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "slop: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "slop: unknown version '${version}'")

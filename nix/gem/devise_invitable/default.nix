@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # devise_invitable
 #
-# Available versions:
-#   2.0.9
-#
-# Usage:
-#   devise_invitable { version = "2.0.9"; }
-#   devise_invitable { }  # latest (2.0.9)
+# Versions: 2.0.9
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "devise_invitable: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "devise_invitable: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "devise_invitable: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "devise_invitable: unknown version '${version}'")

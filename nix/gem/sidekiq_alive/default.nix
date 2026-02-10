@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # sidekiq_alive
 #
-# Available versions:
-#   2.5.0
-#
-# Usage:
-#   sidekiq_alive { version = "2.5.0"; }
-#   sidekiq_alive { }  # latest (2.5.0)
+# Versions: 2.5.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "sidekiq_alive: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "sidekiq_alive: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "sidekiq_alive: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "sidekiq_alive: unknown version '${version}'")

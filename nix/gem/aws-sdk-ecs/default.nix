@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # aws-sdk-ecs
 #
-# Available versions:
-#   1.218.0
-#   1.219.0
-#   1.220.0
-#
-# Usage:
-#   aws-sdk-ecs { version = "1.220.0"; }
-#   aws-sdk-ecs { }  # latest (1.220.0)
+# Versions: 1.218.0, 1.219.0, 1.220.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "aws-sdk-ecs: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "aws-sdk-ecs: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "aws-sdk-ecs: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "aws-sdk-ecs: unknown version '${version}'")

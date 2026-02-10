@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # discourse_math_bundle
 #
-# Available versions:
-#   1.0.1
-#
-# Usage:
-#   discourse_math_bundle { version = "1.0.1"; }
-#   discourse_math_bundle { }  # latest (1.0.1)
+# Versions: 1.0.1
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "discourse_math_bundle: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "discourse_math_bundle: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "discourse_math_bundle: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "discourse_math_bundle: unknown version '${version}'")

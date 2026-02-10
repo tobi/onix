@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # jmespath
 #
-# Available versions:
-#   1.6.0
-#   1.6.1
-#   1.6.2
-#
-# Usage:
-#   jmespath { version = "1.6.2"; }
-#   jmespath { }  # latest (1.6.2)
+# Versions: 1.6.0, 1.6.1, 1.6.2
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "jmespath: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "jmespath: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "jmespath: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "jmespath: unknown version '${version}'")

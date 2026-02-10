@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # stringex
 #
-# Available versions:
-#   2.8.6
-#
-# Usage:
-#   stringex { version = "2.8.6"; }
-#   stringex { }  # latest (2.8.6)
+# Versions: 2.8.6
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "stringex: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "stringex: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "stringex: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "stringex: unknown version '${version}'")

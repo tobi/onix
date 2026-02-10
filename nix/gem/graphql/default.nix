@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # graphql
 #
-# Available versions:
-#   2.5.17
-#   2.5.18
-#   2.5.19
-#
-# Usage:
-#   graphql { version = "2.5.19"; }
-#   graphql { }  # latest (2.5.19)
+# Versions: 2.5.17, 2.5.18, 2.5.19
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "graphql: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "graphql: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "graphql: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "graphql: unknown version '${version}'")

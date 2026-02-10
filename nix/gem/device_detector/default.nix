@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # device_detector
 #
-# Available versions:
-#   1.1.1
-#   1.1.2
-#   1.1.3
-#
-# Usage:
-#   device_detector { version = "1.1.3"; }
-#   device_detector { }  # latest (1.1.3)
+# Versions: 1.1.1, 1.1.2, 1.1.3
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "device_detector: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "device_detector: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "device_detector: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "device_detector: unknown version '${version}'")

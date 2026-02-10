@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # redis-rack
 #
-# Available versions:
-#   2.1.3
-#   2.1.4
-#   3.0.0
-#
-# Usage:
-#   redis-rack { version = "3.0.0"; }
-#   redis-rack { }  # latest (3.0.0)
+# Versions: 2.1.3, 2.1.4, 3.0.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "redis-rack: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "redis-rack: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "redis-rack: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "redis-rack: unknown version '${version}'")

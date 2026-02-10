@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # test-unit
 #
-# Available versions:
-#   3.7.5
-#   3.7.6
-#   3.7.7
-#
-# Usage:
-#   test-unit { version = "3.7.7"; }
-#   test-unit { }  # latest (3.7.7)
+# Versions: 3.7.5, 3.7.6, 3.7.7
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "test-unit: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "test-unit: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "test-unit: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "test-unit: unknown version '${version}'")

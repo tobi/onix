@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # crass
 #
-# Available versions:
-#   1.0.4
-#   1.0.5
-#   1.0.6
-#
-# Usage:
-#   crass { version = "1.0.6"; }
-#   crass { }  # latest (1.0.6)
+# Versions: 1.0.4, 1.0.5, 1.0.6
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "crass: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "crass: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "crass: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "crass: unknown version '${version}'")

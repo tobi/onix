@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # ruby_parser
 #
-# Available versions:
-#   3.20.0
-#   3.21.0
-#   3.21.1
-#   3.22.0
-#
-# Usage:
-#   ruby_parser { version = "3.22.0"; }
-#   ruby_parser { }  # latest (3.22.0)
+# Versions: 3.20.0, 3.21.0, 3.21.1, 3.22.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "ruby_parser: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "ruby_parser: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "ruby_parser: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "ruby_parser: unknown version '${version}'")

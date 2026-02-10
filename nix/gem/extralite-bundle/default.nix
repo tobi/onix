@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # extralite-bundle
 #
-# Available versions:
-#   2.13
-#
-# Usage:
-#   extralite-bundle { version = "2.13"; }
-#   extralite-bundle { }  # latest (2.13)
+# Versions: 2.13
 #
 {
   lib,
@@ -22,14 +17,7 @@
 }:
 let
   versions = {
-    "2.13" = import ./2.13 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
+    "2.13" = import ./2.13 { inherit lib stdenv ruby pkgs; };
   };
 
   gitRevs = {
@@ -37,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "extralite-bundle: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "extralite-bundle: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "extralite-bundle: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "extralite-bundle: unknown version '${version}'")

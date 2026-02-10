@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # coderay
 #
-# Available versions:
-#   1.1.1
-#   1.1.2
-#   1.1.3
-#
-# Usage:
-#   coderay { version = "1.1.3"; }
-#   coderay { }  # latest (1.1.3)
+# Versions: 1.1.1, 1.1.2, 1.1.3
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "coderay: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "coderay: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "coderay: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "coderay: unknown version '${version}'")

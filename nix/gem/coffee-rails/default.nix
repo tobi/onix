@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # coffee-rails
 #
-# Available versions:
-#   4.2.1
-#   4.2.2
-#   5.0.0
-#
-# Usage:
-#   coffee-rails { version = "5.0.0"; }
-#   coffee-rails { }  # latest (5.0.0)
+# Versions: 4.2.1, 4.2.2, 5.0.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "coffee-rails: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "coffee-rails: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "coffee-rails: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "coffee-rails: unknown version '${version}'")

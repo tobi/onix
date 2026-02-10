@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # specinfra
 #
-# Available versions:
-#   2.93.0
-#   2.94.0
-#   2.94.1
-#
-# Usage:
-#   specinfra { version = "2.94.1"; }
-#   specinfra { }  # latest (2.94.1)
+# Versions: 2.93.0, 2.94.0, 2.94.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "specinfra: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "specinfra: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "specinfra: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "specinfra: unknown version '${version}'")

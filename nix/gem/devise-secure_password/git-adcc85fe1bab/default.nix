@@ -1,7 +1,7 @@
 #
-# ╔═══════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/import to refresh ║
-# ╚═══════════════════════════════════════════════════════╝
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run gemset2nix import to regen  ║
+# ╚══════════════════════════════════════════════════════════════╝
 #
 # Git: devise-secure_password @ adcc85fe1bab
 # URI: https://github.com/chatwoot/devise-secure_password
@@ -30,8 +30,8 @@ stdenv.mkDerivation {
   passthru = { inherit bundle_path; };
 
   installPhase = ''
-    local dest=$out/${bundle_path}/bundler/gems/devise-secure_password-adcc85fe1bab
-    mkdir -p $dest
-    cp -r . $dest/
+        local dest=$out/${bundle_path}/bundler/gems/devise-secure_password-adcc85fe1bab
+        mkdir -p $dest
+        cp -r . $dest/
   '';
 }

@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # color_diff
 #
-# Available versions:
-#   0.2
-#
-# Usage:
-#   color_diff { version = "0.2"; }
-#   color_diff { }  # latest (0.2)
+# Versions: 0.2
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "color_diff: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "color_diff: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "color_diff: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "color_diff: unknown version '${version}'")

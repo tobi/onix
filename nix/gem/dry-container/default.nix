@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # dry-container
 #
-# Available versions:
-#   0.10.0
-#   0.10.1
-#   0.11.0
-#
-# Usage:
-#   dry-container { version = "0.11.0"; }
-#   dry-container { }  # latest (0.11.0)
+# Versions: 0.10.0, 0.10.1, 0.11.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "dry-container: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "dry-container: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "dry-container: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "dry-container: unknown version '${version}'")

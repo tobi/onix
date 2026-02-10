@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # css_parser
 #
-# Available versions:
-#   1.20.0
-#   1.21.0
-#   1.21.1
-#
-# Usage:
-#   css_parser { version = "1.21.1"; }
-#   css_parser { }  # latest (1.21.1)
+# Versions: 1.20.0, 1.21.0, 1.21.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "css_parser: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "css_parser: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "css_parser: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "css_parser: unknown version '${version}'")

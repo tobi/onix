@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # nesty
 #
-# Available versions:
-#   1.0.2
-#
-# Usage:
-#   nesty { version = "1.0.2"; }
-#   nesty { }  # latest (1.0.2)
+# Versions: 1.0.2
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "nesty: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "nesty: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "nesty: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "nesty: unknown version '${version}'")

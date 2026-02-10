@@ -1,21 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # brakeman
 #
-# Available versions:
-#   5.4.1
-#   7.0.0
-#   7.1.2
-#   8.0.0
-#   8.0.1
-#   8.0.2
-#
-# Usage:
-#   brakeman { version = "8.0.2"; }
-#   brakeman { }  # latest (8.0.2)
+# Versions: 5.4.1, 7.0.0, 7.1.2, 8.0.0, 8.0.1, 8.0.2
 #
 {
   lib,
@@ -40,7 +30,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "brakeman: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "brakeman: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "brakeman: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "brakeman: unknown version '${version}'")

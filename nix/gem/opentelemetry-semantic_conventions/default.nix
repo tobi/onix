@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # opentelemetry-semantic_conventions
 #
-# Available versions:
-#   1.36.0
-#
-# Usage:
-#   opentelemetry-semantic_conventions { version = "1.36.0"; }
-#   opentelemetry-semantic_conventions { }  # latest (1.36.0)
+# Versions: 1.36.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "opentelemetry-semantic_conventions: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "opentelemetry-semantic_conventions: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "opentelemetry-semantic_conventions: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "opentelemetry-semantic_conventions: unknown version '${version}'")

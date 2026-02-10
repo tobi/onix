@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # i18n-tasks
 #
-# Available versions:
-#   0.9.37
-#   1.0.13
-#   1.1.2
-#
-# Usage:
-#   i18n-tasks { version = "1.1.2"; }
-#   i18n-tasks { }  # latest (1.1.2)
+# Versions: 0.9.37, 1.0.13, 1.1.2
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "i18n-tasks: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "i18n-tasks: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "i18n-tasks: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "i18n-tasks: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # lograge
 #
-# Available versions:
-#   0.12.0
-#   0.13.0
-#   0.14.0
-#
-# Usage:
-#   lograge { version = "0.14.0"; }
-#   lograge { }  # latest (0.14.0)
+# Versions: 0.12.0, 0.13.0, 0.14.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "lograge: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "lograge: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "lograge: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "lograge: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # acts_as_list
 #
-# Available versions:
-#   1.2.4
-#   1.2.5
-#   1.2.6
-#
-# Usage:
-#   acts_as_list { version = "1.2.6"; }
-#   acts_as_list { }  # latest (1.2.6)
+# Versions: 1.2.4, 1.2.5, 1.2.6
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "acts_as_list: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "acts_as_list: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "acts_as_list: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "acts_as_list: unknown version '${version}'")

@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # htmlentities
 #
-# Available versions:
-#   4.3.4
-#   4.4.0
-#   4.4.1
-#   4.4.2
-#
-# Usage:
-#   htmlentities { version = "4.4.2"; }
-#   htmlentities { }  # latest (4.4.2)
+# Versions: 4.3.4, 4.4.0, 4.4.1, 4.4.2
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "htmlentities: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "htmlentities: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "htmlentities: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "htmlentities: unknown version '${version}'")

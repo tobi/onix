@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # dry-types
 #
-# Available versions:
-#   1.8.3
-#   1.9.0
-#   1.9.1
-#
-# Usage:
-#   dry-types { version = "1.9.1"; }
-#   dry-types { }  # latest (1.9.1)
+# Versions: 1.8.3, 1.9.0, 1.9.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "dry-types: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "dry-types: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "dry-types: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "dry-types: unknown version '${version}'")

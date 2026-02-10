@@ -1,22 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # aws-partitions
 #
-# Available versions:
-#   1.1134.0
-#   1.1150.0
-#   1.1198.0
-#   1.1203.0
-#   1.1211.0
-#   1.1212.0
-#   1.1213.0
-#
-# Usage:
-#   aws-partitions { version = "1.1213.0"; }
-#   aws-partitions { }  # latest (1.1213.0)
+# Versions: 1.1134.0, 1.1150.0, 1.1198.0, 1.1203.0, 1.1211.0, 1.1212.0, 1.1213.0
 #
 {
   lib,
@@ -42,7 +31,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "aws-partitions: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "aws-partitions: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "aws-partitions: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "aws-partitions: unknown version '${version}'")

@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # blueprinter
 #
-# Available versions:
-#   1.2.1
-#
-# Usage:
-#   blueprinter { version = "1.2.1"; }
-#   blueprinter { }  # latest (1.2.1)
+# Versions: 1.2.1
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "blueprinter: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "blueprinter: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "blueprinter: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "blueprinter: unknown version '${version}'")

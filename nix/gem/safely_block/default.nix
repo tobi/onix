@@ -1,17 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # safely_block
 #
-# Available versions:
-#   0.4.0
-#   0.5.0
-#
-# Usage:
-#   safely_block { version = "0.5.0"; }
-#   safely_block { }  # latest (0.5.0)
+# Versions: 0.4.0, 0.5.0
 #
 {
   lib,
@@ -32,7 +26,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "safely_block: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "safely_block: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "safely_block: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "safely_block: unknown version '${version}'")

@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # nokogiri
 #
-# Available versions:
-#   1.16.5
-#   1.18.9
-#   1.18.10
-#   1.19.0
-#
-# Usage:
-#   nokogiri { version = "1.19.0"; }
-#   nokogiri { }  # latest (1.19.0)
+# Versions: 1.16.5, 1.18.9, 1.18.10, 1.19.0
 #
 {
   lib,
@@ -25,38 +17,10 @@
 }:
 let
   versions = {
-    "1.16.5" = import ./1.16.5 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
-    "1.18.9" = import ./1.18.9 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
-    "1.18.10" = import ./1.18.10 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
-    "1.19.0" = import ./1.19.0 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
+    "1.16.5" = import ./1.16.5 { inherit lib stdenv ruby pkgs; };
+    "1.18.9" = import ./1.18.9 { inherit lib stdenv ruby pkgs; };
+    "1.18.10" = import ./1.18.10 { inherit lib stdenv ruby pkgs; };
+    "1.19.0" = import ./1.19.0 { inherit lib stdenv ruby pkgs; };
   };
 
   gitRevs = {
@@ -64,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "nokogiri: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "nokogiri: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "nokogiri: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "nokogiri: unknown version '${version}'")

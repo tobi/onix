@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # wmi-lite
 #
-# Available versions:
-#   1.0.2
-#   1.0.5
-#   1.0.7
-#
-# Usage:
-#   wmi-lite { version = "1.0.7"; }
-#   wmi-lite { }  # latest (1.0.7)
+# Versions: 1.0.2, 1.0.5, 1.0.7
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "wmi-lite: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "wmi-lite: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "wmi-lite: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "wmi-lite: unknown version '${version}'")

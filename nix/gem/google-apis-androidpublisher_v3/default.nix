@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # google-apis-androidpublisher_v3
 #
-# Available versions:
-#   0.94.0
-#   0.95.0
-#   0.96.0
-#
-# Usage:
-#   google-apis-androidpublisher_v3 { version = "0.96.0"; }
-#   google-apis-androidpublisher_v3 { }  # latest (0.96.0)
+# Versions: 0.94.0, 0.95.0, 0.96.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "google-apis-androidpublisher_v3: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "google-apis-androidpublisher_v3: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "google-apis-androidpublisher_v3: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "google-apis-androidpublisher_v3: unknown version '${version}'")

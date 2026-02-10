@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # murmurhash3
 #
-# Available versions:
-#   0.1.5
-#   0.1.6
-#   0.1.7
-#
-# Usage:
-#   murmurhash3 { version = "0.1.7"; }
-#   murmurhash3 { }  # latest (0.1.7)
+# Versions: 0.1.5, 0.1.6, 0.1.7
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "murmurhash3: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "murmurhash3: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "murmurhash3: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "murmurhash3: unknown version '${version}'")

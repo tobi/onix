@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # idn-ruby
 #
-# Available versions:
-#   0.1.5
-#
-# Usage:
-#   idn-ruby { version = "0.1.5"; }
-#   idn-ruby { }  # latest (0.1.5)
+# Versions: 0.1.5
 #
 {
   lib,
@@ -22,14 +17,7 @@
 }:
 let
   versions = {
-    "0.1.5" = import ./0.1.5 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
+    "0.1.5" = import ./0.1.5 { inherit lib stdenv ruby pkgs; };
   };
 
   gitRevs = {
@@ -37,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "idn-ruby: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "idn-ruby: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "idn-ruby: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "idn-ruby: unknown version '${version}'")

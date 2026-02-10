@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # ohai
 #
-# Available versions:
-#   18.2.8
-#   19.0.3
-#   19.1.16
-#
-# Usage:
-#   ohai { version = "19.1.16"; }
-#   ohai { }  # latest (19.1.16)
+# Versions: 18.2.8, 19.0.3, 19.1.16
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "ohai: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "ohai: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "ohai: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "ohai: unknown version '${version}'")

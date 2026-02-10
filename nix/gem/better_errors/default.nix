@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # better_errors
 #
-# Available versions:
-#   2.9.1
-#   2.10.0
-#   2.10.1
-#
-# Usage:
-#   better_errors { version = "2.10.1"; }
-#   better_errors { }  # latest (2.10.1)
+# Versions: 2.9.1, 2.10.0, 2.10.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "better_errors: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "better_errors: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "better_errors: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "better_errors: unknown version '${version}'")

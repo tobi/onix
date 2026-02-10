@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # google-cloud-storage
 #
-# Available versions:
-#   1.52.0
-#   1.54.0
-#   1.57.0
-#   1.57.1
-#   1.58.0
-#
-# Usage:
-#   google-cloud-storage { version = "1.58.0"; }
-#   google-cloud-storage { }  # latest (1.58.0)
+# Versions: 1.52.0, 1.54.0, 1.57.0, 1.57.1, 1.58.0
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "google-cloud-storage: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "google-cloud-storage: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "google-cloud-storage: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "google-cloud-storage: unknown version '${version}'")

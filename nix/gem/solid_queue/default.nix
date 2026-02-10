@@ -1,17 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # solid_queue
 #
-# Available versions:
-#   1.1.2
-#   1.2.4
-#
-# Usage:
-#   solid_queue { version = "1.2.4"; }
-#   solid_queue { }  # latest (1.2.4)
+# Versions: 1.1.2, 1.2.4
 #
 {
   lib,
@@ -32,7 +26,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "solid_queue: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "solid_queue: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "solid_queue: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "solid_queue: unknown version '${version}'")

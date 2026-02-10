@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # strscan
 #
-# Available versions:
-#   3.1.5
-#   3.1.6
-#   3.1.7
-#
-# Usage:
-#   strscan { version = "3.1.7"; }
-#   strscan { }  # latest (3.1.7)
+# Versions: 3.1.5, 3.1.6, 3.1.7
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "strscan: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "strscan: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "strscan: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "strscan: unknown version '${version}'")

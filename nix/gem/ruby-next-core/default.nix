@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # ruby-next-core
 #
-# Available versions:
-#   0.15.2
-#
-# Usage:
-#   ruby-next-core { version = "0.15.2"; }
-#   ruby-next-core { }  # latest (0.15.2)
+# Versions: 0.15.2
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "ruby-next-core: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "ruby-next-core: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "ruby-next-core: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "ruby-next-core: unknown version '${version}'")

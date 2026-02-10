@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # tins
 #
-# Available versions:
-#   1.50.0
-#   1.51.0
-#   1.51.1
-#
-# Usage:
-#   tins { version = "1.51.1"; }
-#   tins { }  # latest (1.51.1)
+# Versions: 1.50.0, 1.51.0, 1.51.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "tins: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "tins: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "tins: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "tins: unknown version '${version}'")

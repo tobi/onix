@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # pundit-matchers
 #
-# Available versions:
-#   1.9.0
-#
-# Usage:
-#   pundit-matchers { version = "1.9.0"; }
-#   pundit-matchers { }  # latest (1.9.0)
+# Versions: 1.9.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "pundit-matchers: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "pundit-matchers: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "pundit-matchers: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "pundit-matchers: unknown version '${version}'")

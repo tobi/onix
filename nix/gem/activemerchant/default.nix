@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # activemerchant
 #
-# Available versions:
-#   1.137.0
-#
-# Usage:
-#   activemerchant { version = "1.137.0"; }
-#   activemerchant { }  # latest (1.137.0)
+# Versions: 1.137.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "activemerchant: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "activemerchant: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "activemerchant: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "activemerchant: unknown version '${version}'")

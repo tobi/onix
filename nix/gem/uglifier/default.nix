@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # uglifier
 #
-# Available versions:
-#   4.1.20
-#   4.2.0
-#   4.2.1
-#
-# Usage:
-#   uglifier { version = "4.2.1"; }
-#   uglifier { }  # latest (4.2.1)
+# Versions: 4.1.20, 4.2.0, 4.2.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "uglifier: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "uglifier: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "uglifier: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "uglifier: unknown version '${version}'")

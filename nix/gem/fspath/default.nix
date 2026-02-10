@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # fspath
 #
-# Available versions:
-#   3.1.2
-#
-# Usage:
-#   fspath { version = "3.1.2"; }
-#   fspath { }  # latest (3.1.2)
+# Versions: 3.1.2
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "fspath: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "fspath: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "fspath: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "fspath: unknown version '${version}'")

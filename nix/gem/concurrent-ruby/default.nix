@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # concurrent-ruby
 #
-# Available versions:
-#   1.3.4
-#   1.3.5
-#   1.3.6
-#
-# Usage:
-#   concurrent-ruby { version = "1.3.6"; }
-#   concurrent-ruby { }  # latest (1.3.6)
+# Versions: 1.3.4, 1.3.5, 1.3.6
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "concurrent-ruby: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "concurrent-ruby: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "concurrent-ruby: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "concurrent-ruby: unknown version '${version}'")

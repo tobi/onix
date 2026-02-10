@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # faraday-retry
 #
-# Available versions:
-#   2.1.0
-#   2.2.1
-#   2.3.1
-#   2.3.2
-#   2.4.0
-#
-# Usage:
-#   faraday-retry { version = "2.4.0"; }
-#   faraday-retry { }  # latest (2.4.0)
+# Versions: 2.1.0, 2.2.1, 2.3.1, 2.3.2, 2.4.0
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "faraday-retry: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "faraday-retry: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "faraday-retry: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "faraday-retry: unknown version '${version}'")

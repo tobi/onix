@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # redis-activesupport
 #
-# Available versions:
-#   5.2.0
-#   5.2.1
-#   5.3.0
-#
-# Usage:
-#   redis-activesupport { version = "5.3.0"; }
-#   redis-activesupport { }  # latest (5.3.0)
+# Versions: 5.2.0, 5.2.1, 5.3.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "redis-activesupport: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "redis-activesupport: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "redis-activesupport: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "redis-activesupport: unknown version '${version}'")

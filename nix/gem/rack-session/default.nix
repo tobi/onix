@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rack-session
 #
-# Available versions:
-#   1.0.2
-#   2.0.0
-#   2.1.0
-#   2.1.1
-#
-# Usage:
-#   rack-session { version = "2.1.1"; }
-#   rack-session { }  # latest (2.1.1)
+# Versions: 1.0.2, 2.0.0, 2.1.0, 2.1.1
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rack-session: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rack-session: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rack-session: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rack-session: unknown version '${version}'")

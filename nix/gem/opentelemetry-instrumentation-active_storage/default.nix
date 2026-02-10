@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # opentelemetry-instrumentation-active_storage
 #
-# Available versions:
-#   0.3.1
-#
-# Usage:
-#   opentelemetry-instrumentation-active_storage { version = "0.3.1"; }
-#   opentelemetry-instrumentation-active_storage { }  # latest (0.3.1)
+# Versions: 0.3.1
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "opentelemetry-instrumentation-active_storage: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "opentelemetry-instrumentation-active_storage: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "opentelemetry-instrumentation-active_storage: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "opentelemetry-instrumentation-active_storage: unknown version '${version}'")

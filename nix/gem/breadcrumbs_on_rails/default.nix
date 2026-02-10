@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # breadcrumbs_on_rails
 #
-# Available versions:
-#   4.1.0
-#
-# Usage:
-#   breadcrumbs_on_rails { version = "4.1.0"; }
-#   breadcrumbs_on_rails { }  # latest (4.1.0)
+# Versions: 4.1.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "breadcrumbs_on_rails: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "breadcrumbs_on_rails: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "breadcrumbs_on_rails: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "breadcrumbs_on_rails: unknown version '${version}'")

@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # thor
 #
-# Available versions:
-#   1.3.1
-#   1.3.2
-#   1.4.0
-#   1.5.0
-#
-# Usage:
-#   thor { version = "1.5.0"; }
-#   thor { }  # latest (1.5.0)
+# Versions: 1.3.1, 1.3.2, 1.4.0, 1.5.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "thor: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "thor: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "thor: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "thor: unknown version '${version}'")

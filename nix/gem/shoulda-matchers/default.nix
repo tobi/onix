@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # shoulda-matchers
 #
-# Available versions:
-#   5.3.0
-#   6.4.0
-#   6.5.0
-#   7.0.1
-#
-# Usage:
-#   shoulda-matchers { version = "7.0.1"; }
-#   shoulda-matchers { }  # latest (7.0.1)
+# Versions: 5.3.0, 6.4.0, 6.5.0, 7.0.1
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "shoulda-matchers: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "shoulda-matchers: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "shoulda-matchers: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "shoulda-matchers: unknown version '${version}'")

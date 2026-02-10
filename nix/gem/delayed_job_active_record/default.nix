@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # delayed_job_active_record
 #
-# Available versions:
-#   4.1.9
-#   4.1.10
-#   4.1.11
-#
-# Usage:
-#   delayed_job_active_record { version = "4.1.11"; }
-#   delayed_job_active_record { }  # latest (4.1.11)
+# Versions: 4.1.9, 4.1.10, 4.1.11
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "delayed_job_active_record: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "delayed_job_active_record: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "delayed_job_active_record: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "delayed_job_active_record: unknown version '${version}'")

@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # database_cleaner
 #
-# Available versions:
-#   2.0.1
-#   2.0.2
-#   2.1.0
-#
-# Usage:
-#   database_cleaner { version = "2.1.0"; }
-#   database_cleaner { }  # latest (2.1.0)
+# Versions: 2.0.1, 2.0.2, 2.1.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "database_cleaner: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "database_cleaner: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "database_cleaner: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "database_cleaner: unknown version '${version}'")

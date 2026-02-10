@@ -1,22 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rack
 #
-# Available versions:
-#   2.2.10
-#   2.2.21
-#   3.0.0.rc1
-#   3.2.1
-#   3.2.2
-#   3.2.3
-#   3.2.4
-#
-# Usage:
-#   rack { version = "3.2.4"; }
-#   rack { }  # latest (3.2.4)
+# Versions: 2.2.10, 2.2.21, 3.0.0.rc1, 3.2.1, 3.2.2, 3.2.3, 3.2.4
 #
 {
   lib,
@@ -42,7 +31,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rack: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rack: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rack: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rack: unknown version '${version}'")

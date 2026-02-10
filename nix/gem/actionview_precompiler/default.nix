@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # actionview_precompiler
 #
-# Available versions:
-#   0.4.0
-#
-# Usage:
-#   actionview_precompiler { version = "0.4.0"; }
-#   actionview_precompiler { }  # latest (0.4.0)
+# Versions: 0.4.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "actionview_precompiler: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "actionview_precompiler: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "actionview_precompiler: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "actionview_precompiler: unknown version '${version}'")

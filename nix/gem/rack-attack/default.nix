@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rack-attack
 #
-# Available versions:
-#   6.6.1
-#   6.7.0
-#   6.8.0
-#
-# Usage:
-#   rack-attack { version = "6.8.0"; }
-#   rack-attack { }  # latest (6.8.0)
+# Versions: 6.6.1, 6.7.0, 6.8.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rack-attack: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rack-attack: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rack-attack: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rack-attack: unknown version '${version}'")

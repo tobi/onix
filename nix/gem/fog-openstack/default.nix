@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # fog-openstack
 #
-# Available versions:
-#   1.1.5
-#
-# Usage:
-#   fog-openstack { version = "1.1.5"; }
-#   fog-openstack { }  # latest (1.1.5)
+# Versions: 1.1.5
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "fog-openstack: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "fog-openstack: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "fog-openstack: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "fog-openstack: unknown version '${version}'")

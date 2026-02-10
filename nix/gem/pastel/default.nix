@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # pastel
 #
-# Available versions:
-#   0.7.3
-#   0.7.4
-#   0.8.0
-#
-# Usage:
-#   pastel { version = "0.8.0"; }
-#   pastel { }  # latest (0.8.0)
+# Versions: 0.7.3, 0.7.4, 0.8.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "pastel: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "pastel: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "pastel: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "pastel: unknown version '${version}'")

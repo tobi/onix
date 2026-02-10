@@ -1,20 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # net-http-persistent
 #
-# Available versions:
-#   4.0.1
-#   4.0.2
-#   4.0.6
-#   4.0.7
-#   4.0.8
-#
-# Usage:
-#   net-http-persistent { version = "4.0.8"; }
-#   net-http-persistent { }  # latest (4.0.8)
+# Versions: 4.0.1, 4.0.2, 4.0.6, 4.0.7, 4.0.8
 #
 {
   lib,
@@ -38,7 +29,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "net-http-persistent: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "net-http-persistent: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "net-http-persistent: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "net-http-persistent: unknown version '${version}'")

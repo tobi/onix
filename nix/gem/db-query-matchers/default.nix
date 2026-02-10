@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # db-query-matchers
 #
-# Available versions:
-#   0.15.0
-#
-# Usage:
-#   db-query-matchers { version = "0.15.0"; }
-#   db-query-matchers { }  # latest (0.15.0)
+# Versions: 0.15.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "db-query-matchers: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "db-query-matchers: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "db-query-matchers: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "db-query-matchers: unknown version '${version}'")

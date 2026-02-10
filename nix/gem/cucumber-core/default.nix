@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # cucumber-core
 #
-# Available versions:
-#   16.0.0
-#   16.1.1
-#   16.2.0
-#
-# Usage:
-#   cucumber-core { version = "16.2.0"; }
-#   cucumber-core { }  # latest (16.2.0)
+# Versions: 16.0.0, 16.1.1, 16.2.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "cucumber-core: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "cucumber-core: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "cucumber-core: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "cucumber-core: unknown version '${version}'")

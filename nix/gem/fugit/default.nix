@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # fugit
 #
-# Available versions:
-#   1.11.1
-#   1.11.2
-#   1.12.0
-#   1.12.1
-#
-# Usage:
-#   fugit { version = "1.12.1"; }
-#   fugit { }  # latest (1.12.1)
+# Versions: 1.11.1, 1.11.2, 1.12.0, 1.12.1
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "fugit: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "fugit: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "fugit: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "fugit: unknown version '${version}'")

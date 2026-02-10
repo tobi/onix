@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # time_diff
 #
-# Available versions:
-#   0.3.0
-#
-# Usage:
-#   time_diff { version = "0.3.0"; }
-#   time_diff { }  # latest (0.3.0)
+# Versions: 0.3.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "time_diff: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "time_diff: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "time_diff: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "time_diff: unknown version '${version}'")

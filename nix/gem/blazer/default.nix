@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # blazer
 #
-# Available versions:
-#   2.6.5
-#
-# Usage:
-#   blazer { version = "2.6.5"; }
-#   blazer { }  # latest (2.6.5)
+# Versions: 2.6.5
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "blazer: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "blazer: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "blazer: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "blazer: unknown version '${version}'")

@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # link_header
 #
-# Available versions:
-#   0.0.8
-#
-# Usage:
-#   link_header { version = "0.0.8"; }
-#   link_header { }  # latest (0.0.8)
+# Versions: 0.0.8
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "link_header: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "link_header: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "link_header: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "link_header: unknown version '${version}'")

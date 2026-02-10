@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # chef-utils
 #
-# Available versions:
-#   18.6.2
-#   18.8.54
-#   18.9.4
-#   19.1.164
-#
-# Usage:
-#   chef-utils { version = "19.1.164"; }
-#   chef-utils { }  # latest (19.1.164)
+# Versions: 18.6.2, 18.8.54, 18.9.4, 19.1.164
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "chef-utils: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "chef-utils: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "chef-utils: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "chef-utils: unknown version '${version}'")

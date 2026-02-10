@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # net-ldap
 #
-# Available versions:
-#   0.17.1
-#   0.18.0
-#   0.19.0
-#   0.20.0
-#
-# Usage:
-#   net-ldap { version = "0.20.0"; }
-#   net-ldap { }  # latest (0.20.0)
+# Versions: 0.17.1, 0.18.0, 0.19.0, 0.20.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "net-ldap: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "net-ldap: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "net-ldap: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "net-ldap: unknown version '${version}'")

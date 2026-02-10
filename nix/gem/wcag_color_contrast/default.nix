@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # wcag_color_contrast
 #
-# Available versions:
-#   0.1.0
-#
-# Usage:
-#   wcag_color_contrast { version = "0.1.0"; }
-#   wcag_color_contrast { }  # latest (0.1.0)
+# Versions: 0.1.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "wcag_color_contrast: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "wcag_color_contrast: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "wcag_color_contrast: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "wcag_color_contrast: unknown version '${version}'")

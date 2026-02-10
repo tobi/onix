@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # jbuilder
 #
-# Available versions:
-#   2.11.5
-#   2.13.0
-#   2.14.0
-#   2.14.1
-#
-# Usage:
-#   jbuilder { version = "2.14.1"; }
-#   jbuilder { }  # latest (2.14.1)
+# Versions: 2.11.5, 2.13.0, 2.14.0, 2.14.1
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "jbuilder: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "jbuilder: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "jbuilder: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "jbuilder: unknown version '${version}'")

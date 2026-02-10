@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # eventmachine
 #
-# Available versions:
-#   1.2.5
-#   1.2.6
-#   1.2.7
-#
-# Usage:
-#   eventmachine { version = "1.2.7"; }
-#   eventmachine { }  # latest (1.2.7)
+# Versions: 1.2.5, 1.2.6, 1.2.7
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "eventmachine: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "eventmachine: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "eventmachine: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "eventmachine: unknown version '${version}'")

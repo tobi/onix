@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # sixarm_ruby_unaccent
 #
-# Available versions:
-#   1.1.2
-#   1.2.0
-#   1.2.2
-#
-# Usage:
-#   sixarm_ruby_unaccent { version = "1.2.2"; }
-#   sixarm_ruby_unaccent { }  # latest (1.2.2)
+# Versions: 1.1.2, 1.2.0, 1.2.2
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "sixarm_ruby_unaccent: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "sixarm_ruby_unaccent: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "sixarm_ruby_unaccent: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "sixarm_ruby_unaccent: unknown version '${version}'")

@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # ruby-lsp-rspec
 #
-# Available versions:
-#   0.1.28
-#
-# Usage:
-#   ruby-lsp-rspec { version = "0.1.28"; }
-#   ruby-lsp-rspec { }  # latest (0.1.28)
+# Versions: 0.1.28
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "ruby-lsp-rspec: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "ruby-lsp-rspec: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "ruby-lsp-rspec: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "ruby-lsp-rspec: unknown version '${version}'")

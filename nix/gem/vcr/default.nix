@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # vcr
 #
-# Available versions:
-#   6.3.0
-#   6.3.1
-#   6.4.0
-#
-# Usage:
-#   vcr { version = "6.4.0"; }
-#   vcr { }  # latest (6.4.0)
+# Versions: 6.3.0, 6.3.1, 6.4.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "vcr: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "vcr: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "vcr: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "vcr: unknown version '${version}'")

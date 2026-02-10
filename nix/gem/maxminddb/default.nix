@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # maxminddb
 #
-# Available versions:
-#   0.1.22
-#
-# Usage:
-#   maxminddb { version = "0.1.22"; }
-#   maxminddb { }  # latest (0.1.22)
+# Versions: 0.1.22
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "maxminddb: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "maxminddb: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "maxminddb: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "maxminddb: unknown version '${version}'")

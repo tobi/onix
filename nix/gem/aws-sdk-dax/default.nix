@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # aws-sdk-dax
 #
-# Available versions:
-#   1.81.0
-#   1.82.0
-#   1.83.0
-#
-# Usage:
-#   aws-sdk-dax { version = "1.83.0"; }
-#   aws-sdk-dax { }  # latest (1.83.0)
+# Versions: 1.81.0, 1.82.0, 1.83.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "aws-sdk-dax: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "aws-sdk-dax: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "aws-sdk-dax: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "aws-sdk-dax: unknown version '${version}'")

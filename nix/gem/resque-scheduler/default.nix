@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # resque-scheduler
 #
-# Available versions:
-#   4.11.0
-#
-# Usage:
-#   resque-scheduler { version = "4.11.0"; }
-#   resque-scheduler { }  # latest (4.11.0)
+# Versions: 4.11.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "resque-scheduler: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "resque-scheduler: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "resque-scheduler: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "resque-scheduler: unknown version '${version}'")

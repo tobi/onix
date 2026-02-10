@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # forwardable
 #
-# Available versions:
-#   1.4.0
-#
-# Usage:
-#   forwardable { version = "1.4.0"; }
-#   forwardable { }  # latest (1.4.0)
+# Versions: 1.4.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "forwardable: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "forwardable: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "forwardable: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "forwardable: unknown version '${version}'")

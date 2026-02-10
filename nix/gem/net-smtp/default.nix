@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # net-smtp
 #
-# Available versions:
-#   0.3.4
-#   0.4.0.1
-#   0.5.0
-#   0.5.1
-#
-# Usage:
-#   net-smtp { version = "0.5.1"; }
-#   net-smtp { }  # latest (0.5.1)
+# Versions: 0.3.4, 0.4.0.1, 0.5.0, 0.5.1
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "net-smtp: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "net-smtp: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "net-smtp: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "net-smtp: unknown version '${version}'")

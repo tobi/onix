@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # opentelemetry-api
 #
-# Available versions:
-#   1.5.0
-#   1.6.0
-#   1.7.0
-#
-# Usage:
-#   opentelemetry-api { version = "1.7.0"; }
-#   opentelemetry-api { }  # latest (1.7.0)
+# Versions: 1.5.0, 1.6.0, 1.7.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "opentelemetry-api: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "opentelemetry-api: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "opentelemetry-api: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "opentelemetry-api: unknown version '${version}'")

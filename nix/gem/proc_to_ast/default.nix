@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # proc_to_ast
 #
-# Available versions:
-#   0.0.7
-#   0.1.0
-#   0.2.0
-#
-# Usage:
-#   proc_to_ast { version = "0.2.0"; }
-#   proc_to_ast { }  # latest (0.2.0)
+# Versions: 0.0.7, 0.1.0, 0.2.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "proc_to_ast: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "proc_to_ast: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "proc_to_ast: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "proc_to_ast: unknown version '${version}'")

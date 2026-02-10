@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # opentelemetry-instrumentation-pg
 #
-# Available versions:
-#   0.35.0
-#
-# Usage:
-#   opentelemetry-instrumentation-pg { version = "0.35.0"; }
-#   opentelemetry-instrumentation-pg { }  # latest (0.35.0)
+# Versions: 0.35.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "opentelemetry-instrumentation-pg: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "opentelemetry-instrumentation-pg: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "opentelemetry-instrumentation-pg: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "opentelemetry-instrumentation-pg: unknown version '${version}'")

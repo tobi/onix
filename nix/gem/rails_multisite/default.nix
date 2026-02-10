@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rails_multisite
 #
-# Available versions:
-#   7.0.0
-#
-# Usage:
-#   rails_multisite { version = "7.0.0"; }
-#   rails_multisite { }  # latest (7.0.0)
+# Versions: 7.0.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rails_multisite: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rails_multisite: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rails_multisite: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rails_multisite: unknown version '${version}'")

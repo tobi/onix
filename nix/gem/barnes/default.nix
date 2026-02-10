@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # barnes
 #
-# Available versions:
-#   0.0.9
-#
-# Usage:
-#   barnes { version = "0.0.9"; }
-#   barnes { }  # latest (0.0.9)
+# Versions: 0.0.9
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "barnes: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "barnes: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "barnes: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "barnes: unknown version '${version}'")

@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # kt-paperclip
 #
-# Available versions:
-#   7.3.0
-#
-# Usage:
-#   kt-paperclip { version = "7.3.0"; }
-#   kt-paperclip { }  # latest (7.3.0)
+# Versions: 7.3.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "kt-paperclip: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "kt-paperclip: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "kt-paperclip: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "kt-paperclip: unknown version '${version}'")

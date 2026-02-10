@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # graphql-client
 #
-# Available versions:
-#   0.24.0
-#   0.25.0
-#   0.26.0
-#
-# Usage:
-#   graphql-client { version = "0.26.0"; }
-#   graphql-client { }  # latest (0.26.0)
+# Versions: 0.24.0, 0.25.0, 0.26.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "graphql-client: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "graphql-client: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "graphql-client: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "graphql-client: unknown version '${version}'")

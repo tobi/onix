@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # trilogy
 #
-# Available versions:
-#   2.9.0
-#
-# Usage:
-#   trilogy { version = "2.9.0"; }
-#   trilogy { }  # latest (2.9.0)
+# Versions: 2.9.0
 #
 {
   lib,
@@ -22,14 +17,7 @@
 }:
 let
   versions = {
-    "2.9.0" = import ./2.9.0 {
-      inherit
-        lib
-        stdenv
-        ruby
-        pkgs
-        ;
-    };
+    "2.9.0" = import ./2.9.0 { inherit lib stdenv ruby pkgs; };
   };
 
   gitRevs = {
@@ -37,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "trilogy: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "trilogy: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "trilogy: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "trilogy: unknown version '${version}'")

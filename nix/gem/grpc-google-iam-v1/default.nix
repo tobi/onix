@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # grpc-google-iam-v1
 #
-# Available versions:
-#   1.9.0
-#   1.10.0
-#   1.11.0
-#
-# Usage:
-#   grpc-google-iam-v1 { version = "1.11.0"; }
-#   grpc-google-iam-v1 { }  # latest (1.11.0)
+# Versions: 1.9.0, 1.10.0, 1.11.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "grpc-google-iam-v1: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "grpc-google-iam-v1: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "grpc-google-iam-v1: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "grpc-google-iam-v1: unknown version '${version}'")

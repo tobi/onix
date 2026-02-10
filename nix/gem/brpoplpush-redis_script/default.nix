@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # brpoplpush-redis_script
 #
-# Available versions:
-#   0.1.3
-#
-# Usage:
-#   brpoplpush-redis_script { version = "0.1.3"; }
-#   brpoplpush-redis_script { }  # latest (0.1.3)
+# Versions: 0.1.3
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "brpoplpush-redis_script: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "brpoplpush-redis_script: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "brpoplpush-redis_script: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "brpoplpush-redis_script: unknown version '${version}'")

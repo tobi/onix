@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # lumberjack
 #
-# Available versions:
-#   1.2.9
-#   2.0.2
-#   2.0.3
-#   2.0.4
-#
-# Usage:
-#   lumberjack { version = "2.0.4"; }
-#   lumberjack { }  # latest (2.0.4)
+# Versions: 1.2.9, 2.0.2, 2.0.3, 2.0.4
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "lumberjack: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "lumberjack: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "lumberjack: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "lumberjack: unknown version '${version}'")

@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # ahoy_email
 #
-# Available versions:
-#   2.2.0
-#
-# Usage:
-#   ahoy_email { version = "2.2.0"; }
-#   ahoy_email { }  # latest (2.2.0)
+# Versions: 2.2.0
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "ahoy_email: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "ahoy_email: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "ahoy_email: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "ahoy_email: unknown version '${version}'")

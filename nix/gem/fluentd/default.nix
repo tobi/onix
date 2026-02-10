@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # fluentd
 #
-# Available versions:
-#   1.18.0
-#   1.19.0
-#   1.19.1
-#
-# Usage:
-#   fluentd { version = "1.19.1"; }
-#   fluentd { }  # latest (1.19.1)
+# Versions: 1.18.0, 1.19.0, 1.19.1
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "fluentd: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "fluentd: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "fluentd: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "fluentd: unknown version '${version}'")

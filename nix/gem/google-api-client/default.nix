@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # google-api-client
 #
-# Available versions:
-#   0.51.0
-#   0.52.0
-#   0.53.0
-#
-# Usage:
-#   google-api-client { version = "0.53.0"; }
-#   google-api-client { }  # latest (0.53.0)
+# Versions: 0.51.0, 0.52.0, 0.53.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "google-api-client: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "google-api-client: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "google-api-client: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "google-api-client: unknown version '${version}'")

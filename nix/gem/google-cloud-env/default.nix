@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # google-cloud-env
 #
-# Available versions:
-#   2.2.1
-#   2.2.2
-#   2.3.0
-#   2.3.1
-#
-# Usage:
-#   google-cloud-env { version = "2.3.1"; }
-#   google-cloud-env { }  # latest (2.3.1)
+# Versions: 2.2.1, 2.2.2, 2.3.0, 2.3.1
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "google-cloud-env: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "google-cloud-env: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "google-cloud-env: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "google-cloud-env: unknown version '${version}'")

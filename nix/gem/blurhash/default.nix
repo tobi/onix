@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # blurhash
 #
-# Available versions:
-#   0.1.8
-#
-# Usage:
-#   blurhash { version = "0.1.8"; }
-#   blurhash { }  # latest (0.1.8)
+# Versions: 0.1.8
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "blurhash: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "blurhash: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "blurhash: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "blurhash: unknown version '${version}'")

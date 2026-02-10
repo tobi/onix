@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # mimemagic
 #
-# Available versions:
-#   0.4.1
-#   0.4.2
-#   0.4.3
-#
-# Usage:
-#   mimemagic { version = "0.4.3"; }
-#   mimemagic { }  # latest (0.4.3)
+# Versions: 0.4.1, 0.4.2, 0.4.3
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "mimemagic: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "mimemagic: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "mimemagic: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "mimemagic: unknown version '${version}'")

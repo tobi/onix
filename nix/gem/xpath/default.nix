@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # xpath
 #
-# Available versions:
-#   3.0.0
-#   3.1.0
-#   3.2.0
-#
-# Usage:
-#   xpath { version = "3.2.0"; }
-#   xpath { }  # latest (3.2.0)
+# Versions: 3.0.0, 3.1.0, 3.2.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "xpath: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "xpath: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "xpath: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "xpath: unknown version '${version}'")

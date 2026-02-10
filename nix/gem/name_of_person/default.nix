@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # name_of_person
 #
-# Available versions:
-#   1.1.3
-#
-# Usage:
-#   name_of_person { version = "1.1.3"; }
-#   name_of_person { }  # latest (1.1.3)
+# Versions: 1.1.3
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "name_of_person: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "name_of_person: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "name_of_person: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "name_of_person: unknown version '${version}'")

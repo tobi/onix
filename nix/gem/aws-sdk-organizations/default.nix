@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # aws-sdk-organizations
 #
-# Available versions:
-#   1.133.0
-#   1.134.0
-#   1.135.0
-#
-# Usage:
-#   aws-sdk-organizations { version = "1.135.0"; }
-#   aws-sdk-organizations { }  # latest (1.135.0)
+# Versions: 1.133.0, 1.134.0, 1.135.0
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "aws-sdk-organizations: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "aws-sdk-organizations: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "aws-sdk-organizations: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "aws-sdk-organizations: unknown version '${version}'")

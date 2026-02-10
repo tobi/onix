@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # prometheus_exporter
 #
-# Available versions:
-#   2.3.1
-#
-# Usage:
-#   prometheus_exporter { version = "2.3.1"; }
-#   prometheus_exporter { }  # latest (2.3.1)
+# Versions: 2.3.1
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "prometheus_exporter: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "prometheus_exporter: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "prometheus_exporter: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "prometheus_exporter: unknown version '${version}'")

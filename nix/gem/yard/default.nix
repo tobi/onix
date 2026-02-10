@@ -1,18 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # yard
 #
-# Available versions:
-#   0.9.36
-#   0.9.37
-#   0.9.38
-#
-# Usage:
-#   yard { version = "0.9.38"; }
-#   yard { }  # latest (0.9.38)
+# Versions: 0.9.36, 0.9.37, 0.9.38
 #
 {
   lib,
@@ -34,7 +27,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "yard: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "yard: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "yard: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "yard: unknown version '${version}'")

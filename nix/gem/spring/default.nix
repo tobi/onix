@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # spring
 #
-# Available versions:
-#   4.1.1
-#   4.4.0
-#   4.4.1
-#   4.4.2
-#
-# Usage:
-#   spring { version = "4.4.2"; }
-#   spring { }  # latest (4.4.2)
+# Versions: 4.1.1, 4.4.0, 4.4.1, 4.4.2
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "spring: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "spring: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "spring: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "spring: unknown version '${version}'")

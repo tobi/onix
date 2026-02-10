@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # httparty
 #
-# Available versions:
-#   0.21.0
-#   0.24.0
-#   0.24.1
-#   0.24.2
-#
-# Usage:
-#   httparty { version = "0.24.2"; }
-#   httparty { }  # latest (0.24.2)
+# Versions: 0.21.0, 0.24.0, 0.24.1, 0.24.2
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "httparty: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "httparty: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "httparty: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "httparty: unknown version '${version}'")

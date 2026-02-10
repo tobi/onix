@@ -1,16 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # linzer
 #
-# Available versions:
-#   0.7.7
-#
-# Usage:
-#   linzer { version = "0.7.7"; }
-#   linzer { }  # latest (0.7.7)
+# Versions: 0.7.7
 #
 {
   lib,
@@ -30,7 +25,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "linzer: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "linzer: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "linzer: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "linzer: unknown version '${version}'")

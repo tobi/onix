@@ -1,19 +1,11 @@
 #
 # ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ║  GENERATED — do not edit.  Run gemset2nix update to regen  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
 # rails-i18n
 #
-# Available versions:
-#   7.0.8
-#   8.0.1
-#   8.0.2
-#   8.1.0
-#
-# Usage:
-#   rails-i18n { version = "8.1.0"; }
-#   rails-i18n { }  # latest (8.1.0)
+# Versions: 7.0.8, 8.0.1, 8.0.2, 8.1.0
 #
 {
   lib,
@@ -36,7 +28,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "rails-i18n: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "rails-i18n: unknown git rev '${git.rev}'")
 else
   versions.${version}
-    or (throw "rails-i18n: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "rails-i18n: unknown version '${version}'")
