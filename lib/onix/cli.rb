@@ -5,6 +5,7 @@ module Onix
     COMMANDS = {
       "init"     => "Initialize a new project",
       "import"   => "Import gems from Gemfile.lock",
+      "lock"     => "Lock gems with sha256 hashes (nix-native fetch)",
       "fetch"    => "Download gem sources into cache/",
       "generate" => "Generate Nix derivations and run checks",
       "build"    => "Build gems via Nix",
