@@ -310,7 +310,7 @@ meta_by_key.each_value do |meta|
                              .select { |d| d != "default.nix" && File.directory?(File.join(rb_sys_dir, d)) && !d.start_with?("git-") }
                              .sort_by { |v| Gem::Version.new(v) rescue Gem::Version.new("0") }
         unless rb_sys_versions.empty?
-          nix << "  rb_sys = import ../../../rb_sys/#{rb_sys_versions.last} { inherit lib stdenv ruby; };\n"
+          nix << "  rb_sys = import ../../rb_sys/#{rb_sys_versions.last} { inherit lib stdenv ruby; };\n"
           resolved_gems << "rb_sys"
         end
       end
@@ -326,7 +326,7 @@ meta_by_key.each_value do |meta|
         unless versions.empty?
           v = versions.last
           varname = gdep.gsub("-", "_")
-          nix << "  #{varname} = import ../../../#{gdep}/#{v} { inherit lib stdenv ruby; };\n"
+          nix << "  #{varname} = import ../../#{gdep}/#{v} { inherit lib stdenv ruby; };\n"
           resolved_gems << varname
         end
       end
