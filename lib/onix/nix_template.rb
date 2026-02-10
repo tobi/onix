@@ -331,7 +331,7 @@ module Onix
 
     def install_phase(nix, name:, version:, key:, has_ext:, has_overlay:,
                       has_prebuilt:, require_paths:, executables:, bindir:)
-      needs_platform = has_ext || has_prebuilt
+      has_native = has_ext || has_prebuilt
       rp = require_paths.map { |p| "\"#{p}\"" }.join(", ")
 
       nix << "  installPhase = ''\n"
@@ -339,15 +339,16 @@ module Onix
       nix << "#{SH}mkdir -p $dest/gems/#{key}\n"
       nix << "#{SH}cp -r . $dest/gems/#{key}/\n"
 
-      platform_setup(nix, key) if needs_platform
+      extension_setup(nix, key) if has_native
+      platform_links(nix, key)
 
       gemspec_block(nix, name: name, version: version, key: key, rp: rp,
                     executables: executables, bindir: bindir)
 
-      if needs_platform
-        platform_gemspec(nix, name: name, version: version, key: key, rp: rp,
-                         executables: executables, bindir: bindir)
-      end
+      # Always create platform-qualified gemspecs — Bundler expects them when
+      # the lockfile lists platform variants (e.g. sorbet-static-universal-darwin)
+      platform_gemspec(nix, name: name, version: version, key: key, rp: rp,
+                       executables: executables, bindir: bindir)
 
       binstubs(nix, name: name, version: version, executables: executables) unless executables.empty?
 
@@ -355,23 +356,33 @@ module Onix
       nix << "  '';\n"
     end
 
-    def platform_setup(nix, key)
+    # Copy compiled .so/.bundle into extensions/ dir (only for native gems)
+    def extension_setup(nix, key)
       nix << "#{SH}local extdir=$dest/extensions/${arch}/${rubyVersion}/#{key}\n"
       nix << "#{SH}mkdir -p $extdir\n"
       nix << "#{SH}find . \\( -name '*.so' -o -name '*.bundle' \\) -path '*/lib/*' | while read so; do\n"
       nix << "#{SH}  cp \"$so\" \"$extdir/\"\n"
       nix << "#{SH}done\n"
+    end
+
+    # Create platform symlinks for gems/ and extensions/ (all gems)
+    # Bundler expects platform-qualified paths when the lockfile lists platform variants
+    def platform_links(nix, key)
       nix << "#{SH}local cpu=\"${stdenv.hostPlatform.parsed.cpu.name}\"\n"
       nix << "#{SH}if [ \"$cpu\" = \"aarch64\" ]; then cpu=\"arm64\"; fi\n"
       nix << "#{SH}local gp=\"$cpu-${stdenv.hostPlatform.parsed.kernel.name}\"\n"
       nix << "#{SH}if [ \"${stdenv.hostPlatform.parsed.abi.name}\" != \"unknown\" ]; then\n"
       nix << "#{SH}  gp=\"$gp-${stdenv.hostPlatform.parsed.abi.name}\"\n"
       nix << "#{SH}fi\n"
-      nix << "#{SH}ln -s #{key} $dest/gems/#{key}-$gp\n"
-      nix << "#{SH}ln -s #{key} $dest/extensions/${arch}/${rubyVersion}/#{key}-$gp\n"
+      nix << "#{SH}ln -sf #{key} $dest/gems/#{key}-$gp\n"
+      nix << "#{SH}if [ -d \"$dest/extensions/${arch}/${rubyVersion}/#{key}\" ]; then\n"
+      nix << "#{SH}  ln -sf #{key} $dest/extensions/${arch}/${rubyVersion}/#{key}-$gp\n"
+      nix << "#{SH}fi\n"
       nix << "#{SH}if [ \"${stdenv.hostPlatform.parsed.kernel.name}\" = \"darwin\" ]; then\n"
       nix << "#{SH}  ln -sf #{key} $dest/gems/#{key}-universal-darwin\n"
-      nix << "#{SH}  ln -sf #{key} $dest/extensions/${arch}/${rubyVersion}/#{key}-universal-darwin\n"
+      nix << "#{SH}  if [ -d \"$dest/extensions/${arch}/${rubyVersion}/#{key}\" ]; then\n"
+      nix << "#{SH}    ln -sf #{key} $dest/extensions/${arch}/${rubyVersion}/#{key}-universal-darwin\n"
+      nix << "#{SH}  fi\n"
       nix << "#{SH}fi\n"
     end
 
