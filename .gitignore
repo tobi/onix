@@ -1,7 +1,5 @@
-out/
 cache/
-nix/gem/*/*/source
+examples/nix/gem/*/*/source
 result
-source
 pkg/
 *.gem

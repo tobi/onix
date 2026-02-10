@@ -3,12 +3,12 @@
 module Gemset2Nix
   module CLI
     COMMANDS = {
-      "init"   => "Initialize a new project",
-      "import" => "Import gems from Gemfile.lock",
-      "fetch"  => "Download gem sources into cache/",
-      "update" => "Generate Nix derivations from cache",
-      "build"  => "Build gems via Nix",
-      "check"  => "Check generated derivations",
+      "init"     => "Initialize a new project",
+      "import"   => "Import gems from Gemfile.lock",
+      "fetch"    => "Download gem sources into cache/",
+      "generate" => "Generate Nix derivations and run checks",
+      "build"    => "Build gems via Nix",
+      "check"    => "Run checks on generated derivations",
     }.freeze
 
     def self.run(argv)
@@ -37,13 +37,13 @@ module Gemset2Nix
     def self.usage
       $stderr.puts
       $stderr.puts UI.bold("gemset2nix") + " #{UI.dim(VERSION)}"
-      $stderr.puts UI.dim("  Gemfile.lock → hermetic Nix builds")
+      $stderr.puts UI.dim("  Nix-packaged Ruby gems")
       $stderr.puts
       COMMANDS.each do |name, desc|
         $stderr.puts "  #{UI.amber(name.ljust(10))} #{desc}"
       end
       $stderr.puts
-      $stderr.puts UI.dim("  Workflow: init → import → fetch → update → build")
+      $stderr.puts UI.dim("  Workflow: init → import → fetch → generate → build")
       $stderr.puts
     end
   end

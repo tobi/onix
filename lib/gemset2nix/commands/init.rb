@@ -59,7 +59,7 @@ module Gemset2Nix
           $stderr.puts
           $stderr.puts "  #{UI.amber("1.")} gemset2nix import path/to/Gemfile.lock"
           $stderr.puts "  #{UI.amber("2.")} gemset2nix fetch"
-          $stderr.puts "  #{UI.amber("3.")} gemset2nix update"
+          $stderr.puts "  #{UI.amber("3.")} gemset2nix generate"
           $stderr.puts "  #{UI.amber("4.")} gemset2nix build"
           $stderr.puts
         end
@@ -69,7 +69,7 @@ module Gemset2Nix
         <<~MD
           # #{name}
 
-          Hermetic Ruby gem builds with Nix, managed by [gemset2nix](https://github.com/tobi/gemset2nix).
+          Nix-packaged Ruby gems, managed by [gemset2nix](https://github.com/tobi/gemset2nix).
 
           ## Quick start
 
@@ -81,13 +81,13 @@ module Gemset2Nix
           gemset2nix fetch
 
           # 3. Generate Nix derivations from cached sources
-          gemset2nix update
+          gemset2nix generate
 
           # 4. Build everything
           gemset2nix build
 
-          # 5. Check for problems
-          gemset2nix lint
+          # 5. Check for problems (runs automatically after generate)
+          gemset2nix check
           ```
 
           ## Workflow
@@ -119,7 +119,7 @@ module Gemset2Nix
           Generate Nix derivations from the cached sources and metadata:
 
           ```bash
-          gemset2nix update
+          gemset2nix generate
           ```
 
           This creates:
@@ -138,13 +138,13 @@ module Gemset2Nix
           gemset2nix build --gem nokogiri   # build a gem by name (latest version)
           ```
 
-          ### Lint
+          ### Check
 
           Run checks on generated derivations:
 
           ```bash
-          gemset2nix lint                       # all checks
-          gemset2nix lint symlinks nix-eval     # specific checks
+          gemset2nix check                       # all checks
+          gemset2nix check symlinks nix-eval     # specific checks
           ```
 
           Checks: `symlinks`, `nix-eval`, `source-clean`, `secrets`,
@@ -160,7 +160,7 @@ module Gemset2Nix
 
           ### Auto-detection
 
-          `gemset2nix update` scans each gem's `ext/**/extconf.rb` and automatically
+          `gemset2nix generate` scans each gem's `ext/**/extconf.rb` and automatically
           detects common native dependencies (`pkg_config`, `find_library`,
           `have_header` calls). It also detects Rust gems that use `rb_sys`.
           Auto-detected deps are inlined directly into the generated derivation —
@@ -325,7 +325,7 @@ module Gemset2Nix
               └── modules/      # Catalogue, resolver, app registry
           ```
 
-          Everything under `nix/` is generated. Run `gemset2nix update` to regenerate.
+          Everything under `nix/` is generated. Run `gemset2nix generate` to regenerate.
 
           ## Design
 

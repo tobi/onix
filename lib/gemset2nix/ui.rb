@@ -31,6 +31,9 @@ module Gemset2Nix
     def skip(msg)  = $stderr.puts "  #{dim("○")} #{dim(msg)}"
     def done(msg)  = $stderr.puts "  #{green("●")} #{msg}"
 
+    # Indented detail line
+    def step(msg)  = $stderr.puts "    #{msg}"
+
     # Write to file
     def wrote(path) = $stderr.puts "  #{dim("→")} #{path}"
 

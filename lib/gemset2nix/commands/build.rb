@@ -54,7 +54,8 @@ module Gemset2Nix
         USAGE
       end
 
-      # Build a specific gem by path: nokogiri/1.19.0 or just nokogiri (latest)
+      # ── Single gem build ─────────────────────────────────────────
+
       def build_gem_path(path)
         parts = path.split("/", 2)
         name = parts[0]
@@ -67,7 +68,8 @@ module Gemset2Nix
         if parts[1]
           version_dir = File.join(gem_dir, parts[1])
           abort "Unknown version: #{path}" unless Dir.exist?(version_dir)
-          UI.header "Build #{UI.bold(name)} #{parts[1]}"
+          UI.header "Build"
+          UI.info "#{name} #{parts[1]}"
           exec_nix_build(version_dir)
         else
           versions = Dir.children(gem_dir)
@@ -75,7 +77,8 @@ module Gemset2Nix
             .sort_by { |v| Gem::Version.new(v) rescue Gem::Version.new("0") }
           abort "No versions found for #{name}" if versions.empty?
           latest = versions.last
-          UI.header "Build #{UI.bold(name)} #{latest}"
+          UI.header "Build"
+          UI.info "#{name} #{latest}"
           exec_nix_build(File.join(gem_dir, latest))
         end
       end
@@ -88,12 +91,14 @@ module Gemset2Nix
           "--arg", "pkgs", "import <nixpkgs> {}"
       end
 
-      # Build a specific gem from an app's gemset
+      # ── App gem build ────────────────────────────────────────────
+
       def build_app_gem(app, gem_name)
         app_nix = File.join(@project.app_dir, "#{app}.nix")
         abort "Unknown app: #{app}" unless File.exist?(app_nix)
 
-        UI.header "Build #{UI.bold(gem_name)} #{UI.dim("from #{app}")}"
+        UI.header "Build"
+        UI.info "#{gem_name} #{UI.dim("from #{app}")}"
         exec "nix-build", "--no-out-link", "-E", <<~NIX
           let pkgs = import <nixpkgs> {};
               ruby = pkgs.#{@ruby};
@@ -103,33 +108,34 @@ module Gemset2Nix
         NIX
       end
 
-      # Build all gems for an app
+      # ── App build ───────────────────────────────────────────────
+
       def build_app(app)
         app_nix = File.join(@project.app_dir, "#{app}.nix")
         abort "Unknown app: #{app}" unless File.exist?(app_nix)
 
-        UI.header "Build #{UI.bold(app)}"
-        run_with_failure_log do |log|
-          paths, _ = nix_build_keep_going(<<~NIX, log)
-            let pkgs = import <nixpkgs> {};
-                ruby = pkgs.#{@ruby};
-                resolve = import #{@project.modules_dir}/resolve.nix;
-                gems = resolve { inherit pkgs ruby; gemset = import #{app_nix}; };
-            in builtins.attrValues gems
-          NIX
-          n = paths.count { |p| p.start_with?("/nix/store/") }
-          UI.done "#{n} gems built for #{app}"
-        end
+        UI.header "Build"
+        UI.info "#{app}"
+
+        nix_build_with_progress(<<~NIX)
+          let pkgs = import <nixpkgs> {};
+              ruby = pkgs.#{@ruby};
+              resolve = import #{@project.modules_dir}/resolve.nix;
+              gems = resolve { inherit pkgs ruby; gemset = import #{app_nix}; };
+          in builtins.attrValues gems
+        NIX
       end
 
-      # Build every gem version in the pool
+      # ── Build all ───────────────────────────────────────────────
+
       def build_all
         total = Dir.glob(File.join(@project.output_dir, "*", "*")).count { |d|
           File.directory?(d) && !File.basename(d).start_with?("git-") && File.basename(d) != "default.nix"
         }
         overlay_count = @project.overlays.size
-        UI.header "Build #{UI.bold("all")}"
-        UI.info "#{total} gem derivations #{UI.dim("(#{overlay_count} overlays)")}"
+
+        UI.header "Build"
+        UI.info "#{total} gems #{UI.dim("(#{overlay_count} overlays)")}"
 
         nixexpr = Tempfile.new(["gem-build-all-", ".nix"])
         nixexpr.write(<<~NIX)
@@ -151,22 +157,15 @@ module Gemset2Nix
         NIX
         nixexpr.flush
 
-        run_with_failure_log do |log|
-          paths, _ = nix_build_keep_going(nixexpr.path, log, is_file: true)
-          built = paths.count { |p| p.start_with?("/nix/store/") }
-          failed = [total - built, 0].max
-          if failed > 0
-            UI.fail "#{built}/#{total} built, #{UI.red("#{failed} failed")}"
-          else
-            UI.done "#{built}/#{total} built"
-          end
-        end
+        nix_build_with_progress(nixexpr.path, is_file: true, total_hint: total)
       ensure
         nixexpr&.close
         nixexpr&.unlink
       end
 
-      def nix_build_keep_going(expr, log_path, is_file: false)
+      # ── Nix build with progress tracking ────────────────────────
+
+      def nix_build_with_progress(expr, is_file: false, total_hint: nil)
         cmd = ["nix-build", "--no-out-link", "--keep-going"]
         if is_file
           cmd << expr
@@ -174,55 +173,94 @@ module Gemset2Nix
           cmd += ["-E", expr]
         end
 
+        built = 0
+        failed_drvs = []
+        building = {}    # drv_path => gem name
+        log_lines = []
+        t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
         stdout_lines = []
+
         Open3.popen3(*cmd) do |_in, stdout, stderr, wait|
-          stderr_thread = Thread.new do
-            stderr.each_line do |line|
-              File.open(log_path, "a") { |f| f.puts line }
-              $stderr.write line
+          stdout.set_encoding("UTF-8", invalid: :replace)
+          stderr.set_encoding("UTF-8", invalid: :replace)
+
+          stdout_thread = Thread.new do
+            stdout.each_line { |l| stdout_lines << l.strip rescue nil }
+          rescue IOError
+            # stream closed — normal during shutdown
+          end
+
+          stderr.each_line do |line|
+            log_lines << line
+            line = line.strip rescue next
+
+            case line
+            when /^building '([^']+)'/ 
+              drv = $1
+              name = drv_to_gem_name(drv)
+              building[drv] = name
+              draw_building(building, built, failed_drvs.size, total_hint, t0)
+
+            when /^copying outputs/
+              # A build just finished successfully — we don't know which one here
+              # but we can count stdout lines after the fact
+
+            when /error: builder for '([^']+)' failed/,
+                 /error: Cannot build '([^']+)'/
+              drv = $1
+              name = building.delete(drv) || drv_to_gem_name(drv)
+              failed_drvs << { drv: drv, name: name } unless failed_drvs.any? { |f| f[:drv] == drv }
+              draw_building(building, built, failed_drvs.size, total_hint, t0)
+
+            when /^building '/, /^fetching '/, /^copying /
+              # noise — skip
+
+            else
+              # Count successful builds from "these N paths will be built" and stdout
             end
           end
 
-          stdout.each_line do |line|
-            stdout_lines << line.strip
-          end
-
-          stderr_thread.join
+          stdout_thread.join
           wait.value
         end
 
-        [stdout_lines, log_path]
-      end
+        # Clear progress line
+        $stderr.print "\r\e[K" if UI.tty?
 
-      def run_with_failure_log
-        log = File.join(Dir.tmpdir, "gem-build-#{$$}.log")
-        yield log
-        collect_failure_logs(log)
-      ensure
-        File.delete(log) if File.exist?(log) && !@keep_log
-      end
+        built = stdout_lines.count { |p| p.start_with?("/nix/store/") }
+        total = total_hint || (built + failed_drvs.size)
+        elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0
 
-      def collect_failure_logs(log)
-        return unless File.exist?(log)
-        content = File.read(log, encoding: "utf-8")
-        # Only collect drvs that nix reports as failed — not all drvs mentioned in the log
-        drvs = content.scan(/error: Cannot build '([^']+\.drv)'/).flatten.uniq
-        return if drvs.empty?
-
-        @keep_log = true
-        $stderr.puts
-        drvs.each do |drv|
-          basename = drv.sub(%r{.*/[a-z0-9]*-}, "").sub(/\.drv$/, "")
-          gem_name = basename.sub(/-[0-9][0-9.]*$/, "")
-          gem_version = basename[/[0-9][0-9.]*$/] || "unknown"
-          overlay = File.join(@project.overlays_dir, "#{gem_name}.nix")
-
-          hint = File.exist?(overlay) ? "edit overlays/#{gem_name}.nix" : "create overlays/#{gem_name}.nix"
-          UI.fail "#{gem_name} #{gem_version}  #{UI.dim("→")}  #{hint}"
+        # Summary
+        if failed_drvs.empty?
+          UI.done "#{built} built #{UI.dim(UI.format_time(elapsed))}"
+        else
+          UI.fail "#{built}/#{total} built, #{UI.red("#{failed_drvs.size} failed")} #{UI.dim(UI.format_time(elapsed))}"
+          $stderr.puts
+          failed_drvs.each do |f|
+            overlay = File.join(@project.overlays_dir, "#{f[:name]}.nix")
+            hint = File.exist?(overlay) ? "edit overlays/#{f[:name]}.nix" : "create overlays/#{f[:name]}.nix"
+            UI.fail "#{f[:name]}  #{UI.dim("→")}  #{hint}"
+            UI.step UI.dim("nix log #{f[:drv]}")
+          end
         end
-        $stderr.puts
-        UI.info "nix log #{UI.dim("<drv>")} to see build output"
-        UI.info "Build log: #{log}"
+      end
+
+      def draw_building(building, built, failed, total_hint, t0)
+        return unless UI.tty?
+        elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0
+        active = building.values.last(3).join(", ")
+        parts = []
+        parts << "#{building.size} active"
+        parts << UI.red("#{failed}✗") if failed > 0
+        parts << UI.dim(UI.format_time(elapsed))
+        $stderr.print "\r  #{UI.amber("▸")} #{active} #{UI.dim("(#{parts.join(", ")})") }\e[K"
+      end
+
+      def drv_to_gem_name(drv)
+        basename = drv.sub(%r{.*/[a-z0-9]*-}, "").sub(/\.drv$/, "")
+        basename.sub(/-[0-9][0-9.]*$/, "")
       end
     end
   end
