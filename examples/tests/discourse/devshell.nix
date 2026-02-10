@@ -1,42 +1,16 @@
-# Discourse dev/test shell.
-#
-# Usage:
-#   cd ~/src/ruby-tests/discourse && nix-shell ../../tries/2026-02-07-scint/gemset2nix/tests/discourse/devshell.nix
-#
-{ pkgs ? import <nixpkgs> {}
-, ruby ? pkgs.ruby_3_3
-}:
-
+{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_3 }:
 let
   resolve = import ../../nix/modules/resolve.nix;
   gems = resolve { inherit pkgs ruby; gemset = { gem.app.discourse.enable = true; }; };
-in pkgs.mkShell {
+in gems.devShell {
   name = "discourse-devshell";
-
-  buildInputs = [
-    ruby
-    (pkgs.postgresql.withPackages (ps: [ ps.pgvector ]))
-    pkgs.redis
-    pkgs.nodejs_22
-    pkgs.vips
-    pkgs.imagemagick
-    pkgs.libyaml
-    pkgs.openssl
-    pkgs.zlib
-    pkgs.pkg-config
-    pkgs.libffi
-    pkgs.git
+  buildInputs = with pkgs; [
+    (postgresql.withPackages (ps: [ ps.pgvector ]))
+    redis nodejs_22
+    vips imagemagick libyaml openssl zlib pkg-config libffi git
   ];
-
   shellHook = ''
-    export BUNDLE_PATH="${gems.bundlePath}"
-    export BUNDLE_GEMFILE="$PWD/Gemfile"
     export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [ pkgs.vips pkgs.imagemagick pkgs.libffi ]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-
     rm -rf tmp/cache/bootsnap 2>/dev/null
-
-    echo "discourse devshell ready — ${gems.bundlePath}"
-    echo "  ruby: $(ruby --version)"
-    echo "  gems: $(ls ${gems.bundlePath}/ruby/3.3.0/gems 2>/dev/null | wc -l)"
   '';
 }

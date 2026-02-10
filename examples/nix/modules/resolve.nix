@@ -133,4 +133,22 @@ let
     paths = builtins.attrValues gems;
   };
 in
-gems // { inherit bundlePath; }
+gems // {
+  inherit bundlePath;
+
+  # Ready-made devShell — just add extra buildInputs / shellHook if needed
+  devShell = {
+    name ? "gemset2nix-devshell",
+    buildInputs ? [],
+    shellHook ? "",
+    ...
+  }@args:
+  pkgs.mkShell (builtins.removeAttrs args ["buildInputs" "shellHook" "name"] // {
+    inherit name;
+    buildInputs = [ ruby ] ++ buildInputs;
+    shellHook = ''
+      export BUNDLE_PATH="${bundlePath}"
+      export BUNDLE_GEMFILE="''${BUNDLE_GEMFILE:-$PWD/Gemfile}"
+    '' + shellHook;
+  });
+}

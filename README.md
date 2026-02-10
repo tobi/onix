@@ -86,7 +86,7 @@ Checks: `symlinks` · `nix-eval` · `source-clean` · `secrets` · `dep-complete
 
 ## Using built gems
 
-`resolve` returns an attrset of gem derivations plus a `bundlePath` — a single `buildEnv` that merges everything Bundler needs:
+`resolve` returns gem derivations plus `bundlePath` and `devShell`. The devShell sets `BUNDLE_PATH` and `BUNDLE_GEMFILE` automatically:
 
 ```nix
 # devshell.nix
@@ -97,12 +97,8 @@ let
     inherit pkgs ruby;
     gemset = { gem.app.rails.enable = true; };
   };
-in pkgs.mkShell {
-  buildInputs = [ ruby ];
-  shellHook = ''
-    export BUNDLE_PATH="${gems.bundlePath}"
-    export BUNDLE_GEMFILE="$PWD/Gemfile"
-  '';
+in gems.devShell {
+  buildInputs = with pkgs; [ sqlite postgresql ];
 }
 ```
 

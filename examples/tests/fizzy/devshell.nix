@@ -1,39 +1,12 @@
-# Dev shell for fizzy with all gems pre-built via gemset2nix.
-#
-# Usage:
-#   cd fizzy && nix-shell ../gemset2nix/tests/fizzy/devshell.nix
-#
-{ pkgs ? import <nixpkgs> {}
-, ruby ? pkgs.ruby_3_4
-}:
-
+{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
 let
   resolve = import ../../nix/modules/resolve.nix;
   gems = resolve { inherit pkgs ruby; gemset = { gem.app.fizzy.enable = true; }; };
-in pkgs.mkShell {
+in gems.devShell {
   name = "fizzy-devshell";
-
-  buildInputs = [
-    ruby
-    pkgs.sqlite
-    pkgs.libyaml
-    pkgs.openssl
-    pkgs.zlib
-    pkgs.pkg-config
-    pkgs.vips
-  ];
-
+  buildInputs = with pkgs; [ sqlite libyaml openssl zlib pkg-config vips ];
   shellHook = ''
-    export BUNDLE_PATH="${gems.bundlePath}"
-    export BUNDLE_GEMFILE="$PWD/Gemfile"
     export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [ pkgs.vips pkgs.libffi ]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-
-    # Clear stale bootsnap cache (symlink resolution differs from non-nix installs)
     rm -rf tmp/cache/bootsnap 2>/dev/null
-
-    echo "fizzy devshell ready — ${gems.bundlePath}"
-    echo "  ruby: $(ruby --version)"
-    echo "  gems: $(ls ${gems.bundlePath}/ruby/3.4.0/gems 2>/dev/null | wc -l)"
-    echo "  git checkouts: $(ls ${gems.bundlePath}/ruby/3.4.0/bundler/gems 2>/dev/null | wc -l)"
   '';
 }

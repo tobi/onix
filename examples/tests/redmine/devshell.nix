@@ -1,39 +1,14 @@
-# Redmine dev/test shell.
-#
-# Usage:
-#   cd ~/src/ruby-tests/redmine && nix-shell ../../tries/2026-02-07-scint/gemset2nix/tests/redmine/devshell.nix
-#
-{ pkgs ? import <nixpkgs> {}
-, ruby ? pkgs.ruby_3_4
-}:
-
+{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
 let
   resolve = import ../../nix/modules/resolve.nix;
   gems = resolve { inherit pkgs ruby; gemset = { gem.app.redmine.enable = true; }; };
-in pkgs.mkShell {
+in gems.devShell {
   name = "redmine-devshell";
-
-  buildInputs = [
-    ruby
-    pkgs.sqlite
-    pkgs.imagemagick
-    pkgs.libyaml
-    pkgs.openssl
-    pkgs.zlib
-    pkgs.pkg-config
-    pkgs.libffi
-    pkgs.git
+  buildInputs = with pkgs; [
+    sqlite imagemagick libyaml openssl zlib pkg-config libffi git
   ];
-
   shellHook = ''
-    export BUNDLE_PATH="${gems.bundlePath}"
-    export BUNDLE_GEMFILE="$PWD/Gemfile"
     export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [ pkgs.imagemagick pkgs.libffi ]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-
     rm -rf tmp/cache/bootsnap 2>/dev/null
-
-    echo "redmine devshell ready — ${gems.bundlePath}"
-    echo "  ruby: $(ruby --version)"
-    echo "  gems: $(ls ${gems.bundlePath}/ruby/3.4.0/gems 2>/dev/null | wc -l)"
   '';
 }
