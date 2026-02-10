@@ -36,20 +36,7 @@ Open the temp file referenced in the `just build` output. For each failed gem, f
 | `-std=c++11` with new library | C++ standard mismatch | [Pattern 8](#pattern-8--c-standard-mismatch) |
 | Gem is abandoned / incompatible | Skip the build | [Pattern 9](#pattern-9--skip-unbuildable-gems) |
 
-### Step 2 — Inspect the gem source
-
-```bash
-# Check what extensions exist
-ls cache/sources/<gem>-<version>/ext/
-
-# Read extconf.rb to understand what it needs
-cat cache/sources/<gem>-<version>/ext/*/extconf.rb
-
-# For Rust gems, check Cargo.toml
-cat cache/sources/<gem>-<version>/ext/*/Cargo.toml
-```
-
-### Step 3 — Check nixpkgs gem-config
+### Step 2 — Check nixpkgs gem-config
 
 Always check how nixpkgs handles the same gem before writing an overlay:
 
@@ -60,27 +47,22 @@ grep -A 20 '"<gem-name>"' "$NIXPKGS/pkgs/development/ruby-modules/gem-config/def
 
 The [nixpkgs-research skill](/home/tobi/.pi/agent/skills/nixpkgs-research/SKILL.md) has detailed instructions for searching nixpkgs packages and inspecting headers/libs/pkg-config files. Load it if you need to find the right nixpkgs package for a library.
 
-### Step 4 — Write the overlay
+### Step 3 — Write the overlay
 
 Create `overlays/<gem-name>.nix`. See the patterns below.
 
-### Step 5 — Regenerate and rebuild
+### Step 4 — Rebuild
 
 ```bash
-bin/generate                    # picks up new/changed overlays
-bin/import fizzy                # re-import apps with git sources (generate resets selectors)
-just build                      # full rebuild
-just lint                       # verify completeness
+onix build <project> <gem>     # rebuild a single gem
+onix build                     # full rebuild
+onix check                     # verify completeness
 ```
 
 For faster iteration on a single gem:
 
 ```bash
-nix-build --no-out-link -K nix/gem/<name>/<version>/ \
-  --arg ruby '(import <nixpkgs> {}).ruby_3_4' \
-  --arg lib '(import <nixpkgs> {}).lib' \
-  --arg stdenv '(import <nixpkgs> {}).stdenv' \
-  --arg pkgs '(import <nixpkgs> {})'
+nix-build --no-out-link -K nix/<project>.nix -A <gem-name>
 ```
 
 `-K` keeps the build directory on failure for inspection.
@@ -89,14 +71,14 @@ nix-build --no-out-link -K nix/gem/<name>/<version>/ \
 
 ## Overlay Contract
 
-An overlay file `overlays/<name>.nix` is a function `{ pkgs, ruby }:` returning one of:
+An overlay file `overlays/<name>.nix` is a function `{ pkgs, ruby, buildGem, ... }:` returning one of:
 
 ### Simple: deps list only
 
 When the gem just needs system libraries and the default `extconf.rb && make` works:
 
 ```nix
-{ pkgs, ruby }:
+{ pkgs, ruby, ... }:
 with pkgs;
 [
   libffi
@@ -109,7 +91,7 @@ with pkgs;
 When you need flags, environment setup, or custom build logic:
 
 ```nix
-{ pkgs, ruby }:
+{ pkgs, ruby, ... }:
 {
   deps = with pkgs; [ sqlite pkg-config ];
   extconfFlags = "--enable-system-libraries";
@@ -155,17 +137,17 @@ The most common failure. The gem's `extconf.rb` looks for a header or library vi
 
 ```nix
 # overlays/pg.nix
-{ pkgs, ruby }: with pkgs; [ libpq pkg-config ]
+{ pkgs, ruby, ... }: with pkgs; [ libpq pkg-config ]
 ```
 
 ```nix
 # overlays/mysql2.nix
-{ pkgs, ruby }: with pkgs; [ libmysqlclient openssl pkg-config zlib ]
+{ pkgs, ruby, ... }: with pkgs; [ libmysqlclient openssl pkg-config zlib ]
 ```
 
 ```nix
 # overlays/idn-ruby.nix
-{ pkgs, ruby }: with pkgs; [ libidn pkg-config ]
+{ pkgs, ruby, ... }: with pkgs; [ libidn pkg-config ]
 ```
 
 **When headers are in a non-standard include path**, expose them:
@@ -225,30 +207,22 @@ The gem bundles a vendored copy of a library but supports a flag to use the syst
 
 ```nix
 # overlays/nokogiri.nix
-{ pkgs, ruby }:
-let
-  mini_portile2 = pkgs.callPackage ../nix/gem/mini_portile2/2.8.9 { inherit ruby; };
-in
+{ pkgs, ruby, buildGem, ... }:
 {
   deps = with pkgs; [ libxml2 libxslt pkg-config zlib ];
   extconfFlags = "--use-system-libraries";
-  beforeBuild = ''
-    export GEM_PATH=${mini_portile2}/${mini_portile2.prefix}
-  '';
+  buildGems = [ (buildGem "mini_portile2") ];
 }
 ```
 
 ```nix
 # overlays/gpgme.nix
-{ pkgs, ruby }:
-let
-  mini_portile2 = pkgs.callPackage ../nix/gem/mini_portile2/2.8.9 { inherit ruby; };
-in
+{ pkgs, ruby, buildGem, ... }:
 {
   deps = with pkgs; [ gpgme libgpg-error libassuan pkg-config ];
   extconfFlags = "--use-system-libraries";
+  buildGems = [ (buildGem "mini_portile2") ];
   beforeBuild = ''
-    export GEM_PATH=${mini_portile2}/${mini_portile2.prefix}
     export RUBY_GPGME_USE_SYSTEM_LIBRARIES=1
   '';
 }
@@ -260,51 +234,39 @@ Some gems also check environment variables like `BUNDLE_BUILD__NOKOGIRI`, `RUBY_
 
 The gem's `extconf.rb` does `require 'some_gem'` at build time. This fails because only the gem being built is in the sandbox.
 
-**Fix:** Import the dependency by its pinned version path and set `GEM_PATH`:
+**Fix:** Use `buildGems` with the `buildGem` function:
 
 ```nix
-# overlays/nokogiri.nix (excerpt)
-let
-  mini_portile2 = pkgs.callPackage ../nix/gem/mini_portile2/2.8.9 { inherit ruby; };
-in {
-  beforeBuild = ''
-    export GEM_PATH=${mini_portile2}/${mini_portile2.prefix}
-  '';
+# overlays/nokogiri.nix
+{ pkgs, ruby, buildGem, ... }:
+{
+  deps = with pkgs; [ libxml2 libxslt pkg-config zlib ];
+  extconfFlags = "--use-system-libraries";
+  buildGems = [ (buildGem "mini_portile2") ];
 }
 ```
 
 ```nix
 # overlays/rmagick.nix — needs the pkg-config Ruby gem
-let
-  pkg-config-gem = pkgs.callPackage ../nix/gem/pkg-config/1.6.3 { inherit ruby; };
-in {
+{ pkgs, ruby, buildGem, ... }:
+{
   deps = with pkgs; [ imagemagick pkg-config ];
-  beforeBuild = ''
-    export GEM_PATH=${pkg-config-gem}/${pkg-config-gem.prefix}
-  '';
+  buildGems = [ (buildGem "pkg-config") ];
 }
 ```
 
 ```nix
 # overlays/field_test.nix — needs the rice gem (mkmf-rice)
-let
-  rice = pkgs.callPackage ../nix/gem/rice/4.1.0 { inherit ruby; };
-in {
-  deps = [ ];
-  beforeBuild = ''
-    export GEM_PATH=${rice}/${rice.prefix}
-  '';
+{ pkgs, ruby, buildGem, ... }:
+{
+  buildGems = [ (buildGem "rice") ];
 }
 ```
 
-**Important:** Always use a pinned version path (`../nix/gem/<name>/<version>`) — not the selector (`../nix/gem/<name>`) — because overlays run at build time and must be deterministic.
-
-**Multiple gem deps:** Concatenate paths with `:`:
+**Multiple gem deps:** Just list them all in `buildGems`:
 
 ```nix
-beforeBuild = ''
-  export GEM_PATH=${dep1}/${dep1.prefix}:${dep2}/${dep2.prefix}
-'';
+buildGems = [ (buildGem "dep1") (buildGem "dep2") ];
 ```
 
 ### Pattern 4 — Missing build tool
@@ -372,14 +334,11 @@ Modern gems with Rust extensions use `rb_sys` + `cargo`. They need:
 
 ```nix
 # Template for Rust gems (tiktoken_ruby, tokenizers, etc.)
-{ pkgs, ruby }:
-let
-  rb_sys = pkgs.callPackage ../nix/gem/rb_sys/0.9.124 { inherit ruby; };
-in
+{ pkgs, ruby, buildGem, ... }:
 {
   deps = with pkgs; [ rustc cargo libclang ];
+  buildGems = [ (buildGem "rb_sys") ];
   beforeBuild = ''
-    export GEM_PATH=${rb_sys}/${rb_sys.prefix}
     export CARGO_HOME="$TMPDIR/cargo"
     mkdir -p "$CARGO_HOME"
     export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"
@@ -392,14 +351,11 @@ in
 
 ```nix
 # overlays/commonmarker.nix — pins darling/time for rustc 1.86 compat
-{ pkgs, ruby }:
-let
-  rb_sys = pkgs.callPackage ../nix/gem/rb_sys/0.9.124 { inherit ruby; };
-in
+{ pkgs, ruby, buildGem, ... }:
 {
   deps = with pkgs; [ rustc cargo libclang ];
+  buildGems = [ (buildGem "rb_sys") ];
   buildPhase = ''
-    export GEM_PATH=${rb_sys}/${rb_sys.prefix}
     export CARGO_HOME="$TMPDIR/cargo"
     mkdir -p "$CARGO_HOME"
     export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"
@@ -512,14 +468,13 @@ let hiredis-c = pkgs.hiredis; in
 
 ## Rules
 
-1. **Never hand-edit files under `nix/`.** They are overwritten by `bin/generate`. All customization goes in `overlays/`.
+1. **Never hand-edit files under `nix/`.** They are overwritten by `onix generate`. All customization goes in `overlays/`.
 2. **Always use system libraries.** Never let a gem link against its own vendored copy of libxml2, sqlite, openssl, etc. Pass `--use-system-libraries` or equivalent flags.
 3. **Always include `pkg-config`** when the gem uses pkg-config in its extconf.
-4. **Pin gem deps by version path** (`../nix/gem/<name>/<version>`), not by selector.
-5. **Run `bin/generate` then `bin/import <app>`** after writing or changing an overlay. `generate` regenerates all derivations; `import` re-patches git rev selectors that `generate` resets.
-6. **Run `just lint`** after fixing a gem to verify completeness (gemspec deps resolve, `.so` files exist, require paths work).
-7. **Prefer hooks (`beforeBuild`, `extconfFlags`) over `buildPhase`** — hooks compose with the default build loop. Only use `buildPhase` when the default loop won't work.
-8. **Escape `${` as `''${` in Nix strings** when you need a literal shell variable expansion.
+4. **Use `buildGem` for gem deps** — not `callPackage` with hardcoded paths.
+5. **Run `onix build` then `onix check`** after writing or changing an overlay.
+6. **Prefer hooks (`beforeBuild`, `extconfFlags`, `buildGems`) over `buildPhase`** — hooks compose with the default build loop. Only use `buildPhase` when the default loop won't work.
+7. **Escape `${` as `''${` in Nix strings** when you need a literal shell variable expansion.
 
 ## Nix String Escaping Quick Reference
 

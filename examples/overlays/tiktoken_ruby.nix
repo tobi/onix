@@ -1,5 +1,5 @@
 # tiktoken_ruby — Rust extension via rb_sys
-{ pkgs, ruby }:
+{ pkgs, ruby, buildGem, ... }:
 {
   deps = with pkgs; [
     rustc
@@ -7,7 +7,7 @@
     libclang
   ];
   buildGems = [
-    (pkgs.callPackage ../nix/gem/rb_sys/0.9.124 { inherit ruby; })
+    (buildGem "rb_sys")
   ];
   beforeBuild = ''
     export CARGO_HOME="$TMPDIR/cargo"

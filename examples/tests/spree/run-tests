@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run spree smoke test inside its nix devshell.
-# Verifies core library loads under installed dependencies.
-#
-# Usage:
-#   tests/spree/run-tests
-
 dir="$(cd "$(dirname "$0")" && pwd)"
-app_dir="$HOME/src/ruby-tests/spree"
+app_dir="/tmp/onix-tests/spree"
+
+if [ ! -d "$app_dir" ]; then
+  echo "Cloning spree to $app_dir..."
+  git clone --depth 1 https://github.com/spree/spree.git "$app_dir"
+fi
 
 cd "$app_dir"
 

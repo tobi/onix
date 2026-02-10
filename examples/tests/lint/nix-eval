@@ -3,12 +3,12 @@
 
 set -euo pipefail
 
-nix_dir="nix/gem"
+root="$(cd "$(dirname "$0")/../.." && pwd)"
 errors=0
 checked=0
 
-# Per-gem derivations
-for f in "$nix_dir"/*/default.nix "$nix_dir"/*/*/default.nix ; do
+# Per-gem version files
+for f in "$root/nix/ruby/"*.nix; do
   [ -f "$f" ] || continue
   if ! nix-instantiate --parse "$f" > /dev/null 2>&1; then
     echo "FAIL: $f does not parse"
@@ -18,8 +18,8 @@ for f in "$nix_dir"/*/default.nix "$nix_dir"/*/*/default.nix ; do
   checked=$((checked + 1))
 done
 
-# Project gemset files
-for f in "$nix_dir"/*.nix; do
+# Project nix files
+for f in "$root/nix/"*.nix; do
   [ -f "$f" ] || continue
   if ! nix-instantiate --parse "$f" > /dev/null 2>&1; then
     echo "FAIL: $f does not parse"
@@ -30,7 +30,7 @@ for f in "$nix_dir"/*.nix; do
 done
 
 # Overlay files
-for f in overlays/*.nix; do
+for f in "$root/overlays/"*.nix; do
   [ -f "$f" ] || continue
   if ! nix-instantiate --parse "$f" > /dev/null 2>&1; then
     echo "FAIL: $f does not parse"

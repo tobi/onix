@@ -1,8 +1,7 @@
 { pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
 let
-  resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; config = { onix.apps.liquid.enable = true; }; };
-in gems.devShell {
+  project = import ../../nix/liquid.nix { inherit pkgs ruby; };
+in project.devShell {
   name = "liquid-devshell";
   buildInputs = with pkgs; [ libyaml openssl zlib pkg-config ];
 }

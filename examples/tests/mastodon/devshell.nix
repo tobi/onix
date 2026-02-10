@@ -1,8 +1,7 @@
 { pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
 let
-  resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; config = { onix.apps.mastodon.enable = true; }; };
-in gems.devShell {
+  project = import ../../nix/mastodon.nix { inherit pkgs ruby; };
+in project.devShell {
   name = "mastodon-devshell";
   buildInputs = with pkgs; [
     (postgresql.withPackages (ps: [ ps.pgvector ]))

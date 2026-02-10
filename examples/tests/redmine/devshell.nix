@@ -1,8 +1,7 @@
 { pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
 let
-  resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; config = { onix.apps.redmine.enable = true; }; };
-in gems.devShell {
+  project = import ../../nix/redmine.nix { inherit pkgs ruby; };
+in project.devShell {
   name = "redmine-devshell";
   buildInputs = with pkgs; [
     sqlite imagemagick libyaml openssl zlib pkg-config libffi git

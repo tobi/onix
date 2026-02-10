@@ -10,8 +10,8 @@ nixpkgs gem-config and our overlay system solve the same problem differently:
 
 | Aspect | nixpkgs gem-config | Our system |
 |---|---|---|
-| Format | `gemName = attrs: { ... }` function | `{ pkgs, ruby }: ...` file per gem |
-| Sources | `fetchurl` at build time | Pre-fetched into `cache/sources/` by `bin/fetch` |
+| Format | `gemName = attrs: { ... }` function | `{ pkgs, ruby, buildGem, ... }: ...` file per gem |
+| Sources | `fetchurl` at build time | Nix fetches via `fetchurl`/`builtins.fetchGit` (hashes prefetched by `onix generate`) |
 | Build system | `buildRubyGem` (runs `gem build` + `gem install`) | `stdenv.mkDerivation` (runs `extconf.rb` + `make`) |
 | Deps field | `buildInputs` / `nativeBuildInputs` (separate) | `deps` (single list, all go to `nativeBuildInputs`) |
 | Build flags | `buildFlags = [ "--flag" ]` (list) | `extconfFlags = "--flag"` (string) |
@@ -50,12 +50,11 @@ nokogiri = attrs: {
 };
 
 # Our overlay (simpler — pkg-config finds paths automatically):
-{ pkgs, ruby }:
-let mini_portile2 = pkgs.callPackage ../nix/gem/mini_portile2/2.8.9 { inherit ruby; };
-in {
+{ pkgs, ruby, buildGem, ... }:
+{
   deps = with pkgs; [ libxml2 libxslt pkg-config zlib ];
   extconfFlags = "--use-system-libraries";
-  beforeBuild = ''export GEM_PATH=${mini_portile2}/${mini_portile2.prefix}'';
+  buildGems = [ (buildGem "mini_portile2") ];
 }
 ```
 
@@ -65,7 +64,7 @@ We usually **don't** need the explicit `--with-*-lib=` / `--with-*-include=` pat
 
 | gem-config pattern | Our approach |
 |---|---|
-| `fetchurl` / `fetchpatch` for downloads | Sources are pre-fetched into `cache/`. For patches, use `sed -i` in `beforeBuild`. |
+| `fetchurl` / `fetchpatch` for downloads | Nix fetches sources at build time. For patches, use `sed -i` in `beforeBuild`. |
 | `postPatch` + `substituteInPlace` | `sed -i` in `beforeBuild` or `buildPhase`. |
 | `dontBuild = false` (to re-enable build) | Not needed — our derivations always build if extensions exist. |
 | `meta.broken = true` | Skip overlay: `buildPhase = ''echo "skipping"'';` |

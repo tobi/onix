@@ -1,8 +1,7 @@
 { pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
 let
-  resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; config = { onix.apps.spree.enable = true; }; };
-in gems.devShell {
+  project = import ../../nix/spree.nix { inherit pkgs ruby; };
+in project.devShell {
   name = "spree-devshell";
   buildInputs = with pkgs; [
     sqlite vips imagemagick libyaml openssl zlib pkg-config libffi git

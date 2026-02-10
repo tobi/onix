@@ -1,5 +1,5 @@
 # gpgme — system gpgme + mini_portile2 at build time
-{ pkgs, ruby }:
+{ pkgs, ruby, buildGem, ... }:
 {
   deps = with pkgs; [
     gpgme
@@ -9,7 +9,7 @@
   ];
   extconfFlags = "--use-system-libraries";
   buildGems = [
-    (pkgs.callPackage ../nix/gem/mini_portile2/2.8.9 { inherit ruby; })
+    (buildGem "mini_portile2")
   ];
   beforeBuild = ''
     export RUBY_GPGME_USE_SYSTEM_LIBRARIES=1

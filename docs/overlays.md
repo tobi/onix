@@ -27,12 +27,12 @@ that isn't in the sandbox.
 
 ```nix
 # overlays/pg.nix
-{ pkgs, ruby }: with pkgs; [ libpq pkg-config ]
+{ pkgs, ruby, ... }: with pkgs; [ libpq pkg-config ]
 ```
 
 ```nix
 # overlays/psych.nix
-{ pkgs, ruby }: with pkgs; [ libyaml pkg-config ]
+{ pkgs, ruby, ... }: with pkgs; [ libyaml pkg-config ]
 ```
 
 ### 2. Needs extconf flags (use system libraries)
@@ -47,7 +47,7 @@ downloading/compiling a bundled copy.
 
 ```nix
 # overlays/sqlite3.nix
-{ pkgs, ruby }: {
+{ pkgs, ruby, ... }: {
   deps = with pkgs; [ sqlite pkg-config ];
   extconfFlags = "--enable-system-libraries";
 }
@@ -59,24 +59,22 @@ The gem's `extconf.rb` requires another gem at build time.
 
 **Symptom:** `cannot load such file -- some_gem (LoadError)` during `extconf.rb`
 
-**Fix:** Import the dependency and set `GEM_PATH`:
+**Fix:** Use `buildGems` with the `buildGem` function:
 
 ```nix
 # overlays/nokogiri.nix
-{ pkgs, ruby }:
-let
-  mini_portile2 = pkgs.callPackage ../nix/gem/mini_portile2/2.8.9 { inherit ruby; };
-in {
+{ pkgs, ruby, buildGem, ... }:
+{
   deps = with pkgs; [ libxml2 libxslt pkg-config zlib ];
   extconfFlags = "--use-system-libraries";
-  beforeBuild = ''
-    export GEM_PATH=${mini_portile2}/${mini_portile2.bundle_path}
-  '';
+  buildGems = [
+    (buildGem "mini_portile2")
+  ];
 }
 ```
 
-Note: `mini_portile2` is referenced by a pinned version path (`../nix/gem/mini_portile2/2.8.9`),
-not through the selector, because overlays run at build time and must be deterministic.
+The `buildGem` function resolves the gem from `nix/ruby/<name>.nix` and builds it.
+The framework constructs `GEM_PATH` automatically from `buildGems`.
 
 ### 4. Non-Ruby build tool needed
 
@@ -86,7 +84,7 @@ not through the selector, because overlays run at build time and must be determi
 
 ```nix
 # overlays/mittens.nix
-{ pkgs, ruby }: [ pkgs.perl ]
+{ pkgs, ruby, ... }: [ pkgs.perl ]
 ```
 
 ### 5. Gem downloads things during build
@@ -108,13 +106,13 @@ This is the hardest category. Look at how nixpkgs handles the same gem.
 Gems using Rust via `rb_sys`:
 
 ```nix
-{ pkgs, ruby }:
-let
-  rb_sys = pkgs.callPackage ../nix/gem/rb_sys/<version> { inherit ruby; };
-in {
+{ pkgs, ruby, buildGem, ... }:
+{
   deps = with pkgs; [ rustc cargo libclang ];
+  buildGems = [
+    (buildGem "rb_sys")
+  ];
   beforeBuild = ''
-    export GEM_PATH=${rb_sys}/${rb_sys.bundle_path}
     export CARGO_HOME="$TMPDIR/cargo"
     mkdir -p "$CARGO_HOME"
     export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"
@@ -127,8 +125,8 @@ in {
 
 ## Overlay contract
 
-An overlay file `overlays/<name>.nix` is a function `{ pkgs, ruby }:` that
-returns one of:
+An overlay file `overlays/<name>.nix` is a function `{ pkgs, ruby, buildGem, ... }:`
+that returns one of:
 
 | Return type | Meaning |
 |-------------|---------|
@@ -141,6 +139,7 @@ returns one of:
 |-------|------|-------------|
 | `deps` | list | Extra `nativeBuildInputs` |
 | `extconfFlags` | string | Flags appended to `ruby extconf.rb` |
+| `buildGems` | list | Gem derivations needed at build time (auto `GEM_PATH`) |
 | `beforeBuild` | string | Shell commands before default build |
 | `afterBuild` | string | Shell commands after default build |
 | `buildPhase` | string | **Replaces** entire default build phase |
@@ -154,6 +153,7 @@ the default `extconf.rb` + `make` approach won't work at all.
 When `buildPhase` is not set, the derivation runs:
 
 ```bash
+# GEM_PATH set from buildGems (if any)
 extconfFlags="<overlayExtconfFlags>"   # from overlay, or ""
 <overlayBeforeBuild>                    # from overlay, or ""
 for extconf in $(find ext -name extconf.rb); do
@@ -163,11 +163,6 @@ done
 # copies built .so from ext/ to lib/
 <overlayAfterBuild>                     # from overlay, or ""
 ```
-
-### How pkgs is wired
-
-Overlay gems need `pkgs`. The generated derivation includes `pkgs` in its args
-only when an overlay exists. `onix generate` handles this automatically.
 
 ---
 
@@ -197,20 +192,15 @@ onix build
 # 2. Read the build log
 nix log /nix/store/...-extralite-bundle-2.13.drv
 
-# 3. Check the gem's source
-ls cache/sources/extralite-bundle-2.13/ext/
-cat cache/sources/extralite-bundle-2.13/ext/extralite/extconf.rb
-
-# 4. Write the overlay
+# 3. Write the overlay
 cat > overlays/extralite-bundle.nix << 'EOF'
-{ pkgs, ruby }: with pkgs; [ sqlite pkg-config ]
+{ pkgs, ruby, ... }: with pkgs; [ sqlite pkg-config ]
 EOF
 
-# 5. Regenerate and rebuild
-onix generate
-onix build --gem extralite-bundle
+# 4. Rebuild just that gem to verify
+onix build <project> extralite-bundle
 
-# 6. Rebuild everything and verify
+# 5. Rebuild everything and verify
 onix build
 onix check
 ```
@@ -219,14 +209,11 @@ onix check
 
 ```bash
 # Build a single gem with verbose output (-K keeps build dir on failure)
-nix-build --no-out-link -K nix/gem/<name>/<version>/ \
-  --arg ruby '(import <nixpkgs> {}).ruby_3_4' \
-  --arg lib '(import <nixpkgs> {}).lib' \
-  --arg stdenv '(import <nixpkgs> {}).stdenv'
+nix-build --no-out-link -K nix/<project>.nix -A <gem-name>
 
 # Inspect a built gem
-ls $(nix-build --no-out-link -E '...')/ruby/3.4.0/gems/<name>-<version>/
-ls $(nix-build --no-out-link -E '...')/ruby/3.4.0/extensions/
+ls $(nix-build --no-out-link nix/<project>.nix -A <gem-name>)/ruby/3.4.0/gems/<name>-<version>/
+ls $(nix-build --no-out-link nix/<project>.nix -A <gem-name>)/ruby/3.4.0/extensions/
 ```
 
 ---
@@ -246,19 +233,15 @@ Our overlay contract differs — adapt, don't copy verbatim.
 | `curb` | curl | |
 | `curses` | ncurses | |
 | `eventmachine` | openssl | |
-| `exif` | libexif | `--with-exif-dir` |
 | `ffi` | libffi, pkg-config | |
-| `fiddle` | libffi | |
 | `gpgme` | gpgme, pkg-config | `--use-system-libraries` |
 | `grpc` | openssl, pkg-config | disable format hardening |
 | `hiredis-client` | openssl | |
-| `iconv` | libiconv (macOS) | `--with-iconv-dir` |
 | `idn-ruby` | libidn | |
-| `libxml-ruby` | libxml2 | `--with-xml2-lib/include` |
+| `libxml-ruby` | libxml2 | |
 | `mysql` / `mysql2` | libmysqlclient, zlib, openssl | |
 | `nokogiri` | libxml2, libxslt, zlib | `--use-system-libraries` |
 | `openssl` | openssl | |
-| `patron` | curl | |
 | `pg` | libpq, pkg-config | |
 | `psych` | libyaml | |
 | `puma` | openssl | |
@@ -266,55 +249,9 @@ Our overlay contract differs — adapt, don't copy verbatim.
 | `rmagick` | imagemagick, which, pkg-config | |
 | `rpam2` | linux-pam | |
 | `rugged` | cmake, pkg-config, openssl, libssh2, zlib | |
-| `snappy` | snappy | |
 | `sqlite3` | sqlite, pkg-config | `--enable-system-libraries` |
 | `tiny_tds` | freetds, openssl, pkg-config | |
-| `typhoeus` | curl | |
 | `zlib` | zlib | |
-
-### Patterns worth knowing
-
-#### FFI gems that hardcode library paths
-
-Gems using FFI (`ffi_lib "name"`) need the absolute nix store path substituted:
-
-```nix
-beforeBuild = ''
-  substituteInPlace lib/opus-ruby.rb \
-    --replace "ffi_lib 'opus'" \
-              "ffi_lib '${pkgs.libopus}/lib/libopus.so'"
-'';
-```
-
-Other gems needing this: `ethon` (curl), `ffi-rzmq-core` (zeromq), `rbnacl`
-(libsodium), `ruby-vips` (vips, glib, gobject).
-
-#### Disabling hardening flags
-
-Some gems fail with GCC/Clang security hardening:
-
-```nix
-beforeBuild = ''
-  export CFLAGS="$CFLAGS -Wno-error=format-security"
-'';
-```
-
-#### Gems that download during build
-
-These fail in the Nix sandbox (no network):
-
-| Gem | What it downloads | Fix |
-|-----|-------------------|-----|
-| `pg_query` | libpg_query tarball | `fetchurl` + patch URL |
-| `mini_racer` | V8 via libv8 | `--with-v8-dir` → nodejs.libv8 |
-| `sass-embedded` | dart-sass binary | Patch Rakefile → nixpkgs `dart-sass` |
-
-#### Version-conditional fixes
-
-Check `cache/meta/<gem>.json` for the exact version and tailor accordingly:
-- `sqlite3`: different approach before/after 1.5.0
-- `openssl`: uses `openssl_1_1` for versions < 3.0.0
-- `grpc`: different patches across versions
 
 ---
 
@@ -323,14 +260,14 @@ Check `cache/meta/<gem>.json` for the exact version and tailor accordingly:
 | Overlay | What it provides |
 |---------|-----------------|
 | `charlock_holmes.nix` | icu, zlib, pkg-config, which + C++17 flags |
-| `commonmarker.nix` | rustc, cargo, libclang + rb_sys GEM_PATH |
+| `commonmarker.nix` | rustc, cargo, libclang + rb_sys via buildGem |
 | `debase.nix` | skipped (incompatible with Ruby 3.4) |
 | `extralite-bundle.nix` | sqlite, pkg-config |
-| `ffi-yajl.nix` | yajl, pkg-config + libyajl2 GEM_PATH |
+| `ffi-yajl.nix` | yajl, pkg-config + libyajl2 via buildGem |
 | `ffi.nix` | libffi, pkg-config |
-| `field_test.nix` | rice GEM_PATH |
+| `field_test.nix` | rice via buildGem |
 | `google-protobuf.nix` | disable -Werror=format-security |
-| `gpgme.nix` | gpgme, libgpg-error, libassuan + `--use-system-libraries` |
+| `gpgme.nix` | gpgme, libgpg-error, libassuan + `--use-system-libraries` + mini_portile2 via buildGem |
 | `hiredis-client.nix` | openssl, pkg-config |
 | `hiredis.nix` | custom buildPhase (vendor from system lib) |
 | `idn-ruby.nix` | libidn, pkg-config |
@@ -340,17 +277,17 @@ Check `cache/meta/<gem>.json` for the exact version and tailor accordingly:
 | `mini_racer.nix` | skipped (relocation error) |
 | `mittens.nix` | perl |
 | `mysql2.nix` | libmysqlclient, openssl, pkg-config, zlib |
-| `nokogiri.nix` | libxml2, libxslt, zlib + `--use-system-libraries` + mini_portile2 |
+| `nokogiri.nix` | libxml2, libxslt, zlib + `--use-system-libraries` + mini_portile2 via buildGem |
 | `openssl.nix` | openssl, pkg-config |
 | `pg.nix` | libpq, pkg-config |
 | `psych.nix` | libyaml, pkg-config |
 | `puma.nix` | openssl |
-| `rmagick.nix` | imagemagick, pkg-config |
+| `rmagick.nix` | imagemagick, pkg-config + pkg-config gem via buildGem |
 | `rpam2.nix` | pam |
 | `rugged.nix` | cmake, pkg-config, openssl, zlib, libssh2 |
 | `sqlite3.nix` | sqlite, pkg-config + `--enable-system-libraries` |
 | `therubyracer.nix` | skipped (abandoned) |
-| `tiktoken_ruby.nix` | rustc, cargo, libclang + rb_sys |
-| `tokenizers.nix` | rustc, cargo, libclang + rb_sys |
+| `tiktoken_ruby.nix` | rustc, cargo, libclang + rb_sys via buildGem |
+| `tokenizers.nix` | rustc, cargo, libclang + rb_sys via buildGem |
 | `trilogy.nix` | openssl, zlib |
 | `zlib.nix` | zlib, pkg-config |

@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run rails framework smoke test inside its nix devshell.
-# Verifies the gem loads under installed dependencies.
-#
-# Usage:
-#   tests/rails/run-tests
-
 dir="$(cd "$(dirname "$0")" && pwd)"
-app_dir="$HOME/src/ruby-tests/rails"
+app_dir="/tmp/onix-tests/rails"
+
+if [ ! -d "$app_dir" ]; then
+  echo "Cloning rails to $app_dir..."
+  git clone --depth 1 https://github.com/rails/rails.git "$app_dir"
+fi
 
 cd "$app_dir"
 

@@ -1,6 +1,6 @@
 # datadog uses libdatadog gem's pkg-config at build time — not a system lib
-{ pkgs, ruby }: {
+{ pkgs, ruby, buildGem, ... }: {
   buildGems = [
-    (pkgs.callPackage ../nix/gem/libdatadog { inherit ruby; })
+    (buildGem "libdatadog")
   ];
 }

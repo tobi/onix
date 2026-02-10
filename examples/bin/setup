@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# setup — clone test projects and run onix import + generate
+#
+# Downloads open-source Ruby projects to /tmp/onix-tests/ (if not already
+# present), then runs `onix import` and `onix generate` to populate the
+# examples directory with packagesets/ and nix/ files.
+#
+# Usage:
+#   bin/setup              # all projects
+#   bin/setup rails liquid # specific projects
+
+dir="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$dir/.." && pwd)"
+onix="ruby -I${root}/../lib ${root}/../exe/onix"
+
+PROJECTS_DIR="/tmp/onix-tests"
+mkdir -p "$PROJECTS_DIR"
+
+# Project → Git URL mapping
+declare -A REPOS=(
+  [rails]="https://github.com/rails/rails.git"
+  [liquid]="https://github.com/Shopify/liquid.git"
+  [discourse]="https://github.com/discourse/discourse.git"
+  [mastodon]="https://github.com/mastodon/mastodon.git"
+  [chatwoot]="https://github.com/chatwoot/chatwoot.git"
+  [forem]="https://github.com/forem/forem.git"
+  [solidus]="https://github.com/solidusio/solidus.git"
+  [spree]="https://github.com/spree/spree.git"
+  [redmine]="https://github.com/redmine/redmine.git"
+)
+
+all_projects=(rails liquid discourse mastodon chatwoot forem solidus spree redmine)
+
+if [ $# -gt 0 ]; then
+  projects=("$@")
+else
+  projects=("${all_projects[@]}")
+fi
+
+# ── Init ──────────────────────────────────────────────────────────
+
+cd "$root"
+$onix init .
+
+# ── Clone + Import ───────────────────────────────────────────────
+
+for project in "${projects[@]}"; do
+  # Skip synthetic — it has its own Gemfile.lock in-tree
+  if [ "$project" = "synthetic" ]; then
+    echo "=== $project: importing from tests/synthetic/ ==="
+    $onix import --name synthetic "$root/tests/synthetic"
+    continue
+  fi
+
+  repo="${REPOS[$project]:-}"
+  if [ -z "$repo" ]; then
+    echo "=== $project: unknown repo, skipping ==="
+    continue
+  fi
+
+  project_dir="$PROJECTS_DIR/$project"
+
+  if [ ! -d "$project_dir" ]; then
+    echo "=== $project: cloning $repo ==="
+    git clone --depth 1 "$repo" "$project_dir"
+  else
+    echo "=== $project: already at $project_dir ==="
+  fi
+
+  if [ ! -f "$project_dir/Gemfile.lock" ]; then
+    echo "=== $project: no Gemfile.lock, skipping import ==="
+    continue
+  fi
+
+  echo "=== $project: importing ==="
+  $onix import --name "$project" "$project_dir"
+done
+
+# ── Generate ─────────────────────────────────────────────────────
+
+echo ""
+echo "=== Generating nix derivations ==="
+$onix generate
+
+echo ""
+echo "Done. Run 'just build <project>' or 'just test <project>' next."

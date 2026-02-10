@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run forem smoke test inside its nix devshell.
-#
-# Usage:
-#   tests/forem/run-tests
-
 dir="$(cd "$(dirname "$0")" && pwd)"
-app_dir="$HOME/src/ruby-tests/forem"
+app_dir="/tmp/onix-tests/forem"
+
+if [ ! -d "$app_dir" ]; then
+  echo "Cloning forem to $app_dir..."
+  git clone --depth 1 https://github.com/forem/forem.git "$app_dir"
+fi
 
 cd "$app_dir"
 rm -rf tmp/cache/bootsnap 2>/dev/null || true

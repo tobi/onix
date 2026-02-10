@@ -5,10 +5,10 @@
 ```
 Gemfile.lock
     ↓
-onix fetch            gem fetch + gem unpack + git clone → cache/
+onix import           parse lockfile, clone git repos → packagesets/<name>.jsonl
     ↓
-onix generate         cache/meta/*.json → nix/gem/<name>/<version>/default.nix
-                                        → nix/gem/<name>/default.nix (selectors)
+onix generate         prefetch hashes → nix/ruby/<name>.nix (per gem)
+                                      → nix/<project>.nix (per project)
     ↓
 onix build            nix-build → /nix/store/<hash>-<gem>-<ver>/
 ```
@@ -87,25 +87,21 @@ The gem's `extconf.rb` requires another gem at build time (not runtime).
 
 **Symptom:** `require': cannot load such file -- some_gem (LoadError)` during `extconf.rb`.
 
-**Fix:** Import the dependency and use `beforeBuild` to set `GEM_PATH`:
+**Fix:** Use `buildGems` with the `buildGem` function provided by `gem-config.nix`:
 
 ```nix
 # overlays/nokogiri.nix
-{ pkgs, ruby }:
-let
-  mini_portile2 = pkgs.callPackage ../nix/gem/mini_portile2/2.8.9 { inherit ruby; };
-in {
+{ pkgs, ruby, buildGem, ... }:
+{
   deps = with pkgs; [ libxml2 libxslt pkg-config zlib ];
   extconfFlags = "--use-system-libraries";
-  beforeBuild = ''
-    export GEM_PATH=${mini_portile2}/${mini_portile2.bundle_path}
-  '';
+  buildGems = [
+    (buildGem "mini_portile2")
+  ];
 }
 ```
 
-This composes with the default build phase — `beforeBuild` runs first, sets up `GEM_PATH`, then the default `extconf.rb` + `make` runs with `--use-system-libraries`. No need to write a custom `buildPhase`.
-
-Note: `mini_portile2` is referenced by a pinned version path (`../nix/gem/mini_portile2/2.8.9`), not through the selector, because overlays run at build time and must be deterministic.
+The `buildGem` function resolves the gem from `nix/ruby/<name>.nix` and builds it. The framework constructs `GEM_PATH` automatically from `buildGems`. No need to manually set `GEM_PATH` or write a custom `buildPhase`.
 
 ### 4. Gem needs a non-Ruby build tool
 
@@ -135,7 +131,7 @@ This is the hardest category. Look at how nixpkgs handles the same gem for inspi
 
 ### Overlay contract
 
-An overlay file `overlays/<name>.nix` is a function `{ pkgs, ruby }:` that returns one of:
+An overlay file `overlays/<name>.nix` is a function `{ pkgs, ruby, buildGem, ... }:` that returns one of:
 
 | Return type | Meaning |
 |-------------|---------|
@@ -169,16 +165,6 @@ done
 
 The `$dest` variable (`$out/ruby/3.4.0`) is available in `postInstall` and contains the full BUNDLE_PATH prefix — `gems/`, `specifications/`, `extensions/` are all under `$dest`.
 
-### Passing `pkgs` to overlay gems
-
-Overlay gems need `pkgs` to import their overlay. In the generated derivation, `pkgs` appears in the function args only when an overlay exists. The packageset (`nix/app/<project>.nix`) passes `pkgs` through:
-
-```nix
-"nokogiri" = gem "nokogiri" { version = "1.19.0"; pkgs = pkgs; };
-```
-
-`bin/import` handles this automatically — any gem with an overlay gets `pkgs = pkgs;` in the packageset.
-
 ## Workflow for fixing a failing gem
 
 ```bash
@@ -191,25 +177,18 @@ onix build
 # 2. Read the build log
 nix log /nix/store/...-extralite-bundle-2.13.drv
 
-# 3. Check the gem's source to understand its extension
-ls cache/sources/extralite-bundle-2.13/ext/
-cat cache/sources/extralite-bundle-2.13/ext/extralite/extconf.rb
-
-# 4. Write the overlay
+# 3. Write the overlay
 cat > overlays/extralite-bundle.nix << 'EOF'
 { pkgs, ruby }: with pkgs; [ sqlite pkg-config ]
 EOF
 
-# 5. Regenerate (overlay detection happens in onix generate)
-onix generate
+# 4. Rebuild just that gem to verify
+onix build <project> extralite-bundle
 
-# 6. Rebuild just that gem to verify
-onix build --gem extralite-bundle
-
-# 7. Rebuild everything
+# 5. Rebuild everything
 onix build
 
-# 8. Run checks
+# 6. Run checks
 onix check
 ```
 
@@ -217,17 +196,14 @@ onix check
 
 ```bash
 # Build a single gem with verbose output
-nix-build --no-out-link -K nix/gem/<name>/<version>/ --arg ruby '(import <nixpkgs> {}).ruby_3_4' --arg lib '(import <nixpkgs> {}).lib' --arg stdenv '(import <nixpkgs> {}).stdenv'
+nix-build --no-out-link -K nix/<project>.nix -A <gem-name>
 
 # -K keeps the build dir on failure so you can inspect it
 # The path is printed: /nix/var/nix/builds/nix-build-...-1-...
 
 # Inspect a built gem
-ls $(nix-build --no-out-link -E '...')/ruby/3.4.0/gems/<name>-<version>/
-ls $(nix-build --no-out-link -E '...')/ruby/3.4.0/extensions/
-
-# Check what the selector offers
-nix-instantiate --eval nix/gem/<name>/default.nix --arg lib '(import <nixpkgs> {}).lib' --arg stdenv '(import <nixpkgs> {}).stdenv' --arg ruby '(import <nixpkgs> {}).ruby_3_4'
+ls $(nix-build --no-out-link nix/<project>.nix -A <gem-name>)/ruby/3.4.0/gems/<name>-<version>/
+ls $(nix-build --no-out-link nix/<project>.nix -A <gem-name>)/ruby/3.4.0/extensions/
 ```
 
 ## Bundler-compatible BUNDLE_PATH layout
@@ -268,15 +244,9 @@ onix check     # default: fizzy
 
 | Lint | What it checks |
 |------|---------------|
-| `nix-eval` | Every `.nix` file in `nix/` parses without error |
-| `dep-completeness` | Every gem in `Gemfile.lock` has a derivation |
-| `source-clean` | No pre-built `.so/.bundle/.dylib` leaked into sources |
-| `secrets` | No leaked keys, passwords, tokens in repo or gem sources |
-| `require-paths-vs-gem-metadata` | Generated `require_paths` match `.gem` YAML metadata |
-| `gemspec-deps` | Gemspec runtime deps resolve within the packageset |
-| `require-paths` | Every `require_path` directory exists on disk |
-| `native-extensions` | Native gems have compiled `.so` files |
-| `loadable` | Key gems can be `require`'d by ruby |
+| `nix-eval` | Every `.nix` file in `nix/` and `overlays/` parses without error |
+| `packageset-complete` | Every buildable gem in a packageset has a `nix/ruby/<name>.nix` |
+| `secrets` | No leaked keys, passwords, tokens in overlays, nix, or packagesets |
 
 After writing an overlay, always run `onix check` to verify the gem is complete.
 
@@ -447,13 +417,13 @@ beforeBuild = ''
 Modern gems increasingly use Rust via `rb_sys`. Pattern (already used for commonmarker, tiktoken_ruby, tokenizers):
 
 ```nix
-{ pkgs, ruby }:
-let
-  rb_sys = pkgs.callPackage ../nix/gem/rb_sys/<version> { inherit ruby; };
-in {
+{ pkgs, ruby, buildGem, ... }:
+{
   deps = with pkgs; [ rustc cargo libclang ];
+  buildGems = [
+    (buildGem "rb_sys")
+  ];
   beforeBuild = ''
-    export GEM_PATH=${rb_sys}/${rb_sys.bundle_path}
     export CARGO_HOME="$TMPDIR/cargo"
     mkdir -p "$CARGO_HOME"
     export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"
@@ -479,7 +449,7 @@ These are heavyweight overlays. If a project uses them, expect a cascade of deps
 #### Version-conditional fixes
 
 nixpkgs often applies different fixes per gem version. When writing overlays, check
-`cache/meta/<gem>.json` for the exact version and tailor accordingly:
+the packageset JSONL for the exact version and tailor accordingly:
 
 ```nix
 # sqlite3: different approach before/after 1.5.0

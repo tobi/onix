@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run chatwoot smoke test inside its nix devshell.
-#
-# Usage:
-#   tests/chatwoot/run-tests
-
 dir="$(cd "$(dirname "$0")" && pwd)"
-app_dir="$HOME/src/ruby-tests/chatwoot"
+app_dir="/tmp/onix-tests/chatwoot"
+
+if [ ! -d "$app_dir" ]; then
+  echo "Cloning chatwoot to $app_dir..."
+  git clone --depth 1 https://github.com/chatwoot/chatwoot.git "$app_dir"
+fi
 
 cd "$app_dir"
 rm -rf tmp/cache/bootsnap 2>/dev/null || true

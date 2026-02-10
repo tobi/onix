@@ -1,5 +1,3 @@
-cache/
-examples/nix/gem/*/*/source
 result
 pkg/
 *.gem

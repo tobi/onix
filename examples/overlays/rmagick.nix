@@ -1,11 +1,11 @@
 # rmagick — ImageMagick + pkg-config Ruby gem at build time
-{ pkgs, ruby }:
+{ pkgs, ruby, buildGem, ... }:
 {
   deps = with pkgs; [
     imagemagick
     pkg-config
   ];
   buildGems = [
-    (pkgs.callPackage ../nix/gem/pkg-config/1.6.3 { inherit ruby; })
+    (buildGem "pkg-config")
   ];
 }

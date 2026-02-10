@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run redmine smoke test inside its nix devshell.
-#
-# Usage:
-#   tests/redmine/run-tests
-
 dir="$(cd "$(dirname "$0")" && pwd)"
-app_dir="$HOME/src/ruby-tests/redmine"
+app_dir="/tmp/onix-tests/redmine"
+
+if [ ! -d "$app_dir" ]; then
+  echo "Cloning redmine to $app_dir..."
+  git clone --depth 1 https://github.com/redmine/redmine.git "$app_dir"
+fi
 
 cd "$app_dir"
 rm -rf tmp/cache/bootsnap 2>/dev/null || true

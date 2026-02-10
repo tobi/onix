@@ -1,5 +1,5 @@
 # nokogiri — system libxml2/libxslt, needs mini_portile2 at build time
-{ pkgs, ruby }:
+{ pkgs, ruby, buildGem, ... }:
 {
   deps = with pkgs; [
     libxml2
@@ -9,6 +9,6 @@
   ];
   extconfFlags = "--use-system-libraries";
   buildGems = [
-    (pkgs.callPackage ../nix/gem/mini_portile2/2.8.9 { inherit ruby; })
+    (buildGem "mini_portile2")
   ];
 }

@@ -1,57 +1,47 @@
-#!/usr/bin/env ruby
-# frozen_string_literal: true
+#!/usr/bin/env bash
+# Lint: verify every buildable gem in a packageset has a nix/ruby/<name>.nix file.
 
-# Lint: verify dependency completeness — every dep in Gemfile.lock
-# has a matching derivation in the nix directory.
+set -euo pipefail
 
-require "bundler"
+root="$(cd "$(dirname "$0")/../.." && pwd)"
+project="${1:-}"
 
-project  = ARGV[0] || "fizzy"
-lockfile = ARGV[1]
-nix_dir  = "nix/gem"
-
-unless lockfile
-  # Try to find Gemfile.lock in common locations
-  candidates = [
-    "../#{project}/Gemfile.lock",
-    "../ruby-tests/#{project}/Gemfile.lock",
-  ]
-  lockfile = candidates.find { |c| File.exist?(c) }
-end
-
-unless lockfile && File.exist?(lockfile)
-  puts "dep-completeness: SKIP (no Gemfile.lock found for #{project})"
-  exit 0
-end
-
-gemfile = lockfile.sub(/Gemfile\.lock$/, "Gemfile")
-ENV["BUNDLE_GEMFILE"] = File.expand_path(gemfile) if File.exist?(gemfile)
-
-lf = Bundler::LockfileParser.new(File.read(lockfile))
-errors = []
-
-lf.specs.each do |spec|
-  src = spec.source
-  case src
-  when Bundler::Source::Path
-    next  # skip path sources
-  when Bundler::Source::Git
-    # Git gems handled by repo-level derivations
-    next
-  else
-    dir = File.join(nix_dir, spec.name, spec.version.to_s)
-    unless Dir.exist?(dir)
-      # Check if it's a platform variant we skipped
-      next if spec.platform.to_s != "ruby"
-      errors << "#{spec.name} #{spec.version}: no derivation at #{dir}"
-    end
-  end
-end
-
-if errors.empty?
-  puts "dep-completeness: OK (#{lf.specs.size} specs in lockfile)"
+if [ -z "$project" ]; then
+  # Check all packagesets
+  packagesets=("$root/packagesets/"*.jsonl)
 else
-  errors.each { |e| puts "MISSING: #{e}" }
-  puts "dep-completeness: #{errors.size} missing"
+  packagesets=("$root/packagesets/$project.jsonl")
+fi
+
+errors=0
+checked=0
+
+for pset in "${packagesets[@]}"; do
+  [ -f "$pset" ] || continue
+  name=$(basename "$pset" .jsonl)
+
+  # Extract gem names from JSONL (skip meta line, skip stdlib/path sources)
+  while IFS= read -r line; do
+    gem_name=$(echo "$line" | ruby -rjson -e '
+      j = JSON.parse(STDIN.read)
+      next if j["_meta"]
+      next if j["source"] == "stdlib" || j["source"] == "path"
+      puts j["name"]
+    ' 2>/dev/null) || continue
+    [ -z "$gem_name" ] && continue
+
+    nix_file="$root/nix/ruby/$gem_name.nix"
+    if [ ! -f "$nix_file" ]; then
+      echo "MISSING: $name: $gem_name has no nix/ruby/$gem_name.nix"
+      errors=$((errors + 1))
+    fi
+    checked=$((checked + 1))
+  done < "$pset"
+done
+
+if [ "$errors" -eq 0 ]; then
+  echo "dep-completeness: OK ($checked gems checked)"
+else
+  echo "dep-completeness: $errors missing out of $checked"
   exit 1
-end
+fi

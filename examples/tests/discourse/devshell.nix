@@ -1,8 +1,7 @@
 { pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_3 }:
 let
-  resolve = import ../../nix/modules/resolve.nix;
-  gems = resolve { inherit pkgs ruby; config = { onix.apps.discourse.enable = true; }; };
-in gems.devShell {
+  project = import ../../nix/discourse.nix { inherit pkgs ruby; };
+in project.devShell {
   name = "discourse-devshell";
   buildInputs = with pkgs; [
     (postgresql.withPackages (ps: [ ps.pgvector ]))

@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run discourse smoke test inside its nix devshell.
-# Uses Discourse's own CI pattern to avoid DB/Redis requirements.
-#
-# Usage:
-#   tests/discourse/run-tests
-
 dir="$(cd "$(dirname "$0")" && pwd)"
-app_dir="$HOME/src/ruby-tests/discourse"
+app_dir="/tmp/onix-tests/discourse"
+
+if [ ! -d "$app_dir" ]; then
+  echo "Cloning discourse to $app_dir..."
+  git clone --depth 1 https://github.com/discourse/discourse.git "$app_dir"
+fi
 
 cd "$app_dir"
 rm -rf tmp/cache/bootsnap 2>/dev/null || true

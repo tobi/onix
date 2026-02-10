@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run solidus smoke test inside its nix devshell.
-#
-# Usage:
-#   tests/solidus/run-tests
-
 dir="$(cd "$(dirname "$0")" && pwd)"
-app_dir="$HOME/src/ruby-tests/solidus"
+app_dir="/tmp/onix-tests/solidus"
+
+if [ ! -d "$app_dir" ]; then
+  echo "Cloning solidus to $app_dir..."
+  git clone --depth 1 https://github.com/solidusio/solidus.git "$app_dir"
+fi
 
 cd "$app_dir"
 rm -rf tmp/cache/bootsnap 2>/dev/null || true

@@ -1,7 +1,7 @@
 # field_test — C++ extension via Rice (mkmf-rice)
-{ pkgs, ruby }:
+{ pkgs, ruby, buildGem, ... }:
 {
   buildGems = [
-    (pkgs.callPackage ../nix/gem/rice/4.1.0 { inherit ruby; })
+    (buildGem "rice")
   ];
 }

@@ -5,10 +5,9 @@ Hermetic Nix packages from language-specific lockfiles. Import a lockfile, build
 Currently supports **Ruby** (Gemfile.lock). **npm** (package-lock.json) is planned.
 
 ```
-$ onix import ~/src/rails     # read Gemfile.lock, generate nix package list
+$ onix import ~/src/rails     # parse Gemfile.lock → packagesets/rails.jsonl
 $ onix import ~/src/shopify   # import as many projects as you want
-$ onix fetch                  # download packages, unpack sources
-$ onix generate               # emit one nix derivation per package
+$ onix generate               # prefetch hashes, write nix derivations
 $ onix build                  # build everything, cache forever
 ```
 
@@ -28,7 +27,7 @@ gem install specific_install
 gem specific_install https://github.com/tobi/onix
 ```
 
-Requires Ruby ≥ 3.1 and Nix.
+Requires Ruby >= 3.1 and Nix.
 
 ## Workflow
 
@@ -39,7 +38,7 @@ mkdir my-packages && cd my-packages
 onix init
 ```
 
-Creates the directory structure: `cache/`, `nix/`, `overlays/`, `packagesets/`.
+Creates the directory structure: `packagesets/`, `overlays/`, `nix/ruby/`.
 
 ### 2. Import a lockfile
 
@@ -48,35 +47,27 @@ onix import ~/src/myapp              # reads myapp/Gemfile.lock
 onix import --name blog Gemfile.lock  # explicit name
 ```
 
-The packageset file is a copy of your lockfile stored in `packagesets/`. For Ruby, this is a `Gemfile.lock` saved as `<name>.gem`. Also generates `nix/app/<name>.nix` (the package list for Nix).
+Parses the lockfile and writes a hermetic JSONL packageset to `packagesets/<name>.jsonl`. For git-sourced gems, clones the repo to discover monorepo subdirectories. Everything after import is mechanical.
 
-### 3. Fetch sources
-
-```bash
-onix fetch        # default: 20 parallel jobs
-onix fetch -j 8   # fewer jobs
-```
-
-Downloads packages, unpacks sources, extracts metadata, clones git repos. Everything goes into `cache/` — no network access needed after this step.
-
-### 4. Generate derivations
+### 3. Generate nix derivations
 
 ```bash
-onix generate
+onix generate        # default: 20 parallel prefetch jobs
+onix generate -j 8   # fewer jobs
 ```
 
-Scans cached sources and metadata, auto-detects native dependencies from `extconf.rb`, and writes:
-- `nix/gem/<name>/<version>/default.nix` — one derivation per package
-- `nix/gem/<name>/default.nix` — version selector
-- `nix/modules/gem.nix` — catalogue of all packages
+Prefetches SHA256 hashes for all gems via `nix-prefetch-url` and `nix-prefetch-git`, then writes:
+- `nix/ruby/<name>.nix` — per gem, all versions with hashes
+- `nix/<project>.nix` — per project, gem selection + bundlePath + devShell
+- `nix/build-gem.nix` — generic builder
+- `nix/gem-config.nix` — overlay loader
 
-### 5. Build
+### 4. Build
 
 ```bash
 onix build                    # build every package in the pool
 onix build myapp              # build all packages for one app
 onix build myapp nokogiri     # build a single package from an app
-onix build --gem nokogiri     # build by name (latest version)
 onix build -k                 # keep going past failures
 ```
 
@@ -85,21 +76,20 @@ Shows live progress during builds (pipes through [nix-output-monitor](https://gi
 ```
   ✗ sqlite3  →  create overlays/sqlite3.nix
     nix log /nix/store/...-sqlite3-2.8.0.drv
-    /path/to/nix/gem/sqlite3/2.8.0/default.nix
 ```
 
-### 6. Check
+### 5. Check
 
 ```bash
-onix check                        # all checks
-onix check symlinks dep-completeness  # specific ones
+onix check                            # all checks
+onix check nix-eval packageset-complete  # specific ones
 ```
 
-Checks: `symlinks` · `nix-eval` · `source-clean` · `secrets` · `dep-completeness` · `require-paths-vs-metadata`. All run in parallel, results stream as they complete.
+Checks: `nix-eval` · `packageset-complete` · `secrets`. All run in parallel, results stream as they complete.
 
 ## Using built packages
 
-`resolve` is the Nix-side API. Pass it `pkgs`, `ruby`, and a config — it returns an attrset with:
+Each project nix file exports gems, bundlePath, and devShell:
 
 | Key | Type | Description |
 |-----|------|-------------|
@@ -114,12 +104,8 @@ The simplest way to use onix. Handles all plumbing automatically:
 ```nix
 { pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
 let
-  resolve = import ./nix/modules/resolve.nix;
-  gems = resolve {
-    inherit pkgs ruby;
-    config = { onix.apps.rails.enable = true; };
-  };
-in gems.devShell {
+  project = import ./nix/rails.nix { inherit pkgs ruby; };
+in project.devShell {
   buildInputs = with pkgs; [ sqlite postgresql ];
 }
 ```
@@ -129,15 +115,13 @@ in gems.devShell {
 For CI scripts, Docker images, or custom derivations:
 
 ```nix
-gems.bundlePath        # → /nix/store/...-onix-bundle
-                       # contains ruby/3.4.0/gems/*, specifications/*, extensions/*
+project.bundlePath   # → /nix/store/...-rails-bundle
+                     # contains gems/*, specifications/*, extensions/*
 ```
 
 ## Overlays
 
-Most packages build automatically — `generate` scans `extconf.rb` and inlines detected `pkg_config`, `find_library`, and `have_header` calls as nixpkgs deps. It also detects Rust extensions using `rb_sys`.
-
-When auto-detection isn't enough, write an overlay in `overlays/<package>.nix`. **Manual overlays always win** over auto-detection.
+When a gem needs system libraries or custom build steps, create `overlays/<gem-name>.nix`. **Manual overlays always win** over auto-detection.
 
 ### System library deps
 
@@ -167,26 +151,7 @@ Some packages need other packages during build. Use `buildGems` — the framewor
 { pkgs, ruby }: {
   deps = with pkgs; [ libxml2 libxslt pkg-config zlib ];
   extconfFlags = "--use-system-libraries";
-  buildGems = [
-    (pkgs.callPackage ../nix/gem/mini_portile2/2.8.9 { inherit ruby; })
-  ];
-}
-```
-
-### Rust extensions
-
-```nix
-# overlays/tiktoken_ruby.nix
-{ pkgs, ruby }: {
-  deps = with pkgs; [ rustc cargo libclang ];
-  buildGems = [
-    (pkgs.callPackage ../nix/gem/rb_sys/0.9.124 { inherit ruby; })
-  ];
-  beforeBuild = ''
-    export CARGO_HOME="$TMPDIR/cargo"
-    mkdir -p "$CARGO_HOME"
-    export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"
-  '';
+  buildGems = [ "mini_portile2" ];
 }
 ```
 
@@ -196,7 +161,7 @@ Some packages need other packages during build. Use `buildGems` — the framewor
 |-------|------|--------|
 | `deps` | list | Added to `nativeBuildInputs` |
 | `extconfFlags` | string | Appended to `ruby extconf.rb` |
-| `buildGems` | list | Derivations needed at build time (auto `GEM_PATH`) |
+| `buildGems` | list | Gem names needed at build time (auto `GEM_PATH`) |
 | `beforeBuild` | string | Runs before the default build phase |
 | `afterBuild` | string | Runs after `make` |
 | `buildPhase` | string | **Replaces** the default build entirely |
@@ -209,43 +174,39 @@ Some packages need other packages during build. Use `buildGems` — the framewor
 { pkgs, ruby }: { buildPhase = "true"; }
 ```
 
-## Packageset formats
+## Packageset format
 
-Packagesets live in `packagesets/` and are copies of language-specific lockfiles. The file extension determines the ecosystem:
+Packagesets live in `packagesets/` as JSONL files (one JSON object per line). First line is metadata, remaining lines are one entry per gem.
 
-| Extension | Ecosystem | Lockfile source |
-|-----------|-----------|----------------|
-| `.gem` | Ruby | `Gemfile.lock` |
-| `.npm` | Node.js | `package-lock.json` *(planned)* |
+```jsonl
+{"_meta":true,"ruby":"3.4.8","bundler":"2.6.5","platforms":["arm64-darwin","ruby"]}
+{"installer":"ruby","name":"rack","version":"3.1.12","source":"rubygems","remote":"https://rubygems.org","deps":["webrick"]}
+{"installer":"ruby","name":"rails","version":"8.0.0","source":"git","uri":"https://github.com/rails/rails.git","rev":"abc123...","subdir":"railties"}
+```
 
-Each ecosystem has its own fetcher, source layout, and build strategy, but they share the same overlay system and nix output structure.
+See `docs/packageset-format.md` for the full specification.
 
 ## Directory structure
 
 ```
 my-packages/
-├── packagesets/      # Lockfile copies (one per project, extension per ecosystem)
-│   ├── rails.gem     # Ruby packageset (Gemfile.lock)
-│   └── vite.npm      # Node packageset (package-lock.json) — planned
+├── packagesets/      # Hermetic JSONL packagesets (one per project)
+│   ├── rails.jsonl
+│   └── liquid.jsonl
 ├── overlays/         # Hand-written build overrides
-├── cache/
-│   ├── sources/      # Unpacked source trees
-│   ├── meta/         # Package metadata (JSON)
-│   ├── gems/         # Downloaded .gem files
-│   └── git-clones/   # Bare git clones
 └── nix/              # Generated — never edit by hand
-    ├── gem/          # Per-package derivations + version selectors
-    ├── app/          # Per-project package lists
-    └── modules/      # Catalogue, resolver, app registry
+    ├── ruby/         # Per-gem version files (rack.nix, nokogiri.nix, ...)
+    ├── rails.nix     # Per-project gem selection
+    ├── build-gem.nix     # Generic builder
+    └── gem-config.nix    # Overlay loader
 ```
 
 ## Design principles
 
-- **Everything local.** `fetch` downloads all sources ahead of time. Nix builds use `builtins.path` only — no network, no `fetchGit`, no `fetchurl`.
+- **Nix-native fetch.** `generate` prefetches hashes, then `build` uses `fetchurl`/`builtins.fetchGit` — no local cache directory needed.
 - **System libraries only.** Native packages link against nixpkgs. Vendored copies are stripped.
-- **Lockfile is the source of truth.** Packageset files are unmodified copies, parsed by the ecosystem's own parser.
+- **Lockfile is the source of truth.** Packagesets are hermetic JSONL representations of your lockfile, parsed once during import.
 - **One derivation per package.** Individually cacheable, parallel builds, content-addressed store paths.
-- **Auto-detect where possible, overlay where not.** Source analysis inlines common deps. Overlays handle the rest.
 - **Manual overlays always win** over auto-detection.
 - **Parameterized runtime.** `ruby` (or `nodejs`) flows through every derivation — one argument changes the whole build.
-- **Ecosystem-agnostic core.** The overlay system, nix output layout, build/check/fetch commands work across ecosystems. Only the parser and materializer are ecosystem-specific.
+- **Ecosystem-agnostic core.** The overlay system, nix output layout, and build/check commands work across ecosystems. Only the parser and materializer are ecosystem-specific.

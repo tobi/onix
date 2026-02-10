@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run liquid's unit tests inside its nix devshell.
-#
-# Usage:
-#   tests/liquid/run-tests
-
 dir="$(cd "$(dirname "$0")" && pwd)"
-app_dir="$HOME/src/ruby-tests/liquid"
+app_dir="/tmp/onix-tests/liquid"
+
+if [ ! -d "$app_dir" ]; then
+  echo "Cloning liquid to $app_dir..."
+  git clone --depth 1 https://github.com/Shopify/liquid.git "$app_dir"
+fi
 
 cd "$app_dir"
 

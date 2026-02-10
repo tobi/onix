@@ -4,21 +4,14 @@
 set -euo pipefail
 
 dir="$(cd "$(dirname "$0")" && pwd)"
-project="${1:-fizzy}"
+project="${1:-}"
 
 checks=(
-  symlinks
   nix-eval
   nixfmt
   statix
   dep-completeness
-  source-clean
   secrets
-  require-paths-vs-gem-metadata
-  gemspec-deps
-  require-paths
-  native-extensions
-  loadable
 )
 
 total=${#checks[@]}
