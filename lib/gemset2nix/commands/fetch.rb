@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "bundler"
 require "fileutils"
 require "json"
 require "open3"
@@ -12,11 +13,22 @@ module Gemset2Nix
   module Commands
     class Fetch
       def run(argv)
-        project = Project.new
+        @project = project = Project.new
         jobs = (ENV["JOBS"] || "20").to_i
 
+        while argv.first&.start_with?("-")
+          case argv.shift
+          when "-j", "--jobs" then jobs = argv.shift.to_i
+          when "--help", "-h"
+            $stderr.puts "Usage: gemset2nix fetch [options] [gemset files...]"
+            $stderr.puts
+            $stderr.puts "  -j, --jobs N    Parallel downloads (default: 20, env: JOBS)"
+            exit 0
+          end
+        end
+
         inputs = if argv.empty?
-          Dir.glob(File.join(project.imports_dir, "*.gemset"))
+          Dir.glob(File.join(project.gemsets_dir, "*.gemset"))
         else
           argv.flat_map do |a|
             if File.directory?(a)
@@ -24,66 +36,98 @@ module Gemset2Nix
             elsif File.file?(a)
               [a]
             else
-              $stderr.puts "Not found: #{a}"
+              UI.warn "Not found: #{a}"
               []
             end
           end
         end
 
         if inputs.empty?
-          $stderr.puts "No .gemset files found. Run 'gemset2nix import' first."
+          UI.fail "No .gemset files found. Run 'gemset2nix import' first."
           exit 1
         end
 
-        # Collect all lines, dedupe
-        lines = inputs.flat_map { |f| File.readlines(f).map(&:strip) }
-        lines.reject! { |l| l.empty? || l.start_with?("#") }
-        lines.uniq!
-        lines.sort!
+        # Parse via Bundler
+        work = []
+        inputs.each { |f| work.concat(parse_gemset(f)) }
+        work.uniq! { |w| "#{w[:name]}-#{w[:version]}" }
 
-        $stderr.puts "#{lines.size} unique gems to fetch (jobs=#{jobs})"
+        rubygems = work.reject { |w| w[:git_uri] }
+        git_gems = work.select { |w| w[:git_uri] }
 
-        done = 0
-        failed = 0
-        mutex = Mutex.new
+        UI.header "Fetch"
+        UI.info "#{work.size} gems #{UI.dim("(#{rubygems.size} rubygems, #{git_gems.size} git)")}"
 
-        # Process in thread pool
-        queue = Queue.new
-        lines.each { |l| queue << l }
-        jobs.times { queue << nil } # poison pills
+        # ── Git repos (sequential, fast) ────────────────────────────
 
-        threads = jobs.times.map do
-          Thread.new do
-            while (line = queue.pop)
-              parts = line.split
-              name, version = parts[0], parts[1]
-              git = parts[2]&.start_with?("git:") ? parts[2].sub("git:", "") : nil
+        if git_gems.any?
+          # Group by repo
+          repos = {}
+          git_gems.each do |g|
+            key = "#{g[:git_uri]}@#{g[:git_rev]}"
+            (repos[key] ||= []) << g
+          end
 
-              ok = if git
-                fetch_git(project, name, version, git)
-              else
-                fetch_rubygem(project, name, version)
-              end
+          progress = UI::Progress.new(repos.size, label: "Git repos")
+          repos.each do |_, gems|
+            g = gems.first
+            ok = fetch_git_repo(project, g[:git_uri], g[:git_rev], gems)
+            progress.advance(success: ok)
+          end
+          progress.finish
+        end
 
-              mutex.synchronize do
-                if ok
-                  done += 1
-                  $stderr.print "\r  #{done}/#{lines.size} fetched" if done % 50 == 0 || done == lines.size
-                else
-                  failed += 1
-                  $stderr.puts "FAIL: #{name}-#{version}"
-                end
+        # ── Rubygems (parallel) ─────────────────────────────────────
+
+        if rubygems.any?
+          progress = UI::Progress.new(rubygems.size, label: "Rubygems")
+
+          queue = Queue.new
+          rubygems.each { |w| queue << w }
+          jobs.times { queue << nil }
+
+          threads = jobs.times.map do
+            Thread.new do
+              while (item = queue.pop)
+                cached = gem_cached?(project, item[:name], item[:version])
+                ok = fetch_rubygem(project, item[:name], item[:version])
+                progress.advance(success: ok, skip: cached && ok)
               end
             end
           end
-        end
 
-        threads.each(&:join)
-        $stderr.puts
-        $stderr.puts "#{done} fetched, #{failed} failed" if failed > 0
+          threads.each(&:join)
+          progress.finish
+        end
       end
 
       private
+
+      # ── Gemset parsing ─────────────────────────────────────────────
+
+      def parse_gemset(path)
+        lf = @project.parse_lockfile(path)
+        lf.specs.filter_map do |spec|
+          src = spec.source
+          case src
+          when Bundler::Source::Git
+            { name: spec.name, version: spec.version.to_s,
+              git_uri: src.uri, git_rev: src.options["revision"] }
+          when Bundler::Source::Path
+            nil
+          else
+            { name: spec.name, version: spec.version.to_s,
+              git_uri: nil, git_rev: nil }
+          end
+        end
+      end
+
+      # ── Rubygem fetching ───────────────────────────────────────────
+
+      def gem_cached?(project, name, version)
+        File.exist?(File.join(project.meta_dir, "#{name}-#{version}.json")) &&
+          Dir.exist?(File.join(project.source_dir, "#{name}-#{version}"))
+      end
 
       def fetch_rubygem(project, name, version)
         gem_file = File.join(project.gem_cache_dir, "#{name}-#{version}.gem")
@@ -112,7 +156,7 @@ module Gemset2Nix
         FileUtils.mkdir_p(project.source_dir)
         _, err, status = Open3.capture3("gem", "unpack", gem_file, "--target", project.source_dir)
         unless status.success?
-          $stderr.puts "ERROR: unpack #{name}-#{version}: #{err.strip}"
+          $stderr.puts "\n  ERROR: unpack #{name}-#{version}: #{err.strip}"
           return
         end
 
@@ -145,7 +189,7 @@ module Gemset2Nix
             end
           end
         rescue => e
-          $stderr.puts "WARN: metadata #{name}-#{version}: #{e.message}"
+          $stderr.puts "\n  WARN: metadata #{name}-#{version}: #{e.message}"
         end
 
         return unless meta
@@ -174,23 +218,32 @@ module Gemset2Nix
         File.write(meta_file, JSON.pretty_generate(result))
       end
 
-      def fetch_git(project, name, version, git_ref)
-        target = File.join(project.source_dir, "#{name}-#{version}")
-        return true if Dir.exist?(target)
+      # ── Git fetching ───────────────────────────────────────────────
 
-        uri, rev = git_ref.split("@", 2)
+      def fetch_git_repo(project, uri, rev, gems)
+        # Check if all gems already extracted
+        all_exist = gems.all? { |g| Dir.exist?(File.join(project.source_dir, "#{g[:name]}-#{g[:version]}")) }
+        return true if all_exist
+
         clone_dir = File.join(project.git_clones_dir, File.basename(uri, ".git"))
 
         FileUtils.mkdir_p(File.dirname(clone_dir))
         unless Dir.exist?(clone_dir)
-          system("git", "clone", "--quiet", uri, clone_dir)
+          _, _, status = Open3.capture3("git", "clone", "--quiet", uri, clone_dir)
+          return false unless status.success?
         end
 
-        system("git", "-C", clone_dir, "fetch", "--quiet", "origin", err: "/dev/null")
-        system("git", "-C", clone_dir, "checkout", "--quiet", "--force", rev)
+        Open3.capture3("git", "-C", clone_dir, "fetch", "--quiet", "origin")
+        _, _, status = Open3.capture3("git", "-C", clone_dir, "checkout", "--quiet", "--force", rev)
+        return false unless status.success?
 
-        FileUtils.cp_r(clone_dir, target)
-        FileUtils.rm_rf(File.join(target, ".git"))
+        gems.each do |g|
+          target = File.join(project.source_dir, "#{g[:name]}-#{g[:version]}")
+          next if Dir.exist?(target)
+          FileUtils.cp_r(clone_dir, target)
+          FileUtils.rm_rf(File.join(target, ".git"))
+        end
+
         true
       end
     end

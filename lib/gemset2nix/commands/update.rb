@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "bundler"
 require "json"
 require "fileutils"
 require "pathname"
@@ -10,15 +11,113 @@ module Gemset2Nix
     class Update
       include NixWriter
 
+      # Map pkg-config module names to nixpkgs attribute paths.
+      # Names not listed here are used as-is (pkgs.<name>).
+      PKG_CONFIG_TO_NIX = {
+        "yaml-0.1"  => "libyaml",
+        "yaml-0"    => "libyaml",
+        "libffi"    => "libffi",
+        "libiconv"  => "libiconv",
+        "openssl"   => "openssl",
+        "zlib"      => "zlib",
+        "libxml-2.0" => "libxml2",
+        "libxslt"   => "libxslt",
+        "libexslt"  => "libxslt",
+        "sqlite3"   => "sqlite",
+        "libcurl"   => "curl",
+        "glib-2.0"  => "glib",
+        "gobject-2.0" => "glib",
+        "gio-2.0"   => "glib",
+        "cairo"     => "cairo",
+        "pangocairo" => "pango",
+        "gdk-pixbuf-2.0" => "gdk-pixbuf",
+        "vips"      => "vips",
+        "MagickWand" => "imagemagick",
+      }.freeze
+
+      # Map have_library / dir_config names to nixpkgs attribute paths.
+      # C library names from have_library() and dir_config() that we can
+      # confidently map. Unknown names are ignored (need overlays).
+      LIBRARY_TO_NIX = {
+        "ssl"       => "openssl",
+        "crypto"    => "openssl",
+        "z"         => "zlib",
+        "zlib"      => "zlib",
+        "xml2"      => "libxml2",
+        "libxml2"   => "libxml2",
+        "xslt"      => "libxslt",
+        "exslt"     => "libxslt",
+        "yaml"      => "libyaml",
+        "libyaml"   => "libyaml",
+        "ffi"       => "libffi",
+        "libffi"    => "libffi",
+        "libffi-8"  => "libffi",
+        "iconv"     => "libiconv",
+        "libiconv"  => "libiconv",
+        "curl"      => "curl",
+        "libcurl"   => "curl",
+        "sqlite3"   => "sqlite",
+        "gmp"       => "gmp",
+        "readline"  => "readline",
+        "ncurses"   => "ncurses",
+        "ncursesw"  => "ncurses",
+        "vips"      => "vips",
+      }.freeze
+
+      # Map C #include prefixes to nixpkgs attribute paths.
+      C_INCLUDE_TO_NIX = {
+        "openssl" => "openssl",
+        "libxml"  => "libxml2",
+        "libxslt" => "libxslt",
+        "yaml"    => "libyaml",
+        "zlib"    => "zlib",
+        "sqlite3" => "sqlite",
+        "curl"    => "curl",
+        "ffi"     => "libffi",
+        "mysql"   => "libmysqlclient",
+        "glib"    => "glib",
+        "gobject" => "glib",
+        "gio"     => "glib",
+        "cairo"   => "cairo",
+        "pango"   => "pango",
+        "gdk-pixbuf" => "gdk-pixbuf",
+        "vips"    => "vips",
+      }.freeze
+
+      # Map dir_config names to nixpkgs attribute paths.
+      DIR_CONFIG_TO_NIX = {
+        "openssl"    => "openssl",
+        "zlib"       => "zlib",
+        "libyaml"    => "libyaml",
+        "libxml2"    => "libxml2",
+        "libxslt"    => "libxslt",
+        "sqlite3"    => "sqlite",
+        "libffi"     => "libffi",
+        "readline"   => "readline",
+        "ncurses"    => "ncurses",
+        "curl"       => "curl",
+        "iconv"      => "libiconv",
+      }.freeze
+
+      # Build tools → nixpkgs attribute paths
+      BUILD_TOOL_TO_NIX = {
+        "perl"    => "perl",
+        "python"  => "python3",
+        "python3" => "python3",
+        "cmake"   => "cmake",
+      }.freeze
+
       def run(argv)
         @project = Project.new
         @meta = @project.load_metadata
         @overlays = Set.new(@project.overlays)
 
-        $stderr.puts "#{@meta.size} gems in cache (#{@overlays.size} overlays)"
+        UI.header "Update"
+        UI.info "#{@meta.size} gems in cache #{UI.dim("(#{@overlays.size} overlays)")}"
 
         generate_derivations
         generate_selectors
+        generate_git_derivations
         generate_catalogue
       end
 
@@ -52,13 +151,15 @@ module Gemset2Nix
 
           has_overlay = @overlays.include?(name)
           scan = has_ext && !has_overlay ? ExtconfScanner.scan(source) : nil
-          has_auto = scan&.native?
-          needs_pkgs = has_overlay || (scan && (scan.is_rust || !scan.pkg_configs.empty? || !scan.libraries.empty?))
+          has_auto = scan&.needs_auto_deps?
+          auto_nix_deps = has_auto && scan ? resolve_nix_deps(scan) : []
+          needs_pkgs = has_overlay || (scan && (scan.is_rust || !auto_nix_deps.empty?))
 
           nix = build_derivation(
             name: name, version: version, key: key,
             has_ext: has_ext, has_overlay: has_overlay,
             scan: scan, has_auto: has_auto, needs_pkgs: needs_pkgs,
+            auto_nix_deps: auto_nix_deps,
             require_paths: require_paths, executables: executables, bindir: bindir,
             source: source
           )
@@ -67,11 +168,11 @@ module Gemset2Nix
           generated += 1
         end
 
-        $stderr.puts "#{generated} derivations"
+        UI.done "#{generated} derivations"
       end
 
       def build_derivation(name:, version:, key:, has_ext:, has_overlay:, scan:, has_auto:,
-                           needs_pkgs:, require_paths:, executables:, bindir:, source:)
+                           needs_pkgs:, auto_nix_deps: [], require_paths:, executables:, bindir:, source:)
         si = SH
         hd = HD
         nix = +""
@@ -101,10 +202,12 @@ module Gemset2Nix
         nix << "  arch = stdenv.hostPlatform.system;\n"
         nix << "  bundle_path = \"ruby/${rubyVersion}\";\n"
 
+        has_gem_path = false
         if has_overlay
           emit_overlay_let(nix, name)
+          has_gem_path = true  # overlay always defines gemPath
         elsif scan && (!scan.build_gem_deps.empty? || scan.is_rust)
-          emit_auto_build_gems_let(nix, scan)
+          has_gem_path = emit_auto_build_gems_let(nix, scan)
         end
 
         nix << "in\n"
@@ -118,7 +221,8 @@ module Gemset2Nix
 
         # Build phase
         if has_ext
-          emit_build_phase(nix, has_overlay: has_overlay, scan: scan, has_auto: has_auto)
+          emit_build_phase(nix, has_overlay: has_overlay, scan: scan, has_auto: has_auto,
+                           has_gem_path: has_gem_path, auto_nix_deps: auto_nix_deps)
         else
           nix << "  dontBuild = true;\n"
         end
@@ -184,6 +288,57 @@ module Gemset2Nix
           expr = resolved.map { |g| "\"${#{g}}/${#{g}.bundle_path}\"" }.join(" ")
           nix << "  gemPath = builtins.concatStringsSep \":\" [ #{expr} ];\n"
         end
+
+        !resolved.empty?
+      end
+
+      # Resolve all scanner signals into a deduplicated list of nixpkgs attrs.
+      # Merges pkg_config, have_library, dir_config, C #include, and build tool signals.
+      def resolve_nix_deps(scan)
+        nix_deps = Set.new
+
+        # 1. pkg_config names — highest confidence
+        scan.pkg_configs.each do |pc|
+          nix_deps << PKG_CONFIG_TO_NIX.fetch(pc, pc)
+        end
+
+        # 2. have_library names — map known ones
+        scan.libraries.each do |lib|
+          nix_pkg = LIBRARY_TO_NIX[lib]
+          nix_deps << nix_pkg if nix_pkg
+        end
+
+        # 3. dir_config names — map known ones
+        scan.dir_configs.each do |dc|
+          nix_pkg = DIR_CONFIG_TO_NIX[dc]
+          nix_deps << nix_pkg if nix_pkg
+        end
+
+        # 4. C #include prefixes — lowest confidence fallback
+        scan.c_includes.each do |inc|
+          nix_pkg = C_INCLUDE_TO_NIX[inc]
+          nix_deps << nix_pkg if nix_pkg
+        end
+
+        # 5. Build tools (perl, cmake, etc.)
+        scan.build_tools.each do |tool|
+          nix_pkg = BUILD_TOOL_TO_NIX[tool]
+          nix_deps << nix_pkg if nix_pkg
+        end
+
+        # Add pkg-config utility if any pkg_config() calls were found
+        nix_deps << "pkg-config" unless scan.pkg_configs.empty?
+
+        nix_deps.to_a.sort
+      end
+
+      # Determine which build gem deps are missing from the gemset and
+      # need to be installed at build time via `gem install`.
+      def missing_build_gems(scan)
+        return [] unless scan
+        scan.build_gem_deps.select do |gdep|
+          !Dir.exist?(File.join(@project.output_dir, gdep))
+        end
       end
 
       def version_dirs(dir)
@@ -212,7 +367,7 @@ module Gemset2Nix
         'done',
       ].freeze
 
-      def emit_build_phase(nix, has_overlay:, scan:, has_auto:)
+      def emit_build_phase(nix, has_overlay:, scan:, has_auto:, has_gem_path: false, auto_nix_deps: [])
         if has_overlay
           nix << "  nativeBuildInputs = [ ruby ] ++ overlayDeps;\n\n"
           nix << "  buildPhase =\n"
@@ -229,7 +384,7 @@ module Gemset2Nix
         elsif scan&.is_rust
           nix << "  nativeBuildInputs = [ ruby pkgs.cargo pkgs.rustc pkgs.llvmPackages.libclang ];\n\n"
           nix << "  buildPhase = ''\n"
-          nix << "    export GEM_PATH=${gemPath}\n"
+          nix << "    export GEM_PATH=${gemPath}\n" if has_gem_path
           nix << "    export CARGO_HOME=\"$TMPDIR/cargo\"\n"
           nix << "    mkdir -p \"$CARGO_HOME\"\n"
           nix << "    export LIBCLANG_PATH=\"${pkgs.llvmPackages.libclang.lib}/lib\"\n"
@@ -241,13 +396,20 @@ module Gemset2Nix
           DEFAULT_BUILD_LINES.each { |l| nix << "    #{l}\n" }
           nix << "  '';\n\n"
         elsif has_auto && scan
-          # Auto-detected pkg_config names become pkgs.* deps
-          deps = (scan.pkg_configs + scan.libraries).uniq.map { |d| "pkgs.#{d}" }
-          deps << "pkgs.pkg-config" unless scan.pkg_configs.empty?
+          # Resolved nix deps from all signals (pkg_config, have_library, dir_config, C includes, build tools)
+          deps = auto_nix_deps.map { |d| "pkgs.#{d}" }
           nix << "  nativeBuildInputs = [ ruby #{deps.join(" ")} ];\n\n"
+          missing_gems = missing_build_gems(scan)
           nix << "  buildPhase = ''\n"
-          has_gem_path = !scan.build_gem_deps.empty?
           nix << "    export GEM_PATH=${gemPath}\n" if has_gem_path
+          unless missing_gems.empty?
+            nix << "    # Auto-install build-time gem deps not in the gemset\n"
+            nix << "    export GEM_HOME=\"$TMPDIR/gems\"\n"
+            nix << "    export GEM_PATH=\"$GEM_HOME${GEM_PATH:+:$GEM_PATH}\"\n"
+            missing_gems.each do |g|
+              nix << "    ${ruby}/bin/gem install #{g} --no-document --install-dir \"$GEM_HOME\" 2>/dev/null || true\n"
+            end
+          end
           nix << "    extconfFlags=\"#{scan.system_lib_flags || ""}\"\n"
           DEFAULT_BUILD_LINES.each { |l| nix << "    #{l}\n" }
           nix << "  '';\n\n"
@@ -360,6 +522,133 @@ module Gemset2Nix
         nix << "  '';\n"
       end
 
+      # ── Git repo derivations ──────────────────────────────────────────
+
+      def generate_git_derivations
+        # Parse all gemset files for GIT sources via Bundler
+        repos = {}
+        Dir.glob(File.join(@project.gemsets_dir, "*.gemset")).each do |f|
+          lf = @project.parse_lockfile(f)
+          lf.specs.each do |spec|
+            src = spec.source
+            next unless src.is_a?(Bundler::Source::Git)
+
+            base = File.basename(src.uri, ".git")
+            shortrev = src.options["revision"][0, 12]
+            key = "#{base}-#{shortrev}"
+            repo = (repos[key] ||= { uri: src.uri, rev: src.options["revision"], base: base,
+                                      shortrev: shortrev, gems: [] })
+            repo[:gems] << { name: spec.name, version: spec.version.to_s } unless repo[:gems].any? { |g| g[:name] == spec.name }
+          end
+        end
+
+        return if repos.empty?
+
+        si = SH
+        hd = HD
+        generated = 0
+
+        repos.each do |repo_key, repo|
+          # Find source dir — try each gem name
+          source_dir = repo[:gems].lazy.map { |g|
+            File.join(@project.source_dir, "#{g[:name]}-#{g[:version]}")
+          }.find { |d| Dir.exist?(d) }
+
+          unless source_dir
+            UI.warn "no source for git repo #{repo_key} (run gemset2nix fetch)"
+            next
+          end
+
+          git_dir = File.join(@project.output_dir, repo[:base], "git-#{repo[:shortrev]}")
+          FileUtils.mkdir_p(git_dir)
+          source_link = File.join(git_dir, "source")
+          FileUtils.rm_f(source_link)
+          FileUtils.ln_s(File.expand_path(source_dir), source_link)
+
+          # Check for missing gemspecs
+          missing_gemspecs = repo[:gems].select do |g|
+            !File.exist?(File.join(source_dir, "#{g[:name]}.gemspec")) &&
+              !File.exist?(File.join(source_dir, g[:name], "#{g[:name]}.gemspec"))
+          end
+
+          gnix = +""
+          gnix << BANNER
+          gnix << "# Git: #{repo[:base]} @ #{repo[:shortrev]}\n"
+          gnix << "# URI: #{repo[:uri]}\n"
+          gnix << "# Gems: #{repo[:gems].map { |g| g[:name] }.join(", ")}\n#\n"
+          gnix << "{\n  lib,\n  stdenv,\n  ruby,\n}:\nlet\n"
+          gnix << "  rubyVersion = \"${ruby.version.majMin}.0\";\n"
+          gnix << "  bundle_path = \"ruby/${rubyVersion}\";\n"
+          gnix << "in\nstdenv.mkDerivation {\n"
+          gnix << "  pname = #{repo[:base].inspect};\n"
+          gnix << "  version = #{repo[:shortrev].inspect};\n"
+          gnix << "  src = builtins.path {\n    path = ./source;\n"
+          gnix << "    name = #{(repo_key + "-source").inspect};\n  };\n\n"
+          gnix << "  dontBuild = true;\n  dontConfigure = true;\n\n"
+          gnix << "  passthru = { inherit bundle_path; };\n\n"
+          gnix << "  installPhase = ''\n"
+          gnix << "#{si}local dest=$out/${bundle_path}/bundler/gems/#{repo_key}\n"
+          gnix << "#{si}mkdir -p $dest\n"
+          gnix << "#{si}cp -r . $dest/\n"
+
+          missing_gemspecs.each do |g|
+            gnix << "#{si}cat > $dest/#{g[:name]}.gemspec <<'EOF'\n"
+            gnix << "#{hd}Gem::Specification.new do |s|\n"
+            gnix << "#{hd}  s.name = #{g[:name].inspect}\n"
+            gnix << "#{hd}  s.version = #{g[:version].inspect}\n"
+            gnix << "#{hd}  s.summary = #{g[:name].inspect}\n"
+            gnix << "#{hd}  s.require_paths = [\"lib\"]\n"
+            gnix << "#{hd}  s.files = []\n"
+            gnix << "#{hd}end\n#{hd}EOF\n"
+          end
+
+          gnix << "  '';\n}\n"
+          File.write(File.join(git_dir, "default.nix"), gnix)
+          generated += 1
+
+          # Patch or create selector
+          patch_git_selector(repo)
+        end
+
+        UI.done "#{generated} git derivations" if generated > 0
+      end
+
+      def patch_git_selector(repo)
+        selector_path = File.join(@project.output_dir, repo[:base], "default.nix")
+
+        if File.exist?(selector_path)
+          selector = File.read(selector_path)
+          rev_line = "    #{repo[:shortrev].inspect} = import ./git-#{repo[:shortrev]} { inherit lib stdenv ruby; };\n"
+          unless selector.include?(repo[:shortrev].inspect)
+            selector.sub!("  gitRevs = {\n", "  gitRevs = {\n#{rev_line}")
+            File.write(selector_path, selector)
+          end
+        else
+          # Git-only selector
+          sel = +""
+          sel << BANNER
+          sel << "# #{repo[:base]} (git only)\n#\n"
+          sel << "{\n  lib,\n  stdenv,\n  ruby,\n"
+          sel << "  pkgs ? null,\n  version ? null,\n  git ? { },\n}:\nlet\n"
+          sel << "  versions = { };\n\n  gitRevs = {\n"
+          sel << "    #{repo[:shortrev].inspect} = import ./git-#{repo[:shortrev]} { inherit lib stdenv ruby; };\n"
+          sel << "  };\nin\n"
+          sel << "if git ? rev then\n"
+          sel << "  gitRevs.\${git.rev}\n"
+          sel << "    or (throw \"#{repo[:base]}: unknown git rev '\${git.rev}'\")\n"
+          sel << "else if version != null then\n"
+          sel << "  throw \"#{repo[:base]}: no rubygems versions, only git\"\n"
+          sel << "else\n"
+          sel << "  throw \"#{repo[:base]}: specify git.rev\"\n"
+
+          FileUtils.mkdir_p(File.dirname(selector_path))
+          File.write(selector_path, sel)
+
+          # Add git-only gem to catalogue
+          @gems_by_name[repo[:base]] ||= { versions: [], needs_pkgs: false }
+        end
+      end
+
       # ── Selectors: nix/gem/<name>/default.nix ────────────────────────
 
       def generate_selectors
@@ -379,7 +668,7 @@ module Gemset2Nix
             has_ext = meta[:has_extensions] || !Dir.glob(File.join(source, "ext", "**", "extconf.rb")).empty?
             if has_ext
               scan = ExtconfScanner.scan(source)
-              if scan.native?
+              if scan.needs_auto_deps? && !resolve_nix_deps(scan).empty?
                 info[:needs_pkgs] = true
                 @gems_needing_pkgs << name
               end
@@ -419,7 +708,7 @@ module Gemset2Nix
           File.write(File.join(@project.output_dir, name, "default.nix"), sel)
         end
 
-        $stderr.puts "#{@gems_by_name.size} selectors"
+        UI.done "#{@gems_by_name.size} selectors"
       end
 
       # ── Catalogue: nix/modules/gem.nix ───────────────────────────────
@@ -445,7 +734,7 @@ module Gemset2Nix
 
         FileUtils.mkdir_p(@project.modules_dir)
         File.write(File.join(@project.modules_dir, "gem.nix"), top)
-        $stderr.puts "-> nix/modules/gem.nix"
+        UI.wrote "nix/modules/gem.nix"
       end
     end
   end

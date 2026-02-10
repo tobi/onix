@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "tmpdir"
+
 module Gemset2Nix
   # Represents a gemset2nix project directory — knows all the paths.
   class Project
@@ -18,7 +20,7 @@ module Gemset2Nix
     def output_dir     = File.join(root, "nix", "gem")
     def app_dir        = File.join(root, "nix", "app")
     def modules_dir    = File.join(root, "nix", "modules")
-    def imports_dir    = File.join(root, "imports")
+    def gemsets_dir     = File.join(root, "gemsets")
 
     # All overlay names (without .nix extension)
     def overlays
@@ -46,6 +48,23 @@ module Gemset2Nix
     # Check if project is initialized
     def initialized?
       Dir.exist?(cache_dir) && Dir.exist?(File.join(root, "nix"))
+    end
+
+    # Parse a Gemfile.lock / .gemset file safely.
+    # Bundler's LockfileParser crashes without a Gemfile in cwd (PATH/GIT sources
+    # call Bundler.root). We set BUNDLE_GEMFILE to a dummy file to avoid that.
+    def parse_lockfile(path)
+      @_dummy_gemfile ||= begin
+        f = File.join(Dir.tmpdir, "Gemfile-gemset2nix-#{$$}")
+        File.write(f, "source 'https://rubygems.org'\n")
+        at_exit { File.delete(f) rescue nil }
+        f
+      end
+      old = ENV["BUNDLE_GEMFILE"]
+      ENV["BUNDLE_GEMFILE"] = @_dummy_gemfile
+      Bundler::LockfileParser.new(File.read(path))
+    ensure
+      old ? ENV["BUNDLE_GEMFILE"] = old : ENV.delete("BUNDLE_GEMFILE")
     end
   end
 end
