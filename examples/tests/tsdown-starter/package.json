@@ -1,0 +1,13 @@
+{
+  "name": "tsdown-starter",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "tsdown"
+  },
+  "devDependencies": {
+    "tsdown": "latest",
+    "typescript": "^5.9.3"
+  }
+}
