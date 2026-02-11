@@ -46,7 +46,7 @@ module Onix
       :subdir,        # subdirectory within repo (monorepos)
       :submodules,    # fetch submodules? (git only)
       :path,          # relative path (path source only)
-      :deps,          # runtime dependency names
+      :deps,          # ruby: array of dependency names; node: hash {name => version}
 
       # ── Ruby-specific fields ────────────────────────────────────
       :require_paths, # ["lib"] usually
@@ -91,6 +91,18 @@ module Onix
 
         JSON.generate(h)
       end
+
+      def ruby_deps
+        deps.is_a?(Array) ? deps : []
+      end
+
+      def node_deps
+        deps.is_a?(Hash) ? deps : {}
+      end
+
+      def safe_nix_filename
+        name.gsub("/", "--").gsub("@", "")
+      end
     end
 
     Meta = Struct.new(
@@ -112,10 +124,12 @@ module Onix
 
     # Normalize deps from JSON: symbolized hash keys → string keys, or default to [].
     def self.normalize_deps(raw)
-      return [] if raw.nil?
-      return raw if raw.is_a?(Array)
-      return raw.transform_keys(&:to_s) if raw.is_a?(Hash)
-      []
+      case raw
+      when nil then []
+      when Array then raw
+      when Hash then raw.transform_keys(&:to_s)
+      else []
+      end
     end
 
     # Write a packageset to a JSONL file.

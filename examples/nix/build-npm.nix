@@ -85,8 +85,8 @@ in
 if skip then
   # Produce an empty derivation for packages we can't build
   pkgs.runCommand key {} ''
-    mkdir -p $out/node_modules/${pkgName}
-    echo '{"name":"${pkgName}","version":"${version}"}' > $out/node_modules/${pkgName}/package.json
+    mkdir -p "$out/node_modules/${pkgName}"
+    echo '{"name":"${pkgName}","version":"${version}"}' > "$out/node_modules/${pkgName}/package.json"
   ''
 else
 stdenv.mkDerivation {
@@ -107,19 +107,19 @@ stdenv.mkDerivation {
 
   installPhase = ''
     runHook preInstall
-    local dest=$out/node_modules/${pkgName}
-    mkdir -p $dest
-    cp -r . $dest/
+    local dest="$out/node_modules/${pkgName}"
+    mkdir -p "$dest"
+    cp -r . "$dest"/
 
     # Create bin links from package.json (auto-detect at build time)
     # If explicit bin entries are passed, use those; otherwise read package.json
     ${if bin != {} then ''
-      mkdir -p $out/node_modules/.bin
+      mkdir -p "$out/node_modules/.bin"
       ${builtins.concatStringsSep "\n" (lib.mapAttrsToList (name: path: ''
-        ln -sf $dest/${path} $out/node_modules/.bin/${name}
+        ln -sf "$dest/${path}" "$out/node_modules/.bin/${name}"
       '') bin)}
     '' else ''
-      if [ -f $dest/package.json ]; then
+      if [ -f "$dest/package.json" ]; then
         ${nodejs}/bin/node -e "
           const pj = require('$dest/package.json');
           const fs = require('fs');

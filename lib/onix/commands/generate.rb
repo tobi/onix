@@ -8,6 +8,7 @@ require "uri"
 require "cgi"
 require "scint/credentials"
 require_relative "../packageset"
+require_relative "generate_node"
 
 module Onix
   module Commands
@@ -26,6 +27,8 @@ module Onix
     #   nix/npm-config.nix    — overlay loader
     #
     class Generate
+      include NodeGenerator
+
       def run(argv)
         @project = Project.new
         jobs = (ENV["JOBS"] || "20").to_i
@@ -91,86 +94,18 @@ module Onix
         parts << "#{ruby_git_entries.size + node_git_entries.size} git" if ruby_git_entries.any? || node_git_entries.any?
         UI.info "#{packagesets.size} packagesets, #{all_entries.size} unique packages (#{parts.join(", ")})"
 
-        # ── Load existing hashes ─────────────────────────────────────
+        # ── Prefetch rubygems + git ────────────────────────────────────
 
         ruby_dir = File.join(@project.root, "nix", "ruby")
-        existing = load_existing_hashes(ruby_dir)
-        UI.info "#{existing.size} cached hashes" if existing.any?
-
-        # ── Prefetch rubygems ────────────────────────────────────────
-
-        new_hashes = {}
-        if rubygem_entries.any?
-          needed = rubygem_entries.reject { |e|
-            key = "#{e.name}/#{e.version}"
-            # Re-fetch if entry has platform but cached hash doesn't have platform metadata
-            next false if e.platform && existing.key?(key) && !existing.key?("#{key}:platform")
-            existing.key?(key)
-          }
-          cached = rubygem_entries.size - needed.size
-
-          if needed.empty?
-            UI.done "#{rubygem_entries.size} rubygems (all cached)"
-          else
-            progress = UI::Progress.new(rubygem_entries.size, label: "Prefetch")
-            cached.times { progress.advance(skip: true) }
-            errors = prefetch_rubygems(needed, jobs, new_hashes, progress)
-            progress.finish
-            if errors.any?
-              errors.each { |e| UI.fail e }
-              exit 1
-            end
-          end
-        end
-
-        # ── Prefetch git repos (ruby) ─────────────────────────────────
-
-        git_repos = {}
-        ruby_git_entries.each do |e|
-          key = "#{e.uri}@#{e.rev}"
-          git_repos[key] ||= { uri: e.uri, rev: e.rev, gems: [] }
-          git_repos[key][:gems] << e
-        end
-
-        if git_repos.any?
-          progress = UI::Progress.new(git_repos.size, label: "Prefetch git")
-          git_repos.each_value do |repo|
-            cache_key = "git:#{repo[:uri]}@#{repo[:rev]}"
-            sha256 = existing[cache_key]
-            unless sha256
-              sha256 = nix_prefetch_git(repo[:uri], repo[:rev])
-              unless sha256
-                progress.finish
-                UI.fail "Failed to prefetch #{repo[:uri]} @ #{repo[:rev]}"
-                exit 1
-              end
-              new_hashes[cache_key] = sha256
-            end
-            repo[:sha256] = sha256 || existing[cache_key]
-            progress.advance
-          end
-          progress.finish
-        end
-
-        # ── Build sha256 lookup ──────────────────────────────────────
-
-        sha256_for = {}
-
-        rubygem_entries.each do |e|
-          key = "#{e.name}/#{e.version}"
-          sha256_for[key] = existing[key] || new_hashes[key]
-          # Carry platform metadata — only set when the source gem didn't exist
-          # and the platform variant was fetched instead
-          plat_key = "#{key}:platform"
-          sha256_for[plat_key] = new_hashes[plat_key] || existing[plat_key]
-        end
-
-        git_repos.each_value do |repo|
-          repo[:gems].each do |e|
-            key = "#{e.name}/#{e.version}"
-            sha256_for[key] = repo[:sha256]
-          end
-        end
+        ruby_result = run_prefetch_pipeline(
+          dir: ruby_dir,
+          registry_entries: rubygem_entries,
+          git_entries: ruby_git_entries,
+          prefetch_fn: :prefetch_rubygems,
+          label: "rubygems",
+          jobs: jobs,
+        )
+        sha256_for = ruby_result[:sha256_for]
 
         # ── Write nix/ruby/<name>.nix per gem ────────────────────────
 
@@ -201,67 +136,15 @@ module Onix
         node_by_name = {}
         if node_entries.any?
           node_dir = File.join(@project.root, "nix", "node")
-          existing_node = load_existing_hashes(node_dir)
-          UI.info "#{existing_node.size} cached node hashes" if existing_node.any?
-
-          node_new_hashes = {}
-          if npm_entries.any?
-            needed = npm_entries.reject { |e| existing_node.key?("#{e.name}/#{e.version}") }
-            cached = npm_entries.size - needed.size
-
-            if needed.empty?
-              UI.done "#{npm_entries.size} npm packages (all cached)"
-            else
-              progress = UI::Progress.new(npm_entries.size, label: "Prefetch npm")
-              cached.times { progress.advance(skip: true) }
-              errors = prefetch_npm(needed, jobs, node_new_hashes, progress)
-              progress.finish
-              if errors.any?
-                errors.each { |e| UI.fail e }
-                exit 1
-              end
-            end
-          end
-
-          # Prefetch git repos for node
-          node_git_repos = {}
-          node_git_entries.each do |e|
-            gkey = "#{e.uri}@#{e.rev}"
-            node_git_repos[gkey] ||= { uri: e.uri, rev: e.rev, packages: [] }
-            node_git_repos[gkey][:packages] << e
-          end
-
-          if node_git_repos.any?
-            progress = UI::Progress.new(node_git_repos.size, label: "Prefetch git")
-            node_git_repos.each_value do |repo|
-              cache_key = "git:#{repo[:uri]}@#{repo[:rev]}"
-              sha256 = existing_node[cache_key]
-              unless sha256
-                sha256 = nix_prefetch_git(repo[:uri], repo[:rev])
-                unless sha256
-                  progress.finish
-                  UI.fail "Failed to prefetch #{repo[:uri]} @ #{repo[:rev]}"
-                  exit 1
-                end
-                node_new_hashes[cache_key] = sha256
-              end
-              repo[:sha256] = sha256 || existing_node[cache_key]
-              progress.advance
-            end
-            progress.finish
-          end
-
-          # Build node sha256 lookup
-          node_sha256 = {}
-          npm_entries.each do |e|
-            key = "#{e.name}/#{e.version}"
-            node_sha256[key] = existing_node[key] || node_new_hashes[key]
-          end
-          node_git_repos.each_value do |repo|
-            repo[:packages].each do |e|
-              node_sha256["#{e.name}/#{e.version}"] = repo[:sha256]
-            end
-          end
+          node_result = run_prefetch_pipeline(
+            dir: node_dir,
+            registry_entries: npm_entries,
+            git_entries: node_git_entries,
+            prefetch_fn: :prefetch_npm,
+            label: "npm",
+            jobs: jobs,
+          )
+          node_sha256 = node_result[:sha256_for]
 
           # Write nix/node/<name>.nix per package
           FileUtils.mkdir_p(node_dir)
@@ -316,6 +199,86 @@ module Onix
           end
         end
         hashes
+      end
+
+      # ── Shared prefetch pipeline ─────────────────────────────────
+      # Used by both ruby and node code paths. Loads existing hashes from dir,
+      # runs the given prefetch_fn for registry entries, fetches git repos,
+      # and builds a sha256_for lookup.
+      #
+      # Returns { sha256_for: Hash, by_name: Hash }
+      def run_prefetch_pipeline(dir:, registry_entries:, git_entries:, prefetch_fn:, label:, jobs:)
+        existing = load_existing_hashes(dir)
+        UI.info "#{existing.size} cached #{label} hashes" if existing.any?
+
+        new_hashes = {}
+        if registry_entries.any?
+          needed = registry_entries.reject { |e|
+            key = "#{e.name}/#{e.version}"
+            # Re-fetch if entry has platform but cached hash doesn't have platform metadata
+            next false if e.platform && existing.key?(key) && !existing.key?("#{key}:platform")
+            existing.key?(key)
+          }
+          cached = registry_entries.size - needed.size
+
+          if needed.empty?
+            UI.done "#{registry_entries.size} #{label} (all cached)"
+          else
+            progress = UI::Progress.new(registry_entries.size, label: "Prefetch #{label}")
+            cached.times { progress.advance(skip: true) }
+            errors = send(prefetch_fn, needed, jobs, new_hashes, progress)
+            progress.finish
+            if errors.any?
+              errors.each { |e| UI.fail e }
+              exit 1
+            end
+          end
+        end
+
+        # Prefetch git repos
+        git_repos = {}
+        git_entries.each do |e|
+          gkey = "#{e.uri}@#{e.rev}"
+          git_repos[gkey] ||= { uri: e.uri, rev: e.rev, entries: [] }
+          git_repos[gkey][:entries] << e
+        end
+
+        if git_repos.any?
+          progress = UI::Progress.new(git_repos.size, label: "Prefetch git")
+          git_repos.each_value do |repo|
+            cache_key = "git:#{repo[:uri]}@#{repo[:rev]}"
+            sha256 = existing[cache_key]
+            unless sha256
+              sha256 = nix_prefetch_git(repo[:uri], repo[:rev])
+              unless sha256
+                progress.finish
+                UI.fail "Failed to prefetch #{repo[:uri]} @ #{repo[:rev]}"
+                exit 1
+              end
+              new_hashes[cache_key] = sha256
+            end
+            repo[:sha256] = sha256 || existing[cache_key]
+            progress.advance
+          end
+          progress.finish
+        end
+
+        # Build sha256 lookup
+        sha256_for = {}
+        registry_entries.each do |e|
+          key = "#{e.name}/#{e.version}"
+          sha256_for[key] = existing[key] || new_hashes[key]
+          plat_key = "#{key}:platform"
+          sha256_for[plat_key] = new_hashes[plat_key] || existing[plat_key]
+        end
+
+        git_repos.each_value do |repo|
+          repo[:entries].each do |e|
+            sha256_for["#{e.name}/#{e.version}"] = repo[:sha256]
+          end
+        end
+
+        { sha256_for: sha256_for }
       end
 
       # ── Parallel prefetch ──────────────────────────────────────
@@ -510,238 +473,6 @@ module Onix
 
         File.write(File.join(dir, "#{project_name}.nix"), nix)
         UI.wrote "nix/#{project_name}.nix"
-      end
-
-      # ── Node prefetch ─────────────────────────────────────────
-
-      def prefetch_npm(packages, jobs, hashes, progress)
-        errors = []
-        mutex = Mutex.new
-        queue = Queue.new
-        packages.each { |p| queue << p }
-        jobs.times { queue << nil }
-
-        threads = jobs.times.map do
-          Thread.new do
-            while (e = queue.pop)
-              # npm tarball URL: <remote>/<name>/-/<basename>-<version>.tgz
-              basename = e.name.include?("/") ? e.name.split("/").last : e.name
-              url = "#{e.remote}/#{e.name}/-/#{basename}-#{e.version}.tgz"
-              sha256 = nix_prefetch_url(inject_credentials(url))
-
-              key = "#{e.name}/#{e.version}"
-              mutex.synchronize do
-                if sha256
-                  hashes[key] = sha256
-                  progress.advance
-                else
-                  errors << "#{e.name} #{e.version}: failed to prefetch"
-                  progress.advance(success: false)
-                end
-              end
-            end
-          end
-        end
-        threads.each(&:join)
-        errors
-      end
-
-      # ── Node nix writers ─────────────────────────────────────
-
-      def write_npm_nix(dir, name, entries, sha256_for)
-        nix = +"# #{name} — generated by onix. Do not edit.\n{\n"
-
-        entries.sort_by(&:version).each do |e|
-          sha256 = sha256_for["#{e.name}/#{e.version}"]
-          nix << "  #{nix_str e.version} = {\n"
-          nix << "    version = #{nix_str e.version};\n"
-
-          if e.source == "git"
-            nix << "    source = {\n"
-            nix << "      type = \"git\";\n"
-            nix << "      url = #{nix_str e.uri};\n"
-            nix << "      rev = #{nix_str e.rev};\n"
-            nix << "      sha256 = #{nix_str sha256};\n"
-            nix << "    };\n"
-            nix << "    subdir = #{nix_str e.subdir};\n" if e.subdir && e.subdir != "."
-          else
-            nix << "    source = {\n"
-            nix << "      type = \"tarball\";\n"
-            nix << "      remotes = [ #{nix_str e.remote} ];\n"
-            nix << "      sha256 = #{nix_str sha256};\n"
-            nix << "    };\n"
-          end
-
-          if e.bin && !e.bin.empty?
-            nix << "    bin = {\n"
-            e.bin.sort.each do |bin_name, bin_path|
-              nix << "      #{nix_str bin_name} = #{nix_str bin_path};\n"
-            end
-            nix << "    };\n"
-          end
-
-          nix << "    hasNative = true;\n" if e.has_native
-          nix << "  };\n"
-        end
-
-        nix << "}\n"
-        # Scoped packages: use flat filename with -- separator
-        safe_name = name.gsub("/", "--").gsub("@", "")
-        File.write(File.join(dir, "#{safe_name}.nix"), nix)
-      end
-
-      def write_node_project_nix(dir, project_name, entries, meta)
-        buildable = entries.reject { |e| e.source == "builtin" || e.source == "path" }
-
-        # Build a version index: name → [versions] (for multi-version lookup)
-        version_index = {}
-        buildable.each { |e| (version_index[e.name] ||= []) << e.version }
-
-        # Build dep graph: "name@version" → entry
-        entry_by_key = {}
-        buildable.each { |e| entry_by_key["#{e.name}@#{e.version}"] = e }
-
-        # Collect top-level packages (deduplicated by name, latest version)
-        top_level = {}
-        buildable.each { |e| top_level[e.name] = e }
-
-        nix = +"# #{project_name} — generated by onix. Do not edit.\n"
-        nix << "#\n"
-        nix << "# pnpm-style node_modules layout:\n"
-        nix << "#   node_modules/.pnpm/<name>@<version>/node_modules/<name>  ← package contents\n"
-        nix << "#   node_modules/.pnpm/<name>@<version>/node_modules/<dep>   ← symlink to dep's .pnpm entry\n"
-        nix << "#   node_modules/<name>                                      ← symlink to .pnpm entry\n"
-        nix << "#\n"
-        nix << "{ pkgs ? import <nixpkgs> {}, nodejs ? pkgs.nodejs_22 }:\n"
-        nix << "let\n"
-        nix << "  buildNpm = import ./build-npm.nix { inherit pkgs nodejs; };\n"
-        nix << "  buildPackageByName = name:\n"
-        nix << "    let\n"
-        nix << "      versions = import (./node + \"/\${name}.nix\");\n"
-        nix << "      version = builtins.head (builtins.attrNames versions);\n"
-        nix << "      spec = versions.\${version};\n"
-        nix << "    in buildNpm (spec // { pkgName = name; });\n"
-        nix << "  npmConfig = import ./npm-config.nix {\n"
-        nix << "    inherit pkgs nodejs;\n"
-        nix << "    overlayDir = ../overlays;\n"
-        nix << "    nodeDir = ./node;\n"
-        nix << "    buildPackageFn = buildPackageByName;\n"
-        nix << "  };\n"
-        nix << "\n"
-        nix << "  build = name: version:\n"
-        nix << "    let\n"
-        nix << "      safeName = builtins.replaceStrings [\"/\" \"@\"] [\"--\" \"\"] name;\n"
-        nix << "      versions = import (./node + \"/\${safeName}.nix\");\n"
-        nix << "      spec = versions.\${version};\n"
-        nix << "      config = npmConfig.\${name} or {};\n"
-        nix << "    in buildNpm (spec // {\n"
-        nix << "      pkgName = name;\n"
-        nix << "      hasNative = (spec.hasNative or false) || (config ? deps && config.deps != []);\n"
-        nix << "      nativeBuildInputs = config.deps or [];\n"
-        nix << "      buildFlags = config.buildFlags or \"\";\n"
-        nix << "      beforeBuild = config.beforeBuild or \"\";\n"
-        nix << "      afterBuild = config.afterBuild or \"\";\n"
-        nix << "    } // (if config ? buildPhase then { inherit (config) buildPhase; } else {})\n"
-        nix << "      // (if config ? postInstall then { inherit (config) postInstall; } else {})\n"
-        nix << "      // (if config ? skip then { inherit (config) skip; } else {})\n"
-        nix << "      // (if config ? buildPackages then { inherit (config) buildPackages; } else {}));\n"
-        nix << "\n"
-        nix << "  # Per-package derivations (used by .pnpm/ entries)\n"
-        nix << "  packages = {\n"
-        buildable.sort_by { |e| "#{e.name}@#{e.version}" }.uniq { |e| "#{e.name}@#{e.version}" }.each do |e|
-          key = nix_key("#{e.name}@#{e.version}")
-          nix << "    #{key} = build #{nix_str e.name} #{nix_str e.version};\n"
-        end
-        nix << "  };\n"
-
-        # ── Generate pnpm layout shell commands ───────────────────
-        pnpm_cmds = []
-        bin_cmds = []
-
-        buildable.sort_by { |e| "#{e.name}@#{e.version}" }.uniq { |e| "#{e.name}@#{e.version}" }.each do |e|
-          escaped = escape_pnpm_path("#{e.name}@#{e.version}")
-          pkg_key = nix_key("#{e.name}@#{e.version}")
-          entry_base = ".pnpm/#{escaped}/node_modules"
-
-          # Create .pnpm entry: copy package contents from nix store
-          if e.name.include?("/")
-            scope = e.name.split("/").first
-            pnpm_cmds << "mkdir -p $out/node_modules/#{entry_base}/#{scope}"
-          else
-            pnpm_cmds << "mkdir -p $out/node_modules/#{entry_base}"
-          end
-          pnpm_cmds << "cp -r ${packages.#{pkg_key}}/node_modules/#{e.name}/. $out/node_modules/#{entry_base}/#{e.name}"
-
-          # Create dep symlinks within .pnpm entry
-          deps = e.deps.is_a?(Hash) ? e.deps : {}
-          deps.each do |dep_name, dep_version|
-            # Only create symlink if the dep exists in our package set
-            dep_key = "#{dep_name}@#{dep_version}"
-            next unless entry_by_key.key?(dep_key)
-
-            dep_escaped = escape_pnpm_path(dep_key)
-            rel_target = "../../#{dep_escaped}/node_modules/#{dep_name}"
-
-            if dep_name.include?("/")
-              dep_scope = dep_name.split("/").first
-              pnpm_cmds << "mkdir -p $out/node_modules/#{entry_base}/#{dep_scope}"
-            end
-            pnpm_cmds << "ln -sf #{rel_target} $out/node_modules/#{entry_base}/#{dep_name}"
-          end
-
-          # Collect bin entries (detected at build time from package.json)
-          bin_cmds << "if [ -d ${packages.#{pkg_key}}/node_modules/.bin ]; then"
-          bin_cmds << "  for b in ${packages.#{pkg_key}}/node_modules/.bin/*; do"
-          bin_cmds << "    bname=$(basename $b)"
-          bin_cmds << "    ln -sf $out/node_modules/#{entry_base}/#{e.name}/$(readlink $b | sed \"s|.*node_modules/#{e.name}/||\" ) $out/node_modules/.bin/$bname 2>/dev/null || true"
-          bin_cmds << "  done"
-          bin_cmds << "fi"
-        end
-
-        # Top-level symlinks (from node_modules/<name> → .pnpm/<name>@<ver>/node_modules/<name>)
-        top_cmds = []
-        top_level.values.sort_by(&:name).each do |e|
-          escaped = escape_pnpm_path("#{e.name}@#{e.version}")
-          if e.name.include?("/")
-            scope = e.name.split("/").first
-            top_cmds << "mkdir -p $out/node_modules/#{scope}"
-            # Scoped packages need ../ to escape the scope directory
-            top_cmds << "ln -sf ../.pnpm/#{escaped}/node_modules/#{e.name} $out/node_modules/#{e.name}"
-          else
-            top_cmds << "ln -sf .pnpm/#{escaped}/node_modules/#{e.name} $out/node_modules/#{e.name}"
-          end
-        end
-
-        nix << "\n"
-        nix << "  # pnpm-style .pnpm/ virtual store + top-level symlinks\n"
-        nix << "  nodeModules = pkgs.runCommand #{nix_str "#{project_name}-node-modules"} {} ''\n"
-        nix << "    mkdir -p $out/node_modules/.pnpm $out/node_modules/.bin\n"
-        pnpm_cmds.each { |cmd| nix << "    #{cmd}\n" }
-        nix << "\n    # top-level symlinks\n"
-        top_cmds.each { |cmd| nix << "    #{cmd}\n" }
-        nix << "\n    # bin links\n"
-        bin_cmds.each { |cmd| nix << "    #{cmd}\n" }
-        nix << "  '';\n"
-
-        nix << "in packages // {\n"
-        nix << "  inherit nodeModules;\n"
-        nix << "  devShell = { buildInputs ? [], shellHook ? \"\", ... }@args:\n"
-        nix << "    pkgs.mkShell (builtins.removeAttrs args [\"buildInputs\" \"shellHook\"] // {\n"
-        nix << "      name = #{nix_str "#{project_name}-devshell"};\n"
-        nix << "      buildInputs = [ nodejs ] ++ buildInputs;\n"
-        nix << "      shellHook = ''\n"
-        nix << "        export NODE_PATH=\"${nodeModules}/node_modules\"\n"
-        nix << "      '' + shellHook;\n"
-        nix << "    });\n"
-        nix << "}\n"
-
-        File.write(File.join(dir, "#{project_name}.nix"), nix)
-        UI.wrote "nix/#{project_name}.nix"
-      end
-
-      # Escape a pnpm snapshot key for filesystem use (matches pnpm behavior).
-      def escape_pnpm_path(key)
-        key.gsub("/", "+").gsub(/[()#:\\*?"<>|]/, "_")
       end
 
       def copy_support_files(dir, has_node: false)

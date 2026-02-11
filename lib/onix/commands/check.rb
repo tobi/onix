@@ -73,12 +73,8 @@ module Onix
       private
 
       def nix_file_for(entry)
-        if entry.installer == "node"
-          safe_name = entry.name.gsub("/", "--").gsub("@", "")
-          File.join(@project.root, "nix", "node", "#{safe_name}.nix")
-        else
-          File.join(@project.ruby_dir, "#{entry.name}.nix")
-        end
+        return File.join(@project.ruby_dir, "#{entry.name}.nix") unless entry.installer == "node"
+        File.join(@project.root, "nix", "node", "#{entry.safe_nix_filename}.nix")
       end
 
       # ── nix-eval ─────────────────────────────────────────────────

@@ -81,17 +81,16 @@ module Onix
       end
 
       # Detect whether a project uses ruby (bundlePath) or node (nodeModules)
-      # by reading the first package entry (line 2, after the meta header).
+      # by reading the meta header (line 1) and checking for pnpm/node fields.
       def project_build_attr(name)
         jsonl = File.join(@project.packagesets_dir, "#{name}.jsonl")
-        if File.exist?(jsonl)
-          first_entry = File.foreach(jsonl).drop(1).first&.strip
-          if first_entry
-            data = JSON.parse(first_entry, symbolize_names: true) rescue {}
-            return "nodeModules" if data[:installer] == "node"
-          end
-        end
-        "bundlePath"
+        return "bundlePath" unless File.exist?(jsonl)
+
+        meta_line = File.foreach(jsonl).first&.strip
+        return "bundlePath" unless meta_line
+
+        meta = JSON.parse(meta_line, symbolize_names: true) rescue {}
+        (meta[:pnpm] || meta[:node]) ? "nodeModules" : "bundlePath"
       end
 
       def run_nix(cmd)

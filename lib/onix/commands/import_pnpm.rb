@@ -61,85 +61,9 @@ module Onix
 
         [packages_section, snapshots_section].each do |section|
           section.each do |key, entry|
-            resolution = entry.is_a?(Hash) ? (entry["resolution"] || {}) : {}
-
-            # Skip world zone dependencies
-            next if resolution["type"]&.start_with?("custom:")
-
-            clean = strip_peers(key)
-            parsed = parse_spec(clean)
-            next unless parsed
-            next if world_dep_names.include?(parsed[:name])
-
-            spec_key = "#{parsed[:name]}@#{parsed[:version]}"
-            next if seen.include?(spec_key)
-            seen.add(spec_key)
-
-            # Git-sourced packages
-            if resolution["type"] == "git" && resolution["repo"] && resolution["commit"]
-              git_entries << {
-                name: parsed[:name],
-                version: parsed[:version],
-                url: resolution["repo"],
-                rev: resolution["commit"],
-              }
-              next
-            end
-
-            # Skip non-version specs (file:, link:, workspace:, etc.)
-            next if parsed[:version].match?(/^(file:|link:|workspace:|deprecated:)/)
-            next if parsed[:version].include?(":")
-
-            # Extract metadata from packages section if available
-            pkg_entry = packages_section[spec_key] || packages_section[key]
-            pkg_meta = pkg_entry.is_a?(Hash) ? pkg_entry : {}
-
-            # Detect native addon (binding.gyp, gypfile, install scripts)
-            has_native = pkg_meta["hasBin"] == false && (
-              pkg_meta.dig("scripts", "install")&.include?("node-gyp") ||
-              pkg_meta["gypfile"] == true
-            )
-
-            # Platform constraints
-            os_list = Array(pkg_meta["os"]).map(&:to_s) if pkg_meta["os"]
-            cpu_list = Array(pkg_meta["cpu"]).map(&:to_s) if pkg_meta["cpu"]
-            libc_list = Array(pkg_meta["libc"]).map(&:to_s) if pkg_meta["libc"]
-
-            # Bin entries
-            bin_entries = case pkg_meta["bin"]
-            when String
-              short_name = parsed[:name].split("/").last
-              { short_name => pkg_meta["bin"] }
-            when Hash
-              pkg_meta["bin"]
-            else
-              {}
-            end
-
-            # Dependencies — pull versioned deps from snapshots section.
-            # Snapshots have exact versions: { "body-parser" => "1.20.3" }
-            # We store as a hash {name => version} so the dep graph is preserved.
-            snap_entry = snapshots_section[spec_key] || snapshots_section[key]
-            snap_data = snap_entry.is_a?(Hash) ? snap_entry : {}
-            versioned_deps = {}
-            %w[dependencies optionalDependencies].each do |section_name|
-              dep_section = snap_data[section_name]
-              next unless dep_section.is_a?(Hash)
-              dep_section.each { |dep_name, dep_ver| versioned_deps[dep_name] = dep_ver.to_s }
-            end
-
-            entries << Packageset::Entry.new(
-              installer: "node",
-              name: parsed[:name],
-              version: parsed[:version],
-              source: "npm",
-              remote: "https://registry.npmjs.org",
-              deps: versioned_deps,
-              bin: bin_entries,
-              has_native: has_native || false,
-              os: os_list || [],
-              cpu: cpu_list || [],
-              libc: libc_list || [],
+            process_lockfile_entry(
+              key, entry, packages_section, snapshots_section,
+              world_dep_names, seen, entries, git_entries
             )
           end
         end
@@ -178,6 +102,104 @@ module Onix
 
       private
 
+      def process_lockfile_entry(key, entry, packages_section, snapshots_section, world_dep_names, seen, entries, git_entries)
+        resolution = entry.is_a?(Hash) ? (entry["resolution"] || {}) : {}
+
+        # Skip world zone dependencies
+        return if resolution["type"]&.start_with?("custom:")
+
+        clean = strip_peers(key)
+        parsed = parse_spec(clean)
+        return unless parsed
+        return if world_dep_names.include?(parsed[:name])
+
+        spec_key = "#{parsed[:name]}@#{parsed[:version]}"
+        return if seen.include?(spec_key)
+        seen.add(spec_key)
+
+        return if handle_git_entry(parsed, resolution, git_entries)
+        return if skip_non_version_spec?(parsed[:version])
+
+        pkg_meta = extract_package_metadata(spec_key, key, packages_section)
+        snap_data = extract_snapshot_data(spec_key, key, snapshots_section)
+        entries << build_npm_entry(parsed, pkg_meta, snap_data)
+      end
+
+      def handle_git_entry(parsed, resolution, git_entries)
+        return false unless resolution["type"] == "git" && resolution["repo"] && resolution["commit"]
+
+        git_entries << {
+          name: parsed[:name],
+          version: parsed[:version],
+          url: resolution["repo"],
+          rev: resolution["commit"],
+        }
+        true
+      end
+
+      def skip_non_version_spec?(version)
+        version.match?(/^(file:|link:|workspace:|deprecated:)/) || version.include?(":")
+      end
+
+      def extract_package_metadata(spec_key, key, packages_section)
+        pkg_entry = packages_section[spec_key] || packages_section[key]
+        pkg_entry.is_a?(Hash) ? pkg_entry : {}
+      end
+
+      def extract_snapshot_data(spec_key, key, snapshots_section)
+        snap_entry = snapshots_section[spec_key] || snapshots_section[key]
+        snap_entry.is_a?(Hash) ? snap_entry : {}
+      end
+
+      def build_npm_entry(parsed, pkg_meta, snap_data)
+        Packageset::Entry.new(
+          installer: "node",
+          name: parsed[:name],
+          version: parsed[:version],
+          source: "npm",
+          remote: "https://registry.npmjs.org",
+          deps: extract_versioned_deps(snap_data),
+          bin: extract_bin_entries(parsed[:name], pkg_meta),
+          has_native: detect_native_addon(pkg_meta),
+          os: extract_platform_list(pkg_meta, "os"),
+          cpu: extract_platform_list(pkg_meta, "cpu"),
+          libc: extract_platform_list(pkg_meta, "libc"),
+        )
+      end
+
+      def extract_versioned_deps(snap_data)
+        versioned_deps = {}
+        %w[dependencies optionalDependencies].each do |section_name|
+          dep_section = snap_data[section_name]
+          next unless dep_section.is_a?(Hash)
+          dep_section.each { |dep_name, dep_ver| versioned_deps[dep_name] = dep_ver.to_s }
+        end
+        versioned_deps
+      end
+
+      def extract_bin_entries(pkg_name, pkg_meta)
+        case pkg_meta["bin"]
+        when String
+          short_name = pkg_name.split("/").last
+          { short_name => pkg_meta["bin"] }
+        when Hash
+          pkg_meta["bin"]
+        else
+          {}
+        end
+      end
+
+      def detect_native_addon(pkg_meta)
+        (pkg_meta["hasBin"] == false && (
+          pkg_meta.dig("scripts", "install")&.include?("node-gyp") ||
+          pkg_meta["gypfile"] == true
+        )) || false
+      end
+
+      def extract_platform_list(pkg_meta, key)
+        pkg_meta[key] ? Array(pkg_meta[key]).map(&:to_s) : []
+      end
+
       def resolve_lockfile(arg, name_override)
         path = File.expand_path(arg)
 
@@ -197,7 +219,11 @@ module Onix
         [lockfile, project]
       end
 
-      # Parse "name@version" or "@scope/name@version", stripping peer suffixes.
+      # Parse a pnpm spec key into {name:, version:}.
+      # Examples:
+      #   "react@19.1.0"         → {name: "react", version: "19.1.0"}
+      #   "@babel/core@7.26.0"   → {name: "@babel/core", version: "7.26.0"}
+      # Returns nil if the spec cannot be parsed.
       def parse_spec(spec)
         return nil unless spec.include?("@")
 
