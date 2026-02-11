@@ -71,11 +71,54 @@ for completeness but skipped during nix generation.
 Stdlib gems are built into the Ruby binary. They're skipped during nix
 generation — Ruby already provides them.
 
+## Node source types
+
+### `npm` — from an npm registry
+
+```json
+{"installer":"node","name":"express","version":"4.21.2","source":"npm","remote":"https://registry.npmjs.org","deps":{"body-parser":"1.20.3","cookie":"0.7.1"}}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `remote` | yes | npm registry URL |
+| `deps` | no | Versioned dependencies `{name: version}` (from pnpm snapshots) |
+| `bin` | no | Executable mappings `{"cli": "./bin/cli.js"}` |
+| `has_native` | no | Has node-gyp / NAPI native addon |
+| `os` | no | Platform OS constraints `["darwin", "linux"]` |
+| `cpu` | no | Platform CPU constraints `["x64", "arm64"]` |
+| `libc` | no | Platform libc constraints `["glibc", "musl"]` |
+
+### `git` — from a git repository (node)
+
+```json
+{"installer":"node","name":"my-pkg","version":"1.0.0","source":"git","uri":"https://github.com/org/repo.git","rev":"abc123..."}
+```
+
+Same fields as Ruby git source (`uri`, `rev`, `branch`, `tag`, `subdir`, `submodules`).
+
 ## The `installer` field
 
-Every entry has `"installer":"ruby"`. This identifies which build system
-handles the package. The generate step uses it to select the right builder
-(`build-gem.nix` for Ruby).
+Every entry has an `installer` field: `"ruby"` or `"node"`. This identifies
+which build system handles the package. The generate step uses it to select
+the right builder (`build-gem.nix` for Ruby, `build-npm.nix` for Node).
+
+### Key difference: `deps` format
+
+- **Ruby:** `deps` is an array of names: `["racc", "mini_portile2"]`
+- **Node:** `deps` is a hash of name→version: `{"body-parser": "1.20.3", "cookie": "0.7.1"}`
+
+Node deps include versions because pnpm supports multiple versions of the
+same package. The versioned dep graph is used to create the `.pnpm/` virtual
+store layout with correctly targeted symlinks.
+
+## Node metadata line
+
+```json
+{"_meta":true,"pnpm":"9.0","platforms":["arm64-darwin","x64-linux"]}
+```
+
+The `node` and `pnpm` fields replace `ruby` and `bundler` in the metadata line.
 
 ## Design principles
 

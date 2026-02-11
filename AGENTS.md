@@ -2,6 +2,8 @@
 
 ## Architecture
 
+### Ruby (gems)
+
 ```
 Gemfile.lock
     ↓
@@ -12,6 +14,27 @@ onix generate         prefetch hashes → nix/ruby/<name>.nix (per gem)
     ↓
 onix build            nix-build → /nix/store/<hash>-<gem>-<ver>/
 ```
+
+### Node (pnpm)
+
+```
+pnpm-lock.yaml
+    ↓
+onix import-pnpm      parse lockfile → packagesets/<name>.jsonl (installer:"node")
+    ↓
+onix generate         prefetch hashes → nix/node/<name>.nix (per package)
+                                      → nix/<project>.nix (pnpm .pnpm/ layout)
+    ↓
+onix build            nix-build → /nix/store/<hash>-<pkg>-<ver>/
+```
+
+### Key differences from Ruby
+
+- **Versioned deps.** Node JSONL entries store deps as `{"body-parser":"1.20.3"}` (hash with versions), not `["body-parser"]` (array of names). This preserves the full dependency graph for pnpm layout.
+- **pnpm .pnpm/ layout.** The generated `nix/<project>.nix` uses `pkgs.runCommand` to create a pnpm-compatible virtual store with `.pnpm/<name>@<version>/node_modules/` entries and relative symlinks between deps. This handles multiple versions of the same package correctly.
+- **Bin auto-detection.** `build-npm.nix` reads `package.json` at build time to discover and link bin entries — no need to specify them in the packageset.
+- **Platform packages.** Platform-specific packages (e.g. `@esbuild/darwin-arm64`) have `os`/`cpu` constraints in the JSONL. All platform variants are prefetched and built.
+- **Overlay signature.** Node overlays use `{ pkgs, nodejs, buildPackage, ... }:` instead of `{ pkgs, ruby, buildGem, ... }:`.
 
 Everything under `nix/` is generated. Never hand-edit — run `onix generate` to regenerate.
 
