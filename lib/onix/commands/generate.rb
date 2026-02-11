@@ -394,7 +394,9 @@ module Onix
       end
 
       def nix_eval_fetchgit(url, rev)
-        expr = "(builtins.fetchGit { url = \"#{url}\"; rev = \"#{rev}\"; }).narHash"
+        safe_url = url.gsub('\\', '\\\\\\\\').gsub('"', '\\"').gsub('$', '\\$')
+        safe_rev = rev.gsub('\\', '\\\\\\\\').gsub('"', '\\"').gsub('$', '\\$')
+        expr = "(builtins.fetchGit { url = \"#{safe_url}\"; rev = \"#{safe_rev}\"; }).narHash"
         out, status = Open3.capture2("nix", "eval", "--impure", "--raw", "--expr", expr,
                                      err: File::NULL)
         status.success? ? out.strip : nil
@@ -757,7 +759,12 @@ module Onix
       end
 
       def nix_str(s)
-        "\"#{s}\""
+        escaped = s.to_s
+          .gsub('\\', '\\\\')
+          .gsub('"', '\\"')
+          .gsub('$', '\\$')
+          .gsub("\n", '\\n')
+        "\"#{escaped}\""
       end
     end
   end
