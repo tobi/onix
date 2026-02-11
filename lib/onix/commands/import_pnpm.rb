@@ -15,18 +15,20 @@ module Onix
       def run(argv)
         @project = Project.new
         name_override = nil
+        node_version = nil
 
         while argv.first&.start_with?("-")
           case argv.shift
           when "--name", "-n" then name_override = argv.shift
+          when "--node-version" then node_version = argv.shift
           when "--help", "-h"
-            $stderr.puts "Usage: onix import-pnpm [--name NAME] <path/to/pnpm-lock.yaml>"
+            $stderr.puts "Usage: onix import-pnpm [--name NAME] [--node-version VER] <path/to/pnpm-lock.yaml>"
             exit 0
           end
         end
 
         if argv.empty?
-          $stderr.puts "Usage: onix import-pnpm <path/to/pnpm-lock.yaml>"
+          $stderr.puts "Usage: onix import-pnpm [--name NAME] [--node-version VER] <path/to/pnpm-lock.yaml>"
           exit 1
         end
 
@@ -36,6 +38,17 @@ module Onix
         UI.info lockfile
 
         lock = YAML.safe_load(File.read(lockfile), permitted_classes: [Symbol])
+
+        # Validate lockfile version — we require v9.0+ (pnpm 9/10/11)
+        lf_version = lock["lockfileVersion"]&.to_s
+        lf_major = lf_version&.split(".")&.first&.to_i || 0
+        if lf_major < 9
+          UI.fail "Unsupported pnpm lockfile version: #{lf_version || "unknown"}"
+          UI.info "onix requires pnpm-lock.yaml v9.0+ (pnpm >= 9.0)"
+          UI.info "Upgrade with: pnpm install (using pnpm >= 9.0)"
+          exit 1
+        end
+
         packages_section = lock["packages"] || {}
         snapshots_section = lock["snapshots"] || {}
 
@@ -88,6 +101,7 @@ module Onix
         # ── Write JSONL packageset ────────────────────────────────────
 
         meta = Packageset::Meta.new(
+          node: node_version,
           pnpm: lock["lockfileVersion"]&.to_s,
           platforms: detect_platforms(entries),
         )

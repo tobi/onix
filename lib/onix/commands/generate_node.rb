@@ -105,7 +105,13 @@ module Onix
         nix << "#   node_modules/.pnpm/<name>@<version>/node_modules/<dep>   <- symlink to dep's .pnpm entry\n"
         nix << "#   node_modules/<name>                                      <- symlink to .pnpm entry\n"
         nix << "#\n"
-        nix << "{ pkgs ? import <nixpkgs> {}, nodejs ? pkgs.nodejs_22 }:\n"
+        # Use node version from meta if available, otherwise default to nodejs_22
+        nodejs_attr = "nodejs_22"
+        if meta&.node
+          major = meta.node.to_s.split(".").first
+          nodejs_attr = "nodejs_#{major}" if major.to_i >= 18
+        end
+        nix << "{ pkgs ? import <nixpkgs> {}, nodejs ? pkgs.#{nodejs_attr} }:\n"
         nix << "let\n"
         nix << "  buildNpm = import ./build-npm.nix { inherit pkgs nodejs; };\n"
         nix << "  buildPackageByName = name:\n"
