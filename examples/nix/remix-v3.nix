@@ -72,88 +72,88 @@ let
   # pnpm-style .pnpm/ virtual store + top-level symlinks
   nodeModules = pkgs.runCommand "remix-v3-node-modules" {} ''
     mkdir -p $out/node_modules/.pnpm $out/node_modules/.bin
-    mkdir -p $out/node_modules/.pnpm/@edgefirst-dev+data@0.0.4/node_modules/@edgefirst-dev
-    cp -r ${packages."@edgefirst-dev/data@0.0.4"}/node_modules/@edgefirst-dev/data/. $out/node_modules/.pnpm/@edgefirst-dev+data@0.0.4/node_modules/@edgefirst-dev/data
-    mkdir -p $out/node_modules/.pnpm/@mjackson+headers@0.10.0/node_modules/@mjackson
-    cp -r ${packages."@mjackson/headers@0.10.0"}/node_modules/@mjackson/headers/. $out/node_modules/.pnpm/@mjackson+headers@0.10.0/node_modules/@mjackson/headers
-    mkdir -p $out/node_modules/.pnpm/@oslojs+asn1@1.0.0/node_modules/@oslojs
-    cp -r ${packages."@oslojs/asn1@1.0.0"}/node_modules/@oslojs/asn1/. $out/node_modules/.pnpm/@oslojs+asn1@1.0.0/node_modules/@oslojs/asn1
+    mkdir -p $out/node_modules/.pnpm/@edgefirst-dev+data@0.0.4/node_modules/@edgefirst-dev/data
+    cp -r --reflink=auto ${packages."@edgefirst-dev/data@0.0.4"}/node_modules/@edgefirst-dev/data/. $out/node_modules/.pnpm/@edgefirst-dev+data@0.0.4/node_modules/@edgefirst-dev/data/
+    mkdir -p $out/node_modules/.pnpm/@mjackson+headers@0.10.0/node_modules/@mjackson/headers
+    cp -r --reflink=auto ${packages."@mjackson/headers@0.10.0"}/node_modules/@mjackson/headers/. $out/node_modules/.pnpm/@mjackson+headers@0.10.0/node_modules/@mjackson/headers/
+    mkdir -p $out/node_modules/.pnpm/@oslojs+asn1@1.0.0/node_modules/@oslojs/asn1
+    cp -r --reflink=auto ${packages."@oslojs/asn1@1.0.0"}/node_modules/@oslojs/asn1/. $out/node_modules/.pnpm/@oslojs+asn1@1.0.0/node_modules/@oslojs/asn1/
     mkdir -p $out/node_modules/.pnpm/@oslojs+asn1@1.0.0/node_modules/@oslojs
     ln -sf ../../@oslojs+binary@1.0.0/node_modules/@oslojs/binary $out/node_modules/.pnpm/@oslojs+asn1@1.0.0/node_modules/@oslojs/binary
-    mkdir -p $out/node_modules/.pnpm/@oslojs+binary@1.0.0/node_modules/@oslojs
-    cp -r ${packages."@oslojs/binary@1.0.0"}/node_modules/@oslojs/binary/. $out/node_modules/.pnpm/@oslojs+binary@1.0.0/node_modules/@oslojs/binary
-    mkdir -p $out/node_modules/.pnpm/@oslojs+crypto@1.0.1/node_modules/@oslojs
-    cp -r ${packages."@oslojs/crypto@1.0.1"}/node_modules/@oslojs/crypto/. $out/node_modules/.pnpm/@oslojs+crypto@1.0.1/node_modules/@oslojs/crypto
+    mkdir -p $out/node_modules/.pnpm/@oslojs+binary@1.0.0/node_modules/@oslojs/binary
+    cp -r --reflink=auto ${packages."@oslojs/binary@1.0.0"}/node_modules/@oslojs/binary/. $out/node_modules/.pnpm/@oslojs+binary@1.0.0/node_modules/@oslojs/binary/
+    mkdir -p $out/node_modules/.pnpm/@oslojs+crypto@1.0.1/node_modules/@oslojs/crypto
+    cp -r --reflink=auto ${packages."@oslojs/crypto@1.0.1"}/node_modules/@oslojs/crypto/. $out/node_modules/.pnpm/@oslojs+crypto@1.0.1/node_modules/@oslojs/crypto/
     mkdir -p $out/node_modules/.pnpm/@oslojs+crypto@1.0.1/node_modules/@oslojs
     ln -sf ../../@oslojs+asn1@1.0.0/node_modules/@oslojs/asn1 $out/node_modules/.pnpm/@oslojs+crypto@1.0.1/node_modules/@oslojs/asn1
     mkdir -p $out/node_modules/.pnpm/@oslojs+crypto@1.0.1/node_modules/@oslojs
     ln -sf ../../@oslojs+binary@1.0.0/node_modules/@oslojs/binary $out/node_modules/.pnpm/@oslojs+crypto@1.0.1/node_modules/@oslojs/binary
-    mkdir -p $out/node_modules/.pnpm/@oslojs+encoding@0.4.1/node_modules/@oslojs
-    cp -r ${packages."@oslojs/encoding@0.4.1"}/node_modules/@oslojs/encoding/. $out/node_modules/.pnpm/@oslojs+encoding@0.4.1/node_modules/@oslojs/encoding
-    mkdir -p $out/node_modules/.pnpm/@oslojs+encoding@1.1.0/node_modules/@oslojs
-    cp -r ${packages."@oslojs/encoding@1.1.0"}/node_modules/@oslojs/encoding/. $out/node_modules/.pnpm/@oslojs+encoding@1.1.0/node_modules/@oslojs/encoding
-    mkdir -p $out/node_modules/.pnpm/@oslojs+jwt@0.2.0/node_modules/@oslojs
-    cp -r ${packages."@oslojs/jwt@0.2.0"}/node_modules/@oslojs/jwt/. $out/node_modules/.pnpm/@oslojs+jwt@0.2.0/node_modules/@oslojs/jwt
+    mkdir -p $out/node_modules/.pnpm/@oslojs+encoding@0.4.1/node_modules/@oslojs/encoding
+    cp -r --reflink=auto ${packages."@oslojs/encoding@0.4.1"}/node_modules/@oslojs/encoding/. $out/node_modules/.pnpm/@oslojs+encoding@0.4.1/node_modules/@oslojs/encoding/
+    mkdir -p $out/node_modules/.pnpm/@oslojs+encoding@1.1.0/node_modules/@oslojs/encoding
+    cp -r --reflink=auto ${packages."@oslojs/encoding@1.1.0"}/node_modules/@oslojs/encoding/. $out/node_modules/.pnpm/@oslojs+encoding@1.1.0/node_modules/@oslojs/encoding/
+    mkdir -p $out/node_modules/.pnpm/@oslojs+jwt@0.2.0/node_modules/@oslojs/jwt
+    cp -r --reflink=auto ${packages."@oslojs/jwt@0.2.0"}/node_modules/@oslojs/jwt/. $out/node_modules/.pnpm/@oslojs+jwt@0.2.0/node_modules/@oslojs/jwt/
     mkdir -p $out/node_modules/.pnpm/@oslojs+jwt@0.2.0/node_modules/@oslojs
     ln -sf ../../@oslojs+encoding@0.4.1/node_modules/@oslojs/encoding $out/node_modules/.pnpm/@oslojs+jwt@0.2.0/node_modules/@oslojs/encoding
-    mkdir -p $out/node_modules/.pnpm/@remix-run+dom@0.0.0-experimental-remix-jam.6/node_modules/@remix-run
-    cp -r ${packages."@remix-run/dom@0.0.0-experimental-remix-jam.6"}/node_modules/@remix-run/dom/. $out/node_modules/.pnpm/@remix-run+dom@0.0.0-experimental-remix-jam.6/node_modules/@remix-run/dom
+    mkdir -p $out/node_modules/.pnpm/@remix-run+dom@0.0.0-experimental-remix-jam.6/node_modules/@remix-run/dom
+    cp -r --reflink=auto ${packages."@remix-run/dom@0.0.0-experimental-remix-jam.6"}/node_modules/@remix-run/dom/. $out/node_modules/.pnpm/@remix-run+dom@0.0.0-experimental-remix-jam.6/node_modules/@remix-run/dom/
     mkdir -p $out/node_modules/.pnpm/@remix-run+dom@0.0.0-experimental-remix-jam.6/node_modules/@remix-run
     ln -sf ../../@remix-run+events@0.0.0-experimental-remix-jam.5/node_modules/@remix-run/events $out/node_modules/.pnpm/@remix-run+dom@0.0.0-experimental-remix-jam.6/node_modules/@remix-run/events
     mkdir -p $out/node_modules/.pnpm/@remix-run+dom@0.0.0-experimental-remix-jam.6/node_modules/@remix-run
     ln -sf ../../@remix-run+style@0.0.0-experimental-remix-jam.5/node_modules/@remix-run/style $out/node_modules/.pnpm/@remix-run+dom@0.0.0-experimental-remix-jam.6/node_modules/@remix-run/style
-    mkdir -p $out/node_modules/.pnpm/@remix-run+events@0.0.0-experimental-remix-jam.5/node_modules/@remix-run
-    cp -r ${packages."@remix-run/events@0.0.0-experimental-remix-jam.5"}/node_modules/@remix-run/events/. $out/node_modules/.pnpm/@remix-run+events@0.0.0-experimental-remix-jam.5/node_modules/@remix-run/events
-    mkdir -p $out/node_modules/.pnpm/@remix-run+fetch-router@0.6.0/node_modules/@remix-run
-    cp -r ${packages."@remix-run/fetch-router@0.6.0"}/node_modules/@remix-run/fetch-router/. $out/node_modules/.pnpm/@remix-run+fetch-router@0.6.0/node_modules/@remix-run/fetch-router
+    mkdir -p $out/node_modules/.pnpm/@remix-run+events@0.0.0-experimental-remix-jam.5/node_modules/@remix-run/events
+    cp -r --reflink=auto ${packages."@remix-run/events@0.0.0-experimental-remix-jam.5"}/node_modules/@remix-run/events/. $out/node_modules/.pnpm/@remix-run+events@0.0.0-experimental-remix-jam.5/node_modules/@remix-run/events/
+    mkdir -p $out/node_modules/.pnpm/@remix-run+fetch-router@0.6.0/node_modules/@remix-run/fetch-router
+    cp -r --reflink=auto ${packages."@remix-run/fetch-router@0.6.0"}/node_modules/@remix-run/fetch-router/. $out/node_modules/.pnpm/@remix-run+fetch-router@0.6.0/node_modules/@remix-run/fetch-router/
     mkdir -p $out/node_modules/.pnpm/@remix-run+fetch-router@0.6.0/node_modules/@remix-run
     ln -sf ../../@remix-run+form-data-parser@0.11.0/node_modules/@remix-run/form-data-parser $out/node_modules/.pnpm/@remix-run+fetch-router@0.6.0/node_modules/@remix-run/form-data-parser
     mkdir -p $out/node_modules/.pnpm/@remix-run+fetch-router@0.6.0/node_modules/@remix-run
     ln -sf ../../@remix-run+route-pattern@0.14.0/node_modules/@remix-run/route-pattern $out/node_modules/.pnpm/@remix-run+fetch-router@0.6.0/node_modules/@remix-run/route-pattern
-    mkdir -p $out/node_modules/.pnpm/@remix-run+form-data-parser@0.11.0/node_modules/@remix-run
-    cp -r ${packages."@remix-run/form-data-parser@0.11.0"}/node_modules/@remix-run/form-data-parser/. $out/node_modules/.pnpm/@remix-run+form-data-parser@0.11.0/node_modules/@remix-run/form-data-parser
+    mkdir -p $out/node_modules/.pnpm/@remix-run+form-data-parser@0.11.0/node_modules/@remix-run/form-data-parser
+    cp -r --reflink=auto ${packages."@remix-run/form-data-parser@0.11.0"}/node_modules/@remix-run/form-data-parser/. $out/node_modules/.pnpm/@remix-run+form-data-parser@0.11.0/node_modules/@remix-run/form-data-parser/
     mkdir -p $out/node_modules/.pnpm/@remix-run+form-data-parser@0.11.0/node_modules/@remix-run
     ln -sf ../../@remix-run+multipart-parser@0.11.0/node_modules/@remix-run/multipart-parser $out/node_modules/.pnpm/@remix-run+form-data-parser@0.11.0/node_modules/@remix-run/multipart-parser
-    mkdir -p $out/node_modules/.pnpm/@remix-run+headers@0.12.0/node_modules/@remix-run
-    cp -r ${packages."@remix-run/headers@0.12.0"}/node_modules/@remix-run/headers/. $out/node_modules/.pnpm/@remix-run+headers@0.12.0/node_modules/@remix-run/headers
-    mkdir -p $out/node_modules/.pnpm/@remix-run+multipart-parser@0.11.0/node_modules/@remix-run
-    cp -r ${packages."@remix-run/multipart-parser@0.11.0"}/node_modules/@remix-run/multipart-parser/. $out/node_modules/.pnpm/@remix-run+multipart-parser@0.11.0/node_modules/@remix-run/multipart-parser
+    mkdir -p $out/node_modules/.pnpm/@remix-run+headers@0.12.0/node_modules/@remix-run/headers
+    cp -r --reflink=auto ${packages."@remix-run/headers@0.12.0"}/node_modules/@remix-run/headers/. $out/node_modules/.pnpm/@remix-run+headers@0.12.0/node_modules/@remix-run/headers/
+    mkdir -p $out/node_modules/.pnpm/@remix-run+multipart-parser@0.11.0/node_modules/@remix-run/multipart-parser
+    cp -r --reflink=auto ${packages."@remix-run/multipart-parser@0.11.0"}/node_modules/@remix-run/multipart-parser/. $out/node_modules/.pnpm/@remix-run+multipart-parser@0.11.0/node_modules/@remix-run/multipart-parser/
     mkdir -p $out/node_modules/.pnpm/@remix-run+multipart-parser@0.11.0/node_modules/@remix-run
     ln -sf ../../@remix-run+headers@0.12.0/node_modules/@remix-run/headers $out/node_modules/.pnpm/@remix-run+multipart-parser@0.11.0/node_modules/@remix-run/headers
-    mkdir -p $out/node_modules/.pnpm/@remix-run+route-pattern@0.14.0/node_modules/@remix-run
-    cp -r ${packages."@remix-run/route-pattern@0.14.0"}/node_modules/@remix-run/route-pattern/. $out/node_modules/.pnpm/@remix-run+route-pattern@0.14.0/node_modules/@remix-run/route-pattern
-    mkdir -p $out/node_modules/.pnpm/@remix-run+style@0.0.0-experimental-remix-jam.5/node_modules/@remix-run
-    cp -r ${packages."@remix-run/style@0.0.0-experimental-remix-jam.5"}/node_modules/@remix-run/style/. $out/node_modules/.pnpm/@remix-run+style@0.0.0-experimental-remix-jam.5/node_modules/@remix-run/style
-    mkdir -p $out/node_modules/.pnpm/@tanstack+query-core@5.90.20/node_modules/@tanstack
-    cp -r ${packages."@tanstack/query-core@5.90.20"}/node_modules/@tanstack/query-core/. $out/node_modules/.pnpm/@tanstack+query-core@5.90.20/node_modules/@tanstack/query-core
-    mkdir -p $out/node_modules/.pnpm/@types+bun@1.3.9/node_modules/@types
-    cp -r ${packages."@types/bun@1.3.9"}/node_modules/@types/bun/. $out/node_modules/.pnpm/@types+bun@1.3.9/node_modules/@types/bun
+    mkdir -p $out/node_modules/.pnpm/@remix-run+route-pattern@0.14.0/node_modules/@remix-run/route-pattern
+    cp -r --reflink=auto ${packages."@remix-run/route-pattern@0.14.0"}/node_modules/@remix-run/route-pattern/. $out/node_modules/.pnpm/@remix-run+route-pattern@0.14.0/node_modules/@remix-run/route-pattern/
+    mkdir -p $out/node_modules/.pnpm/@remix-run+style@0.0.0-experimental-remix-jam.5/node_modules/@remix-run/style
+    cp -r --reflink=auto ${packages."@remix-run/style@0.0.0-experimental-remix-jam.5"}/node_modules/@remix-run/style/. $out/node_modules/.pnpm/@remix-run+style@0.0.0-experimental-remix-jam.5/node_modules/@remix-run/style/
+    mkdir -p $out/node_modules/.pnpm/@tanstack+query-core@5.90.20/node_modules/@tanstack/query-core
+    cp -r --reflink=auto ${packages."@tanstack/query-core@5.90.20"}/node_modules/@tanstack/query-core/. $out/node_modules/.pnpm/@tanstack+query-core@5.90.20/node_modules/@tanstack/query-core/
+    mkdir -p $out/node_modules/.pnpm/@types+bun@1.3.9/node_modules/@types/bun
+    cp -r --reflink=auto ${packages."@types/bun@1.3.9"}/node_modules/@types/bun/. $out/node_modules/.pnpm/@types+bun@1.3.9/node_modules/@types/bun/
     ln -sf ../../bun-types@1.3.9/node_modules/bun-types $out/node_modules/.pnpm/@types+bun@1.3.9/node_modules/bun-types
-    mkdir -p $out/node_modules/.pnpm/@types+node@25.2.3/node_modules/@types
-    cp -r ${packages."@types/node@25.2.3"}/node_modules/@types/node/. $out/node_modules/.pnpm/@types+node@25.2.3/node_modules/@types/node
+    mkdir -p $out/node_modules/.pnpm/@types+node@25.2.3/node_modules/@types/node
+    cp -r --reflink=auto ${packages."@types/node@25.2.3"}/node_modules/@types/node/. $out/node_modules/.pnpm/@types+node@25.2.3/node_modules/@types/node/
     ln -sf ../../undici-types@7.16.0/node_modules/undici-types $out/node_modules/.pnpm/@types+node@25.2.3/node_modules/undici-types
-    mkdir -p $out/node_modules/.pnpm/alien-signals@3.1.2/node_modules
-    cp -r ${packages."alien-signals@3.1.2"}/node_modules/alien-signals/. $out/node_modules/.pnpm/alien-signals@3.1.2/node_modules/alien-signals
-    mkdir -p $out/node_modules/.pnpm/arctic@3.7.0/node_modules
-    cp -r ${packages."arctic@3.7.0"}/node_modules/arctic/. $out/node_modules/.pnpm/arctic@3.7.0/node_modules/arctic
+    mkdir -p $out/node_modules/.pnpm/alien-signals@3.1.2/node_modules/alien-signals
+    cp -r --reflink=auto ${packages."alien-signals@3.1.2"}/node_modules/alien-signals/. $out/node_modules/.pnpm/alien-signals@3.1.2/node_modules/alien-signals/
+    mkdir -p $out/node_modules/.pnpm/arctic@3.7.0/node_modules/arctic
+    cp -r --reflink=auto ${packages."arctic@3.7.0"}/node_modules/arctic/. $out/node_modules/.pnpm/arctic@3.7.0/node_modules/arctic/
     mkdir -p $out/node_modules/.pnpm/arctic@3.7.0/node_modules/@oslojs
     ln -sf ../../@oslojs+crypto@1.0.1/node_modules/@oslojs/crypto $out/node_modules/.pnpm/arctic@3.7.0/node_modules/@oslojs/crypto
     mkdir -p $out/node_modules/.pnpm/arctic@3.7.0/node_modules/@oslojs
     ln -sf ../../@oslojs+encoding@1.1.0/node_modules/@oslojs/encoding $out/node_modules/.pnpm/arctic@3.7.0/node_modules/@oslojs/encoding
     mkdir -p $out/node_modules/.pnpm/arctic@3.7.0/node_modules/@oslojs
     ln -sf ../../@oslojs+jwt@0.2.0/node_modules/@oslojs/jwt $out/node_modules/.pnpm/arctic@3.7.0/node_modules/@oslojs/jwt
-    mkdir -p $out/node_modules/.pnpm/bun-types@1.3.9/node_modules
-    cp -r ${packages."bun-types@1.3.9"}/node_modules/bun-types/. $out/node_modules/.pnpm/bun-types@1.3.9/node_modules/bun-types
+    mkdir -p $out/node_modules/.pnpm/bun-types@1.3.9/node_modules/bun-types
+    cp -r --reflink=auto ${packages."bun-types@1.3.9"}/node_modules/bun-types/. $out/node_modules/.pnpm/bun-types@1.3.9/node_modules/bun-types/
     mkdir -p $out/node_modules/.pnpm/bun-types@1.3.9/node_modules/@types
     ln -sf ../../@types+node@25.2.3/node_modules/@types/node $out/node_modules/.pnpm/bun-types@1.3.9/node_modules/@types/node
-    mkdir -p $out/node_modules/.pnpm/remix-auth@4.2.0/node_modules
-    cp -r ${packages."remix-auth@4.2.0"}/node_modules/remix-auth/. $out/node_modules/.pnpm/remix-auth@4.2.0/node_modules/remix-auth
-    mkdir -p $out/node_modules/.pnpm/remix-auth-oauth2@3.4.1/node_modules
-    cp -r ${packages."remix-auth-oauth2@3.4.1"}/node_modules/remix-auth-oauth2/. $out/node_modules/.pnpm/remix-auth-oauth2@3.4.1/node_modules/remix-auth-oauth2
-    mkdir -p $out/node_modules/.pnpm/typescript@5.9.3/node_modules
-    cp -r ${packages."typescript@5.9.3"}/node_modules/typescript/. $out/node_modules/.pnpm/typescript@5.9.3/node_modules/typescript
-    mkdir -p $out/node_modules/.pnpm/undici-types@7.16.0/node_modules
-    cp -r ${packages."undici-types@7.16.0"}/node_modules/undici-types/. $out/node_modules/.pnpm/undici-types@7.16.0/node_modules/undici-types
+    mkdir -p $out/node_modules/.pnpm/remix-auth@4.2.0/node_modules/remix-auth
+    cp -r --reflink=auto ${packages."remix-auth@4.2.0"}/node_modules/remix-auth/. $out/node_modules/.pnpm/remix-auth@4.2.0/node_modules/remix-auth/
+    mkdir -p $out/node_modules/.pnpm/remix-auth-oauth2@3.4.1/node_modules/remix-auth-oauth2
+    cp -r --reflink=auto ${packages."remix-auth-oauth2@3.4.1"}/node_modules/remix-auth-oauth2/. $out/node_modules/.pnpm/remix-auth-oauth2@3.4.1/node_modules/remix-auth-oauth2/
+    mkdir -p $out/node_modules/.pnpm/typescript@5.9.3/node_modules/typescript
+    cp -r --reflink=auto ${packages."typescript@5.9.3"}/node_modules/typescript/. $out/node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/
+    mkdir -p $out/node_modules/.pnpm/undici-types@7.16.0/node_modules/undici-types
+    cp -r --reflink=auto ${packages."undici-types@7.16.0"}/node_modules/undici-types/. $out/node_modules/.pnpm/undici-types@7.16.0/node_modules/undici-types/
 
     # top-level symlinks
     mkdir -p $out/node_modules/@edgefirst-dev
@@ -365,7 +365,66 @@ in packages // {
       name = "remix-v3-devshell";
       buildInputs = [ nodejs ] ++ buildInputs;
       shellHook = ''
-        export NODE_PATH="${nodeModules}/node_modules"
+        _onix_nm="${nodeModules}"
+        _onix_sentinel="node_modules/.nix-sentinel"
+
+        if [ ! -f "$_onix_sentinel" ] || [ "$(cat "$_onix_sentinel" 2>/dev/null)" != "$_onix_nm" ]; then
+          # Remove stale node_modules if sentinel exists (derivation changed)
+          if [ -f "$_onix_sentinel" ]; then
+            chmod -R u+w node_modules 2>/dev/null; rm -rf node_modules
+          fi
+
+          # Sync: copy symlink tree from Nix store
+          cp -rP "$_onix_nm/node_modules" node_modules
+
+          # Make the copied directory writable (for metadata files)
+          chmod u+w node_modules node_modules/.pnpm
+
+          # Copy lockfile as pnpm's "current lockfile" (what's installed = what's desired)
+          if [ -f pnpm-lock.yaml ]; then
+            cp pnpm-lock.yaml node_modules/.pnpm/lock.yaml
+          fi
+
+          # Generate pnpm metadata (optional — only if pnpm available)
+          if command -v pnpm >/dev/null 2>&1; then
+            _pnpm_version=$(pnpm --version 2>/dev/null || echo "9.0.0")
+            _store_dir=$(pnpm store path 2>/dev/null || echo "''${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store/v3")
+
+            cat > node_modules/.modules.yaml << MODULES
+hoistedDependencies: {}
+included:
+  dependencies: true
+  devDependencies: true
+  optionalDependencies: true
+layoutVersion: 5
+nodeLinker: isolated
+packageManager: pnpm@$_pnpm_version
+pendingBuilds: []
+prunedAt: $(date -u '+%a, %d %b %Y %H:%M:%S GMT')
+registries:
+  default: https://registry.npmjs.org/
+skipped: []
+storeDir: $_store_dir
+virtualStoreDir: .pnpm
+virtualStoreDirMaxLength: 120
+MODULES
+
+            cat > node_modules/.pnpm-workspace-state-v1.json << WSSTATE
+{
+  "lastValidatedTimestamp": 32503680000000,
+  "settings": {
+    "nodeLinker": "isolated"
+  }
+}
+WSSTATE
+          fi
+
+          # Write sentinel
+          echo "$_onix_nm" > "$_onix_sentinel"
+          echo "onix: node_modules ready ($(ls node_modules/.pnpm/ | wc -l | tr -d ' ') packages)"
+        fi
+
+        export NODE_PATH="$PWD/node_modules"
       '' + shellHook;
     });
 }

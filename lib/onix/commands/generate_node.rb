@@ -199,7 +199,57 @@ module Onix
         nix << "      name = #{nix_str "#{project_name}-devshell"};\n"
         nix << "      buildInputs = [ nodejs ] ++ buildInputs;\n"
         nix << "      shellHook = ''\n"
-        nix << "        export NODE_PATH=\"${nodeModules}/node_modules\"\n"
+        nix << "        _onix_nm=\"${nodeModules}\"\n"
+        nix << "        _onix_sentinel=\"node_modules/.nix-sentinel\"\n"
+        nix << "\n        if [ ! -f \"$_onix_sentinel\" ] || [ \"$(cat \"$_onix_sentinel\" 2>/dev/null)\" != \"$_onix_nm\" ]; then\n"
+        nix << "          # Remove stale node_modules if sentinel exists (derivation changed)\n"
+        nix << "          if [ -f \"$_onix_sentinel\" ]; then\n"
+        nix << "            chmod -R u+w node_modules 2>/dev/null; rm -rf node_modules\n"
+        nix << "          fi\n"
+        nix << "\n          # Sync: copy symlink tree from Nix store\n"
+        nix << "          cp -rP \"$_onix_nm/node_modules\" node_modules\n"
+        nix << "\n          # Make the copied directory writable (for metadata files)\n"
+        nix << "          chmod u+w node_modules node_modules/.pnpm\n"
+        nix << "\n          # Copy lockfile as pnpm's \"current lockfile\" (what's installed = what's desired)\n"
+        nix << "          if [ -f pnpm-lock.yaml ]; then\n"
+        nix << "            cp pnpm-lock.yaml node_modules/.pnpm/lock.yaml\n"
+        nix << "          fi\n"
+        nix << "\n          # Generate pnpm metadata (optional — only if pnpm available)\n"
+        nix << "          if command -v pnpm >/dev/null 2>&1; then\n"
+        nix << "            _pnpm_version=$(pnpm --version 2>/dev/null || echo \"9.0.0\")\n"
+        nix << "            _store_dir=$(pnpm store path 2>/dev/null || echo \"''${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store/v3\")\n"
+        nix << "\n            cat > node_modules/.modules.yaml << MODULES\n"
+        nix << "hoistedDependencies: {}\n"
+        nix << "included:\n"
+        nix << "  dependencies: true\n"
+        nix << "  devDependencies: true\n"
+        nix << "  optionalDependencies: true\n"
+        nix << "layoutVersion: 5\n"
+        nix << "nodeLinker: isolated\n"
+        nix << "packageManager: pnpm@$_pnpm_version\n"
+        nix << "pendingBuilds: []\n"
+        nix << "prunedAt: $(date -u '+%a, %d %b %Y %H:%M:%S GMT')\n"
+        nix << "registries:\n"
+        nix << "  default: https://registry.npmjs.org/\n"
+        nix << "skipped: []\n"
+        nix << "storeDir: $_store_dir\n"
+        nix << "virtualStoreDir: .pnpm\n"
+        nix << "virtualStoreDirMaxLength: 120\n"
+        nix << "MODULES\n"
+        nix << "\n            cat > node_modules/.pnpm-workspace-state-v1.json << WSSTATE\n"
+        nix << "{\n"
+        nix << "  \"lastValidatedTimestamp\": 32503680000000,\n"
+        nix << "  \"settings\": {\n"
+        nix << "    \"nodeLinker\": \"isolated\"\n"
+        nix << "  }\n"
+        nix << "}\n"
+        nix << "WSSTATE\n"
+        nix << "          fi\n"
+        nix << "\n          # Write sentinel\n"
+        nix << "          echo \"$_onix_nm\" > \"$_onix_sentinel\"\n"
+        nix << "          echo \"onix: node_modules ready ($(ls node_modules/.pnpm/ | wc -l | tr -d ' ') packages)\"\n"
+        nix << "        fi\n"
+        nix << "\n        export NODE_PATH=\"$PWD/node_modules\"\n"
         nix << "      '' + shellHook;\n"
         nix << "    });\n"
         nix << "}\n"
@@ -208,20 +258,15 @@ module Onix
         UI.wrote "nix/#{project_name}.nix"
       end
 
-      # Shell commands for one .pnpm/ entry: create dir, copy contents, link deps.
+      # Shell commands for one .pnpm/ entry: create dir, symlink-copy contents, link deps.
       def pnpm_entry_commands(entry, entry_by_key)
         cmds = []
         escaped = escape_pnpm_path("#{entry.name}@#{entry.version}")
         pkg_key = nix_key("#{entry.name}@#{entry.version}")
         entry_base = ".pnpm/#{escaped}/node_modules"
 
-        if entry.name.include?("/")
-          scope = entry.name.split("/").first
-          cmds << "mkdir -p $out/node_modules/#{entry_base}/#{scope}"
-        else
-          cmds << "mkdir -p $out/node_modules/#{entry_base}"
-        end
-        cmds << "cp -r ${packages.#{pkg_key}}/node_modules/#{entry.name}/. $out/node_modules/#{entry_base}/#{entry.name}"
+        cmds << "mkdir -p $out/node_modules/#{entry_base}/#{entry.name}"
+        cmds << "cp -r --reflink=auto ${packages.#{pkg_key}}/node_modules/#{entry.name}/. $out/node_modules/#{entry_base}/#{entry.name}/"
 
         entry.node_deps.each do |dep_name, dep_version|
           dep_key = "#{dep_name}@#{dep_version}"

@@ -107,8 +107,8 @@ let
   # pnpm-style .pnpm/ virtual store + top-level symlinks
   nodeModules = pkgs.runCommand "tsdown-starter-node-modules" {} ''
     mkdir -p $out/node_modules/.pnpm $out/node_modules/.bin
-    mkdir -p $out/node_modules/.pnpm/@babel+generator@8.0.0-rc.1/node_modules/@babel
-    cp -r ${packages."@babel/generator@8.0.0-rc.1"}/node_modules/@babel/generator/. $out/node_modules/.pnpm/@babel+generator@8.0.0-rc.1/node_modules/@babel/generator
+    mkdir -p $out/node_modules/.pnpm/@babel+generator@8.0.0-rc.1/node_modules/@babel/generator
+    cp -r --reflink=auto ${packages."@babel/generator@8.0.0-rc.1"}/node_modules/@babel/generator/. $out/node_modules/.pnpm/@babel+generator@8.0.0-rc.1/node_modules/@babel/generator/
     mkdir -p $out/node_modules/.pnpm/@babel+generator@8.0.0-rc.1/node_modules/@babel
     ln -sf ../../@babel+parser@8.0.0-rc.1/node_modules/@babel/parser $out/node_modules/.pnpm/@babel+generator@8.0.0-rc.1/node_modules/@babel/parser
     mkdir -p $out/node_modules/.pnpm/@babel+generator@8.0.0-rc.1/node_modules/@babel
@@ -120,142 +120,142 @@ let
     mkdir -p $out/node_modules/.pnpm/@babel+generator@8.0.0-rc.1/node_modules/@types
     ln -sf ../../@types+jsesc@2.5.1/node_modules/@types/jsesc $out/node_modules/.pnpm/@babel+generator@8.0.0-rc.1/node_modules/@types/jsesc
     ln -sf ../../jsesc@3.1.0/node_modules/jsesc $out/node_modules/.pnpm/@babel+generator@8.0.0-rc.1/node_modules/jsesc
-    mkdir -p $out/node_modules/.pnpm/@babel+helper-string-parser@8.0.0-rc.1/node_modules/@babel
-    cp -r ${packages."@babel/helper-string-parser@8.0.0-rc.1"}/node_modules/@babel/helper-string-parser/. $out/node_modules/.pnpm/@babel+helper-string-parser@8.0.0-rc.1/node_modules/@babel/helper-string-parser
-    mkdir -p $out/node_modules/.pnpm/@babel+helper-validator-identifier@8.0.0-rc.1/node_modules/@babel
-    cp -r ${packages."@babel/helper-validator-identifier@8.0.0-rc.1"}/node_modules/@babel/helper-validator-identifier/. $out/node_modules/.pnpm/@babel+helper-validator-identifier@8.0.0-rc.1/node_modules/@babel/helper-validator-identifier
-    mkdir -p $out/node_modules/.pnpm/@babel+parser@8.0.0-rc.1/node_modules/@babel
-    cp -r ${packages."@babel/parser@8.0.0-rc.1"}/node_modules/@babel/parser/. $out/node_modules/.pnpm/@babel+parser@8.0.0-rc.1/node_modules/@babel/parser
+    mkdir -p $out/node_modules/.pnpm/@babel+helper-string-parser@8.0.0-rc.1/node_modules/@babel/helper-string-parser
+    cp -r --reflink=auto ${packages."@babel/helper-string-parser@8.0.0-rc.1"}/node_modules/@babel/helper-string-parser/. $out/node_modules/.pnpm/@babel+helper-string-parser@8.0.0-rc.1/node_modules/@babel/helper-string-parser/
+    mkdir -p $out/node_modules/.pnpm/@babel+helper-validator-identifier@8.0.0-rc.1/node_modules/@babel/helper-validator-identifier
+    cp -r --reflink=auto ${packages."@babel/helper-validator-identifier@8.0.0-rc.1"}/node_modules/@babel/helper-validator-identifier/. $out/node_modules/.pnpm/@babel+helper-validator-identifier@8.0.0-rc.1/node_modules/@babel/helper-validator-identifier/
+    mkdir -p $out/node_modules/.pnpm/@babel+parser@8.0.0-rc.1/node_modules/@babel/parser
+    cp -r --reflink=auto ${packages."@babel/parser@8.0.0-rc.1"}/node_modules/@babel/parser/. $out/node_modules/.pnpm/@babel+parser@8.0.0-rc.1/node_modules/@babel/parser/
     mkdir -p $out/node_modules/.pnpm/@babel+parser@8.0.0-rc.1/node_modules/@babel
     ln -sf ../../@babel+types@8.0.0-rc.1/node_modules/@babel/types $out/node_modules/.pnpm/@babel+parser@8.0.0-rc.1/node_modules/@babel/types
-    mkdir -p $out/node_modules/.pnpm/@babel+types@8.0.0-rc.1/node_modules/@babel
-    cp -r ${packages."@babel/types@8.0.0-rc.1"}/node_modules/@babel/types/. $out/node_modules/.pnpm/@babel+types@8.0.0-rc.1/node_modules/@babel/types
+    mkdir -p $out/node_modules/.pnpm/@babel+types@8.0.0-rc.1/node_modules/@babel/types
+    cp -r --reflink=auto ${packages."@babel/types@8.0.0-rc.1"}/node_modules/@babel/types/. $out/node_modules/.pnpm/@babel+types@8.0.0-rc.1/node_modules/@babel/types/
     mkdir -p $out/node_modules/.pnpm/@babel+types@8.0.0-rc.1/node_modules/@babel
     ln -sf ../../@babel+helper-string-parser@8.0.0-rc.1/node_modules/@babel/helper-string-parser $out/node_modules/.pnpm/@babel+types@8.0.0-rc.1/node_modules/@babel/helper-string-parser
     mkdir -p $out/node_modules/.pnpm/@babel+types@8.0.0-rc.1/node_modules/@babel
     ln -sf ../../@babel+helper-validator-identifier@8.0.0-rc.1/node_modules/@babel/helper-validator-identifier $out/node_modules/.pnpm/@babel+types@8.0.0-rc.1/node_modules/@babel/helper-validator-identifier
-    mkdir -p $out/node_modules/.pnpm/@emnapi+core@1.8.1/node_modules/@emnapi
-    cp -r ${packages."@emnapi/core@1.8.1"}/node_modules/@emnapi/core/. $out/node_modules/.pnpm/@emnapi+core@1.8.1/node_modules/@emnapi/core
+    mkdir -p $out/node_modules/.pnpm/@emnapi+core@1.8.1/node_modules/@emnapi/core
+    cp -r --reflink=auto ${packages."@emnapi/core@1.8.1"}/node_modules/@emnapi/core/. $out/node_modules/.pnpm/@emnapi+core@1.8.1/node_modules/@emnapi/core/
     mkdir -p $out/node_modules/.pnpm/@emnapi+core@1.8.1/node_modules/@emnapi
     ln -sf ../../@emnapi+wasi-threads@1.1.0/node_modules/@emnapi/wasi-threads $out/node_modules/.pnpm/@emnapi+core@1.8.1/node_modules/@emnapi/wasi-threads
     ln -sf ../../tslib@2.8.1/node_modules/tslib $out/node_modules/.pnpm/@emnapi+core@1.8.1/node_modules/tslib
-    mkdir -p $out/node_modules/.pnpm/@emnapi+runtime@1.8.1/node_modules/@emnapi
-    cp -r ${packages."@emnapi/runtime@1.8.1"}/node_modules/@emnapi/runtime/. $out/node_modules/.pnpm/@emnapi+runtime@1.8.1/node_modules/@emnapi/runtime
+    mkdir -p $out/node_modules/.pnpm/@emnapi+runtime@1.8.1/node_modules/@emnapi/runtime
+    cp -r --reflink=auto ${packages."@emnapi/runtime@1.8.1"}/node_modules/@emnapi/runtime/. $out/node_modules/.pnpm/@emnapi+runtime@1.8.1/node_modules/@emnapi/runtime/
     ln -sf ../../tslib@2.8.1/node_modules/tslib $out/node_modules/.pnpm/@emnapi+runtime@1.8.1/node_modules/tslib
-    mkdir -p $out/node_modules/.pnpm/@emnapi+wasi-threads@1.1.0/node_modules/@emnapi
-    cp -r ${packages."@emnapi/wasi-threads@1.1.0"}/node_modules/@emnapi/wasi-threads/. $out/node_modules/.pnpm/@emnapi+wasi-threads@1.1.0/node_modules/@emnapi/wasi-threads
+    mkdir -p $out/node_modules/.pnpm/@emnapi+wasi-threads@1.1.0/node_modules/@emnapi/wasi-threads
+    cp -r --reflink=auto ${packages."@emnapi/wasi-threads@1.1.0"}/node_modules/@emnapi/wasi-threads/. $out/node_modules/.pnpm/@emnapi+wasi-threads@1.1.0/node_modules/@emnapi/wasi-threads/
     ln -sf ../../tslib@2.8.1/node_modules/tslib $out/node_modules/.pnpm/@emnapi+wasi-threads@1.1.0/node_modules/tslib
-    mkdir -p $out/node_modules/.pnpm/@jridgewell+gen-mapping@0.3.13/node_modules/@jridgewell
-    cp -r ${packages."@jridgewell/gen-mapping@0.3.13"}/node_modules/@jridgewell/gen-mapping/. $out/node_modules/.pnpm/@jridgewell+gen-mapping@0.3.13/node_modules/@jridgewell/gen-mapping
+    mkdir -p $out/node_modules/.pnpm/@jridgewell+gen-mapping@0.3.13/node_modules/@jridgewell/gen-mapping
+    cp -r --reflink=auto ${packages."@jridgewell/gen-mapping@0.3.13"}/node_modules/@jridgewell/gen-mapping/. $out/node_modules/.pnpm/@jridgewell+gen-mapping@0.3.13/node_modules/@jridgewell/gen-mapping/
     mkdir -p $out/node_modules/.pnpm/@jridgewell+gen-mapping@0.3.13/node_modules/@jridgewell
     ln -sf ../../@jridgewell+sourcemap-codec@1.5.5/node_modules/@jridgewell/sourcemap-codec $out/node_modules/.pnpm/@jridgewell+gen-mapping@0.3.13/node_modules/@jridgewell/sourcemap-codec
     mkdir -p $out/node_modules/.pnpm/@jridgewell+gen-mapping@0.3.13/node_modules/@jridgewell
     ln -sf ../../@jridgewell+trace-mapping@0.3.31/node_modules/@jridgewell/trace-mapping $out/node_modules/.pnpm/@jridgewell+gen-mapping@0.3.13/node_modules/@jridgewell/trace-mapping
-    mkdir -p $out/node_modules/.pnpm/@jridgewell+resolve-uri@3.1.2/node_modules/@jridgewell
-    cp -r ${packages."@jridgewell/resolve-uri@3.1.2"}/node_modules/@jridgewell/resolve-uri/. $out/node_modules/.pnpm/@jridgewell+resolve-uri@3.1.2/node_modules/@jridgewell/resolve-uri
-    mkdir -p $out/node_modules/.pnpm/@jridgewell+sourcemap-codec@1.5.5/node_modules/@jridgewell
-    cp -r ${packages."@jridgewell/sourcemap-codec@1.5.5"}/node_modules/@jridgewell/sourcemap-codec/. $out/node_modules/.pnpm/@jridgewell+sourcemap-codec@1.5.5/node_modules/@jridgewell/sourcemap-codec
-    mkdir -p $out/node_modules/.pnpm/@jridgewell+trace-mapping@0.3.31/node_modules/@jridgewell
-    cp -r ${packages."@jridgewell/trace-mapping@0.3.31"}/node_modules/@jridgewell/trace-mapping/. $out/node_modules/.pnpm/@jridgewell+trace-mapping@0.3.31/node_modules/@jridgewell/trace-mapping
+    mkdir -p $out/node_modules/.pnpm/@jridgewell+resolve-uri@3.1.2/node_modules/@jridgewell/resolve-uri
+    cp -r --reflink=auto ${packages."@jridgewell/resolve-uri@3.1.2"}/node_modules/@jridgewell/resolve-uri/. $out/node_modules/.pnpm/@jridgewell+resolve-uri@3.1.2/node_modules/@jridgewell/resolve-uri/
+    mkdir -p $out/node_modules/.pnpm/@jridgewell+sourcemap-codec@1.5.5/node_modules/@jridgewell/sourcemap-codec
+    cp -r --reflink=auto ${packages."@jridgewell/sourcemap-codec@1.5.5"}/node_modules/@jridgewell/sourcemap-codec/. $out/node_modules/.pnpm/@jridgewell+sourcemap-codec@1.5.5/node_modules/@jridgewell/sourcemap-codec/
+    mkdir -p $out/node_modules/.pnpm/@jridgewell+trace-mapping@0.3.31/node_modules/@jridgewell/trace-mapping
+    cp -r --reflink=auto ${packages."@jridgewell/trace-mapping@0.3.31"}/node_modules/@jridgewell/trace-mapping/. $out/node_modules/.pnpm/@jridgewell+trace-mapping@0.3.31/node_modules/@jridgewell/trace-mapping/
     mkdir -p $out/node_modules/.pnpm/@jridgewell+trace-mapping@0.3.31/node_modules/@jridgewell
     ln -sf ../../@jridgewell+resolve-uri@3.1.2/node_modules/@jridgewell/resolve-uri $out/node_modules/.pnpm/@jridgewell+trace-mapping@0.3.31/node_modules/@jridgewell/resolve-uri
     mkdir -p $out/node_modules/.pnpm/@jridgewell+trace-mapping@0.3.31/node_modules/@jridgewell
     ln -sf ../../@jridgewell+sourcemap-codec@1.5.5/node_modules/@jridgewell/sourcemap-codec $out/node_modules/.pnpm/@jridgewell+trace-mapping@0.3.31/node_modules/@jridgewell/sourcemap-codec
-    mkdir -p $out/node_modules/.pnpm/@napi-rs+wasm-runtime@1.1.1/node_modules/@napi-rs
-    cp -r ${packages."@napi-rs/wasm-runtime@1.1.1"}/node_modules/@napi-rs/wasm-runtime/. $out/node_modules/.pnpm/@napi-rs+wasm-runtime@1.1.1/node_modules/@napi-rs/wasm-runtime
+    mkdir -p $out/node_modules/.pnpm/@napi-rs+wasm-runtime@1.1.1/node_modules/@napi-rs/wasm-runtime
+    cp -r --reflink=auto ${packages."@napi-rs/wasm-runtime@1.1.1"}/node_modules/@napi-rs/wasm-runtime/. $out/node_modules/.pnpm/@napi-rs+wasm-runtime@1.1.1/node_modules/@napi-rs/wasm-runtime/
     mkdir -p $out/node_modules/.pnpm/@napi-rs+wasm-runtime@1.1.1/node_modules/@emnapi
     ln -sf ../../@emnapi+core@1.8.1/node_modules/@emnapi/core $out/node_modules/.pnpm/@napi-rs+wasm-runtime@1.1.1/node_modules/@emnapi/core
     mkdir -p $out/node_modules/.pnpm/@napi-rs+wasm-runtime@1.1.1/node_modules/@emnapi
     ln -sf ../../@emnapi+runtime@1.8.1/node_modules/@emnapi/runtime $out/node_modules/.pnpm/@napi-rs+wasm-runtime@1.1.1/node_modules/@emnapi/runtime
     mkdir -p $out/node_modules/.pnpm/@napi-rs+wasm-runtime@1.1.1/node_modules/@tybys
     ln -sf ../../@tybys+wasm-util@0.10.1/node_modules/@tybys/wasm-util $out/node_modules/.pnpm/@napi-rs+wasm-runtime@1.1.1/node_modules/@tybys/wasm-util
-    mkdir -p $out/node_modules/.pnpm/@oxc-project+types@0.112.0/node_modules/@oxc-project
-    cp -r ${packages."@oxc-project/types@0.112.0"}/node_modules/@oxc-project/types/. $out/node_modules/.pnpm/@oxc-project+types@0.112.0/node_modules/@oxc-project/types
-    mkdir -p $out/node_modules/.pnpm/@quansync+fs@1.0.0/node_modules/@quansync
-    cp -r ${packages."@quansync/fs@1.0.0"}/node_modules/@quansync/fs/. $out/node_modules/.pnpm/@quansync+fs@1.0.0/node_modules/@quansync/fs
+    mkdir -p $out/node_modules/.pnpm/@oxc-project+types@0.112.0/node_modules/@oxc-project/types
+    cp -r --reflink=auto ${packages."@oxc-project/types@0.112.0"}/node_modules/@oxc-project/types/. $out/node_modules/.pnpm/@oxc-project+types@0.112.0/node_modules/@oxc-project/types/
+    mkdir -p $out/node_modules/.pnpm/@quansync+fs@1.0.0/node_modules/@quansync/fs
+    cp -r --reflink=auto ${packages."@quansync/fs@1.0.0"}/node_modules/@quansync/fs/. $out/node_modules/.pnpm/@quansync+fs@1.0.0/node_modules/@quansync/fs/
     ln -sf ../../quansync@1.0.0/node_modules/quansync $out/node_modules/.pnpm/@quansync+fs@1.0.0/node_modules/quansync
-    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-android-arm64@1.0.0-rc.3/node_modules/@rolldown
-    cp -r ${packages."@rolldown/binding-android-arm64@1.0.0-rc.3"}/node_modules/@rolldown/binding-android-arm64/. $out/node_modules/.pnpm/@rolldown+binding-android-arm64@1.0.0-rc.3/node_modules/@rolldown/binding-android-arm64
-    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-darwin-arm64@1.0.0-rc.3/node_modules/@rolldown
-    cp -r ${packages."@rolldown/binding-darwin-arm64@1.0.0-rc.3"}/node_modules/@rolldown/binding-darwin-arm64/. $out/node_modules/.pnpm/@rolldown+binding-darwin-arm64@1.0.0-rc.3/node_modules/@rolldown/binding-darwin-arm64
-    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-darwin-x64@1.0.0-rc.3/node_modules/@rolldown
-    cp -r ${packages."@rolldown/binding-darwin-x64@1.0.0-rc.3"}/node_modules/@rolldown/binding-darwin-x64/. $out/node_modules/.pnpm/@rolldown+binding-darwin-x64@1.0.0-rc.3/node_modules/@rolldown/binding-darwin-x64
-    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-freebsd-x64@1.0.0-rc.3/node_modules/@rolldown
-    cp -r ${packages."@rolldown/binding-freebsd-x64@1.0.0-rc.3"}/node_modules/@rolldown/binding-freebsd-x64/. $out/node_modules/.pnpm/@rolldown+binding-freebsd-x64@1.0.0-rc.3/node_modules/@rolldown/binding-freebsd-x64
-    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-linux-arm-gnueabihf@1.0.0-rc.3/node_modules/@rolldown
-    cp -r ${packages."@rolldown/binding-linux-arm-gnueabihf@1.0.0-rc.3"}/node_modules/@rolldown/binding-linux-arm-gnueabihf/. $out/node_modules/.pnpm/@rolldown+binding-linux-arm-gnueabihf@1.0.0-rc.3/node_modules/@rolldown/binding-linux-arm-gnueabihf
-    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-linux-arm64-gnu@1.0.0-rc.3/node_modules/@rolldown
-    cp -r ${packages."@rolldown/binding-linux-arm64-gnu@1.0.0-rc.3"}/node_modules/@rolldown/binding-linux-arm64-gnu/. $out/node_modules/.pnpm/@rolldown+binding-linux-arm64-gnu@1.0.0-rc.3/node_modules/@rolldown/binding-linux-arm64-gnu
-    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-linux-arm64-musl@1.0.0-rc.3/node_modules/@rolldown
-    cp -r ${packages."@rolldown/binding-linux-arm64-musl@1.0.0-rc.3"}/node_modules/@rolldown/binding-linux-arm64-musl/. $out/node_modules/.pnpm/@rolldown+binding-linux-arm64-musl@1.0.0-rc.3/node_modules/@rolldown/binding-linux-arm64-musl
-    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-linux-x64-gnu@1.0.0-rc.3/node_modules/@rolldown
-    cp -r ${packages."@rolldown/binding-linux-x64-gnu@1.0.0-rc.3"}/node_modules/@rolldown/binding-linux-x64-gnu/. $out/node_modules/.pnpm/@rolldown+binding-linux-x64-gnu@1.0.0-rc.3/node_modules/@rolldown/binding-linux-x64-gnu
-    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-linux-x64-musl@1.0.0-rc.3/node_modules/@rolldown
-    cp -r ${packages."@rolldown/binding-linux-x64-musl@1.0.0-rc.3"}/node_modules/@rolldown/binding-linux-x64-musl/. $out/node_modules/.pnpm/@rolldown+binding-linux-x64-musl@1.0.0-rc.3/node_modules/@rolldown/binding-linux-x64-musl
-    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-openharmony-arm64@1.0.0-rc.3/node_modules/@rolldown
-    cp -r ${packages."@rolldown/binding-openharmony-arm64@1.0.0-rc.3"}/node_modules/@rolldown/binding-openharmony-arm64/. $out/node_modules/.pnpm/@rolldown+binding-openharmony-arm64@1.0.0-rc.3/node_modules/@rolldown/binding-openharmony-arm64
-    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-wasm32-wasi@1.0.0-rc.3/node_modules/@rolldown
-    cp -r ${packages."@rolldown/binding-wasm32-wasi@1.0.0-rc.3"}/node_modules/@rolldown/binding-wasm32-wasi/. $out/node_modules/.pnpm/@rolldown+binding-wasm32-wasi@1.0.0-rc.3/node_modules/@rolldown/binding-wasm32-wasi
+    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-android-arm64@1.0.0-rc.3/node_modules/@rolldown/binding-android-arm64
+    cp -r --reflink=auto ${packages."@rolldown/binding-android-arm64@1.0.0-rc.3"}/node_modules/@rolldown/binding-android-arm64/. $out/node_modules/.pnpm/@rolldown+binding-android-arm64@1.0.0-rc.3/node_modules/@rolldown/binding-android-arm64/
+    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-darwin-arm64@1.0.0-rc.3/node_modules/@rolldown/binding-darwin-arm64
+    cp -r --reflink=auto ${packages."@rolldown/binding-darwin-arm64@1.0.0-rc.3"}/node_modules/@rolldown/binding-darwin-arm64/. $out/node_modules/.pnpm/@rolldown+binding-darwin-arm64@1.0.0-rc.3/node_modules/@rolldown/binding-darwin-arm64/
+    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-darwin-x64@1.0.0-rc.3/node_modules/@rolldown/binding-darwin-x64
+    cp -r --reflink=auto ${packages."@rolldown/binding-darwin-x64@1.0.0-rc.3"}/node_modules/@rolldown/binding-darwin-x64/. $out/node_modules/.pnpm/@rolldown+binding-darwin-x64@1.0.0-rc.3/node_modules/@rolldown/binding-darwin-x64/
+    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-freebsd-x64@1.0.0-rc.3/node_modules/@rolldown/binding-freebsd-x64
+    cp -r --reflink=auto ${packages."@rolldown/binding-freebsd-x64@1.0.0-rc.3"}/node_modules/@rolldown/binding-freebsd-x64/. $out/node_modules/.pnpm/@rolldown+binding-freebsd-x64@1.0.0-rc.3/node_modules/@rolldown/binding-freebsd-x64/
+    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-linux-arm-gnueabihf@1.0.0-rc.3/node_modules/@rolldown/binding-linux-arm-gnueabihf
+    cp -r --reflink=auto ${packages."@rolldown/binding-linux-arm-gnueabihf@1.0.0-rc.3"}/node_modules/@rolldown/binding-linux-arm-gnueabihf/. $out/node_modules/.pnpm/@rolldown+binding-linux-arm-gnueabihf@1.0.0-rc.3/node_modules/@rolldown/binding-linux-arm-gnueabihf/
+    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-linux-arm64-gnu@1.0.0-rc.3/node_modules/@rolldown/binding-linux-arm64-gnu
+    cp -r --reflink=auto ${packages."@rolldown/binding-linux-arm64-gnu@1.0.0-rc.3"}/node_modules/@rolldown/binding-linux-arm64-gnu/. $out/node_modules/.pnpm/@rolldown+binding-linux-arm64-gnu@1.0.0-rc.3/node_modules/@rolldown/binding-linux-arm64-gnu/
+    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-linux-arm64-musl@1.0.0-rc.3/node_modules/@rolldown/binding-linux-arm64-musl
+    cp -r --reflink=auto ${packages."@rolldown/binding-linux-arm64-musl@1.0.0-rc.3"}/node_modules/@rolldown/binding-linux-arm64-musl/. $out/node_modules/.pnpm/@rolldown+binding-linux-arm64-musl@1.0.0-rc.3/node_modules/@rolldown/binding-linux-arm64-musl/
+    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-linux-x64-gnu@1.0.0-rc.3/node_modules/@rolldown/binding-linux-x64-gnu
+    cp -r --reflink=auto ${packages."@rolldown/binding-linux-x64-gnu@1.0.0-rc.3"}/node_modules/@rolldown/binding-linux-x64-gnu/. $out/node_modules/.pnpm/@rolldown+binding-linux-x64-gnu@1.0.0-rc.3/node_modules/@rolldown/binding-linux-x64-gnu/
+    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-linux-x64-musl@1.0.0-rc.3/node_modules/@rolldown/binding-linux-x64-musl
+    cp -r --reflink=auto ${packages."@rolldown/binding-linux-x64-musl@1.0.0-rc.3"}/node_modules/@rolldown/binding-linux-x64-musl/. $out/node_modules/.pnpm/@rolldown+binding-linux-x64-musl@1.0.0-rc.3/node_modules/@rolldown/binding-linux-x64-musl/
+    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-openharmony-arm64@1.0.0-rc.3/node_modules/@rolldown/binding-openharmony-arm64
+    cp -r --reflink=auto ${packages."@rolldown/binding-openharmony-arm64@1.0.0-rc.3"}/node_modules/@rolldown/binding-openharmony-arm64/. $out/node_modules/.pnpm/@rolldown+binding-openharmony-arm64@1.0.0-rc.3/node_modules/@rolldown/binding-openharmony-arm64/
+    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-wasm32-wasi@1.0.0-rc.3/node_modules/@rolldown/binding-wasm32-wasi
+    cp -r --reflink=auto ${packages."@rolldown/binding-wasm32-wasi@1.0.0-rc.3"}/node_modules/@rolldown/binding-wasm32-wasi/. $out/node_modules/.pnpm/@rolldown+binding-wasm32-wasi@1.0.0-rc.3/node_modules/@rolldown/binding-wasm32-wasi/
     mkdir -p $out/node_modules/.pnpm/@rolldown+binding-wasm32-wasi@1.0.0-rc.3/node_modules/@napi-rs
     ln -sf ../../@napi-rs+wasm-runtime@1.1.1/node_modules/@napi-rs/wasm-runtime $out/node_modules/.pnpm/@rolldown+binding-wasm32-wasi@1.0.0-rc.3/node_modules/@napi-rs/wasm-runtime
-    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-win32-arm64-msvc@1.0.0-rc.3/node_modules/@rolldown
-    cp -r ${packages."@rolldown/binding-win32-arm64-msvc@1.0.0-rc.3"}/node_modules/@rolldown/binding-win32-arm64-msvc/. $out/node_modules/.pnpm/@rolldown+binding-win32-arm64-msvc@1.0.0-rc.3/node_modules/@rolldown/binding-win32-arm64-msvc
-    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-win32-x64-msvc@1.0.0-rc.3/node_modules/@rolldown
-    cp -r ${packages."@rolldown/binding-win32-x64-msvc@1.0.0-rc.3"}/node_modules/@rolldown/binding-win32-x64-msvc/. $out/node_modules/.pnpm/@rolldown+binding-win32-x64-msvc@1.0.0-rc.3/node_modules/@rolldown/binding-win32-x64-msvc
-    mkdir -p $out/node_modules/.pnpm/@rolldown+pluginutils@1.0.0-rc.3/node_modules/@rolldown
-    cp -r ${packages."@rolldown/pluginutils@1.0.0-rc.3"}/node_modules/@rolldown/pluginutils/. $out/node_modules/.pnpm/@rolldown+pluginutils@1.0.0-rc.3/node_modules/@rolldown/pluginutils
-    mkdir -p $out/node_modules/.pnpm/@tybys+wasm-util@0.10.1/node_modules/@tybys
-    cp -r ${packages."@tybys/wasm-util@0.10.1"}/node_modules/@tybys/wasm-util/. $out/node_modules/.pnpm/@tybys+wasm-util@0.10.1/node_modules/@tybys/wasm-util
+    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-win32-arm64-msvc@1.0.0-rc.3/node_modules/@rolldown/binding-win32-arm64-msvc
+    cp -r --reflink=auto ${packages."@rolldown/binding-win32-arm64-msvc@1.0.0-rc.3"}/node_modules/@rolldown/binding-win32-arm64-msvc/. $out/node_modules/.pnpm/@rolldown+binding-win32-arm64-msvc@1.0.0-rc.3/node_modules/@rolldown/binding-win32-arm64-msvc/
+    mkdir -p $out/node_modules/.pnpm/@rolldown+binding-win32-x64-msvc@1.0.0-rc.3/node_modules/@rolldown/binding-win32-x64-msvc
+    cp -r --reflink=auto ${packages."@rolldown/binding-win32-x64-msvc@1.0.0-rc.3"}/node_modules/@rolldown/binding-win32-x64-msvc/. $out/node_modules/.pnpm/@rolldown+binding-win32-x64-msvc@1.0.0-rc.3/node_modules/@rolldown/binding-win32-x64-msvc/
+    mkdir -p $out/node_modules/.pnpm/@rolldown+pluginutils@1.0.0-rc.3/node_modules/@rolldown/pluginutils
+    cp -r --reflink=auto ${packages."@rolldown/pluginutils@1.0.0-rc.3"}/node_modules/@rolldown/pluginutils/. $out/node_modules/.pnpm/@rolldown+pluginutils@1.0.0-rc.3/node_modules/@rolldown/pluginutils/
+    mkdir -p $out/node_modules/.pnpm/@tybys+wasm-util@0.10.1/node_modules/@tybys/wasm-util
+    cp -r --reflink=auto ${packages."@tybys/wasm-util@0.10.1"}/node_modules/@tybys/wasm-util/. $out/node_modules/.pnpm/@tybys+wasm-util@0.10.1/node_modules/@tybys/wasm-util/
     ln -sf ../../tslib@2.8.1/node_modules/tslib $out/node_modules/.pnpm/@tybys+wasm-util@0.10.1/node_modules/tslib
-    mkdir -p $out/node_modules/.pnpm/@types+estree@1.0.8/node_modules/@types
-    cp -r ${packages."@types/estree@1.0.8"}/node_modules/@types/estree/. $out/node_modules/.pnpm/@types+estree@1.0.8/node_modules/@types/estree
-    mkdir -p $out/node_modules/.pnpm/@types+jsesc@2.5.1/node_modules/@types
-    cp -r ${packages."@types/jsesc@2.5.1"}/node_modules/@types/jsesc/. $out/node_modules/.pnpm/@types+jsesc@2.5.1/node_modules/@types/jsesc
-    mkdir -p $out/node_modules/.pnpm/ansis@4.2.0/node_modules
-    cp -r ${packages."ansis@4.2.0"}/node_modules/ansis/. $out/node_modules/.pnpm/ansis@4.2.0/node_modules/ansis
-    mkdir -p $out/node_modules/.pnpm/ast-kit@3.0.0-beta.1/node_modules
-    cp -r ${packages."ast-kit@3.0.0-beta.1"}/node_modules/ast-kit/. $out/node_modules/.pnpm/ast-kit@3.0.0-beta.1/node_modules/ast-kit
+    mkdir -p $out/node_modules/.pnpm/@types+estree@1.0.8/node_modules/@types/estree
+    cp -r --reflink=auto ${packages."@types/estree@1.0.8"}/node_modules/@types/estree/. $out/node_modules/.pnpm/@types+estree@1.0.8/node_modules/@types/estree/
+    mkdir -p $out/node_modules/.pnpm/@types+jsesc@2.5.1/node_modules/@types/jsesc
+    cp -r --reflink=auto ${packages."@types/jsesc@2.5.1"}/node_modules/@types/jsesc/. $out/node_modules/.pnpm/@types+jsesc@2.5.1/node_modules/@types/jsesc/
+    mkdir -p $out/node_modules/.pnpm/ansis@4.2.0/node_modules/ansis
+    cp -r --reflink=auto ${packages."ansis@4.2.0"}/node_modules/ansis/. $out/node_modules/.pnpm/ansis@4.2.0/node_modules/ansis/
+    mkdir -p $out/node_modules/.pnpm/ast-kit@3.0.0-beta.1/node_modules/ast-kit
+    cp -r --reflink=auto ${packages."ast-kit@3.0.0-beta.1"}/node_modules/ast-kit/. $out/node_modules/.pnpm/ast-kit@3.0.0-beta.1/node_modules/ast-kit/
     mkdir -p $out/node_modules/.pnpm/ast-kit@3.0.0-beta.1/node_modules/@babel
     ln -sf ../../@babel+parser@8.0.0-rc.1/node_modules/@babel/parser $out/node_modules/.pnpm/ast-kit@3.0.0-beta.1/node_modules/@babel/parser
     ln -sf ../../estree-walker@3.0.3/node_modules/estree-walker $out/node_modules/.pnpm/ast-kit@3.0.0-beta.1/node_modules/estree-walker
     ln -sf ../../pathe@2.0.3/node_modules/pathe $out/node_modules/.pnpm/ast-kit@3.0.0-beta.1/node_modules/pathe
-    mkdir -p $out/node_modules/.pnpm/birpc@4.0.0/node_modules
-    cp -r ${packages."birpc@4.0.0"}/node_modules/birpc/. $out/node_modules/.pnpm/birpc@4.0.0/node_modules/birpc
-    mkdir -p $out/node_modules/.pnpm/cac@6.7.14/node_modules
-    cp -r ${packages."cac@6.7.14"}/node_modules/cac/. $out/node_modules/.pnpm/cac@6.7.14/node_modules/cac
-    mkdir -p $out/node_modules/.pnpm/defu@6.1.4/node_modules
-    cp -r ${packages."defu@6.1.4"}/node_modules/defu/. $out/node_modules/.pnpm/defu@6.1.4/node_modules/defu
-    mkdir -p $out/node_modules/.pnpm/dts-resolver@2.1.3/node_modules
-    cp -r ${packages."dts-resolver@2.1.3"}/node_modules/dts-resolver/. $out/node_modules/.pnpm/dts-resolver@2.1.3/node_modules/dts-resolver
-    mkdir -p $out/node_modules/.pnpm/empathic@2.0.0/node_modules
-    cp -r ${packages."empathic@2.0.0"}/node_modules/empathic/. $out/node_modules/.pnpm/empathic@2.0.0/node_modules/empathic
-    mkdir -p $out/node_modules/.pnpm/estree-walker@3.0.3/node_modules
-    cp -r ${packages."estree-walker@3.0.3"}/node_modules/estree-walker/. $out/node_modules/.pnpm/estree-walker@3.0.3/node_modules/estree-walker
+    mkdir -p $out/node_modules/.pnpm/birpc@4.0.0/node_modules/birpc
+    cp -r --reflink=auto ${packages."birpc@4.0.0"}/node_modules/birpc/. $out/node_modules/.pnpm/birpc@4.0.0/node_modules/birpc/
+    mkdir -p $out/node_modules/.pnpm/cac@6.7.14/node_modules/cac
+    cp -r --reflink=auto ${packages."cac@6.7.14"}/node_modules/cac/. $out/node_modules/.pnpm/cac@6.7.14/node_modules/cac/
+    mkdir -p $out/node_modules/.pnpm/defu@6.1.4/node_modules/defu
+    cp -r --reflink=auto ${packages."defu@6.1.4"}/node_modules/defu/. $out/node_modules/.pnpm/defu@6.1.4/node_modules/defu/
+    mkdir -p $out/node_modules/.pnpm/dts-resolver@2.1.3/node_modules/dts-resolver
+    cp -r --reflink=auto ${packages."dts-resolver@2.1.3"}/node_modules/dts-resolver/. $out/node_modules/.pnpm/dts-resolver@2.1.3/node_modules/dts-resolver/
+    mkdir -p $out/node_modules/.pnpm/empathic@2.0.0/node_modules/empathic
+    cp -r --reflink=auto ${packages."empathic@2.0.0"}/node_modules/empathic/. $out/node_modules/.pnpm/empathic@2.0.0/node_modules/empathic/
+    mkdir -p $out/node_modules/.pnpm/estree-walker@3.0.3/node_modules/estree-walker
+    cp -r --reflink=auto ${packages."estree-walker@3.0.3"}/node_modules/estree-walker/. $out/node_modules/.pnpm/estree-walker@3.0.3/node_modules/estree-walker/
     mkdir -p $out/node_modules/.pnpm/estree-walker@3.0.3/node_modules/@types
     ln -sf ../../@types+estree@1.0.8/node_modules/@types/estree $out/node_modules/.pnpm/estree-walker@3.0.3/node_modules/@types/estree
-    mkdir -p $out/node_modules/.pnpm/fdir@6.5.0/node_modules
-    cp -r ${packages."fdir@6.5.0"}/node_modules/fdir/. $out/node_modules/.pnpm/fdir@6.5.0/node_modules/fdir
-    mkdir -p $out/node_modules/.pnpm/get-tsconfig@4.13.6/node_modules
-    cp -r ${packages."get-tsconfig@4.13.6"}/node_modules/get-tsconfig/. $out/node_modules/.pnpm/get-tsconfig@4.13.6/node_modules/get-tsconfig
+    mkdir -p $out/node_modules/.pnpm/fdir@6.5.0/node_modules/fdir
+    cp -r --reflink=auto ${packages."fdir@6.5.0"}/node_modules/fdir/. $out/node_modules/.pnpm/fdir@6.5.0/node_modules/fdir/
+    mkdir -p $out/node_modules/.pnpm/get-tsconfig@4.13.6/node_modules/get-tsconfig
+    cp -r --reflink=auto ${packages."get-tsconfig@4.13.6"}/node_modules/get-tsconfig/. $out/node_modules/.pnpm/get-tsconfig@4.13.6/node_modules/get-tsconfig/
     ln -sf ../../resolve-pkg-maps@1.0.0/node_modules/resolve-pkg-maps $out/node_modules/.pnpm/get-tsconfig@4.13.6/node_modules/resolve-pkg-maps
-    mkdir -p $out/node_modules/.pnpm/hookable@6.0.1/node_modules
-    cp -r ${packages."hookable@6.0.1"}/node_modules/hookable/. $out/node_modules/.pnpm/hookable@6.0.1/node_modules/hookable
-    mkdir -p $out/node_modules/.pnpm/import-without-cache@0.2.5/node_modules
-    cp -r ${packages."import-without-cache@0.2.5"}/node_modules/import-without-cache/. $out/node_modules/.pnpm/import-without-cache@0.2.5/node_modules/import-without-cache
-    mkdir -p $out/node_modules/.pnpm/jsesc@3.1.0/node_modules
-    cp -r ${packages."jsesc@3.1.0"}/node_modules/jsesc/. $out/node_modules/.pnpm/jsesc@3.1.0/node_modules/jsesc
-    mkdir -p $out/node_modules/.pnpm/obug@2.1.1/node_modules
-    cp -r ${packages."obug@2.1.1"}/node_modules/obug/. $out/node_modules/.pnpm/obug@2.1.1/node_modules/obug
-    mkdir -p $out/node_modules/.pnpm/pathe@2.0.3/node_modules
-    cp -r ${packages."pathe@2.0.3"}/node_modules/pathe/. $out/node_modules/.pnpm/pathe@2.0.3/node_modules/pathe
-    mkdir -p $out/node_modules/.pnpm/picomatch@4.0.3/node_modules
-    cp -r ${packages."picomatch@4.0.3"}/node_modules/picomatch/. $out/node_modules/.pnpm/picomatch@4.0.3/node_modules/picomatch
-    mkdir -p $out/node_modules/.pnpm/quansync@1.0.0/node_modules
-    cp -r ${packages."quansync@1.0.0"}/node_modules/quansync/. $out/node_modules/.pnpm/quansync@1.0.0/node_modules/quansync
-    mkdir -p $out/node_modules/.pnpm/resolve-pkg-maps@1.0.0/node_modules
-    cp -r ${packages."resolve-pkg-maps@1.0.0"}/node_modules/resolve-pkg-maps/. $out/node_modules/.pnpm/resolve-pkg-maps@1.0.0/node_modules/resolve-pkg-maps
-    mkdir -p $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules
-    cp -r ${packages."rolldown@1.0.0-rc.3"}/node_modules/rolldown/. $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules/rolldown
+    mkdir -p $out/node_modules/.pnpm/hookable@6.0.1/node_modules/hookable
+    cp -r --reflink=auto ${packages."hookable@6.0.1"}/node_modules/hookable/. $out/node_modules/.pnpm/hookable@6.0.1/node_modules/hookable/
+    mkdir -p $out/node_modules/.pnpm/import-without-cache@0.2.5/node_modules/import-without-cache
+    cp -r --reflink=auto ${packages."import-without-cache@0.2.5"}/node_modules/import-without-cache/. $out/node_modules/.pnpm/import-without-cache@0.2.5/node_modules/import-without-cache/
+    mkdir -p $out/node_modules/.pnpm/jsesc@3.1.0/node_modules/jsesc
+    cp -r --reflink=auto ${packages."jsesc@3.1.0"}/node_modules/jsesc/. $out/node_modules/.pnpm/jsesc@3.1.0/node_modules/jsesc/
+    mkdir -p $out/node_modules/.pnpm/obug@2.1.1/node_modules/obug
+    cp -r --reflink=auto ${packages."obug@2.1.1"}/node_modules/obug/. $out/node_modules/.pnpm/obug@2.1.1/node_modules/obug/
+    mkdir -p $out/node_modules/.pnpm/pathe@2.0.3/node_modules/pathe
+    cp -r --reflink=auto ${packages."pathe@2.0.3"}/node_modules/pathe/. $out/node_modules/.pnpm/pathe@2.0.3/node_modules/pathe/
+    mkdir -p $out/node_modules/.pnpm/picomatch@4.0.3/node_modules/picomatch
+    cp -r --reflink=auto ${packages."picomatch@4.0.3"}/node_modules/picomatch/. $out/node_modules/.pnpm/picomatch@4.0.3/node_modules/picomatch/
+    mkdir -p $out/node_modules/.pnpm/quansync@1.0.0/node_modules/quansync
+    cp -r --reflink=auto ${packages."quansync@1.0.0"}/node_modules/quansync/. $out/node_modules/.pnpm/quansync@1.0.0/node_modules/quansync/
+    mkdir -p $out/node_modules/.pnpm/resolve-pkg-maps@1.0.0/node_modules/resolve-pkg-maps
+    cp -r --reflink=auto ${packages."resolve-pkg-maps@1.0.0"}/node_modules/resolve-pkg-maps/. $out/node_modules/.pnpm/resolve-pkg-maps@1.0.0/node_modules/resolve-pkg-maps/
+    mkdir -p $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules/rolldown
+    cp -r --reflink=auto ${packages."rolldown@1.0.0-rc.3"}/node_modules/rolldown/. $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules/rolldown/
     mkdir -p $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules/@oxc-project
     ln -sf ../../@oxc-project+types@0.112.0/node_modules/@oxc-project/types $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules/@oxc-project/types
     mkdir -p $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules/@rolldown
@@ -286,30 +286,30 @@ let
     ln -sf ../../@rolldown+binding-win32-arm64-msvc@1.0.0-rc.3/node_modules/@rolldown/binding-win32-arm64-msvc $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules/@rolldown/binding-win32-arm64-msvc
     mkdir -p $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules/@rolldown
     ln -sf ../../@rolldown+binding-win32-x64-msvc@1.0.0-rc.3/node_modules/@rolldown/binding-win32-x64-msvc $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules/@rolldown/binding-win32-x64-msvc
-    mkdir -p $out/node_modules/.pnpm/rolldown-plugin-dts@0.22.1/node_modules
-    cp -r ${packages."rolldown-plugin-dts@0.22.1"}/node_modules/rolldown-plugin-dts/. $out/node_modules/.pnpm/rolldown-plugin-dts@0.22.1/node_modules/rolldown-plugin-dts
-    mkdir -p $out/node_modules/.pnpm/semver@7.7.4/node_modules
-    cp -r ${packages."semver@7.7.4"}/node_modules/semver/. $out/node_modules/.pnpm/semver@7.7.4/node_modules/semver
-    mkdir -p $out/node_modules/.pnpm/tinyexec@1.0.2/node_modules
-    cp -r ${packages."tinyexec@1.0.2"}/node_modules/tinyexec/. $out/node_modules/.pnpm/tinyexec@1.0.2/node_modules/tinyexec
-    mkdir -p $out/node_modules/.pnpm/tinyglobby@0.2.15/node_modules
-    cp -r ${packages."tinyglobby@0.2.15"}/node_modules/tinyglobby/. $out/node_modules/.pnpm/tinyglobby@0.2.15/node_modules/tinyglobby
+    mkdir -p $out/node_modules/.pnpm/rolldown-plugin-dts@0.22.1/node_modules/rolldown-plugin-dts
+    cp -r --reflink=auto ${packages."rolldown-plugin-dts@0.22.1"}/node_modules/rolldown-plugin-dts/. $out/node_modules/.pnpm/rolldown-plugin-dts@0.22.1/node_modules/rolldown-plugin-dts/
+    mkdir -p $out/node_modules/.pnpm/semver@7.7.4/node_modules/semver
+    cp -r --reflink=auto ${packages."semver@7.7.4"}/node_modules/semver/. $out/node_modules/.pnpm/semver@7.7.4/node_modules/semver/
+    mkdir -p $out/node_modules/.pnpm/tinyexec@1.0.2/node_modules/tinyexec
+    cp -r --reflink=auto ${packages."tinyexec@1.0.2"}/node_modules/tinyexec/. $out/node_modules/.pnpm/tinyexec@1.0.2/node_modules/tinyexec/
+    mkdir -p $out/node_modules/.pnpm/tinyglobby@0.2.15/node_modules/tinyglobby
+    cp -r --reflink=auto ${packages."tinyglobby@0.2.15"}/node_modules/tinyglobby/. $out/node_modules/.pnpm/tinyglobby@0.2.15/node_modules/tinyglobby/
     ln -sf ../../picomatch@4.0.3/node_modules/picomatch $out/node_modules/.pnpm/tinyglobby@0.2.15/node_modules/picomatch
-    mkdir -p $out/node_modules/.pnpm/tree-kill@1.2.2/node_modules
-    cp -r ${packages."tree-kill@1.2.2"}/node_modules/tree-kill/. $out/node_modules/.pnpm/tree-kill@1.2.2/node_modules/tree-kill
-    mkdir -p $out/node_modules/.pnpm/tsdown@0.20.3/node_modules
-    cp -r ${packages."tsdown@0.20.3"}/node_modules/tsdown/. $out/node_modules/.pnpm/tsdown@0.20.3/node_modules/tsdown
-    mkdir -p $out/node_modules/.pnpm/tslib@2.8.1/node_modules
-    cp -r ${packages."tslib@2.8.1"}/node_modules/tslib/. $out/node_modules/.pnpm/tslib@2.8.1/node_modules/tslib
-    mkdir -p $out/node_modules/.pnpm/typescript@5.9.3/node_modules
-    cp -r ${packages."typescript@5.9.3"}/node_modules/typescript/. $out/node_modules/.pnpm/typescript@5.9.3/node_modules/typescript
-    mkdir -p $out/node_modules/.pnpm/unconfig-core@7.4.2/node_modules
-    cp -r ${packages."unconfig-core@7.4.2"}/node_modules/unconfig-core/. $out/node_modules/.pnpm/unconfig-core@7.4.2/node_modules/unconfig-core
+    mkdir -p $out/node_modules/.pnpm/tree-kill@1.2.2/node_modules/tree-kill
+    cp -r --reflink=auto ${packages."tree-kill@1.2.2"}/node_modules/tree-kill/. $out/node_modules/.pnpm/tree-kill@1.2.2/node_modules/tree-kill/
+    mkdir -p $out/node_modules/.pnpm/tsdown@0.20.3/node_modules/tsdown
+    cp -r --reflink=auto ${packages."tsdown@0.20.3"}/node_modules/tsdown/. $out/node_modules/.pnpm/tsdown@0.20.3/node_modules/tsdown/
+    mkdir -p $out/node_modules/.pnpm/tslib@2.8.1/node_modules/tslib
+    cp -r --reflink=auto ${packages."tslib@2.8.1"}/node_modules/tslib/. $out/node_modules/.pnpm/tslib@2.8.1/node_modules/tslib/
+    mkdir -p $out/node_modules/.pnpm/typescript@5.9.3/node_modules/typescript
+    cp -r --reflink=auto ${packages."typescript@5.9.3"}/node_modules/typescript/. $out/node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/
+    mkdir -p $out/node_modules/.pnpm/unconfig-core@7.4.2/node_modules/unconfig-core
+    cp -r --reflink=auto ${packages."unconfig-core@7.4.2"}/node_modules/unconfig-core/. $out/node_modules/.pnpm/unconfig-core@7.4.2/node_modules/unconfig-core/
     mkdir -p $out/node_modules/.pnpm/unconfig-core@7.4.2/node_modules/@quansync
     ln -sf ../../@quansync+fs@1.0.0/node_modules/@quansync/fs $out/node_modules/.pnpm/unconfig-core@7.4.2/node_modules/@quansync/fs
     ln -sf ../../quansync@1.0.0/node_modules/quansync $out/node_modules/.pnpm/unconfig-core@7.4.2/node_modules/quansync
-    mkdir -p $out/node_modules/.pnpm/unrun@0.2.27/node_modules
-    cp -r ${packages."unrun@0.2.27"}/node_modules/unrun/. $out/node_modules/.pnpm/unrun@0.2.27/node_modules/unrun
+    mkdir -p $out/node_modules/.pnpm/unrun@0.2.27/node_modules/unrun
+    cp -r --reflink=auto ${packages."unrun@0.2.27"}/node_modules/unrun/. $out/node_modules/.pnpm/unrun@0.2.27/node_modules/unrun/
     ln -sf ../../rolldown@1.0.0-rc.3/node_modules/rolldown $out/node_modules/.pnpm/unrun@0.2.27/node_modules/rolldown
 
     # top-level symlinks
@@ -782,7 +782,66 @@ in packages // {
       name = "tsdown-starter-devshell";
       buildInputs = [ nodejs ] ++ buildInputs;
       shellHook = ''
-        export NODE_PATH="${nodeModules}/node_modules"
+        _onix_nm="${nodeModules}"
+        _onix_sentinel="node_modules/.nix-sentinel"
+
+        if [ ! -f "$_onix_sentinel" ] || [ "$(cat "$_onix_sentinel" 2>/dev/null)" != "$_onix_nm" ]; then
+          # Remove stale node_modules if sentinel exists (derivation changed)
+          if [ -f "$_onix_sentinel" ]; then
+            chmod -R u+w node_modules 2>/dev/null; rm -rf node_modules
+          fi
+
+          # Sync: copy symlink tree from Nix store
+          cp -rP "$_onix_nm/node_modules" node_modules
+
+          # Make the copied directory writable (for metadata files)
+          chmod u+w node_modules node_modules/.pnpm
+
+          # Copy lockfile as pnpm's "current lockfile" (what's installed = what's desired)
+          if [ -f pnpm-lock.yaml ]; then
+            cp pnpm-lock.yaml node_modules/.pnpm/lock.yaml
+          fi
+
+          # Generate pnpm metadata (optional — only if pnpm available)
+          if command -v pnpm >/dev/null 2>&1; then
+            _pnpm_version=$(pnpm --version 2>/dev/null || echo "9.0.0")
+            _store_dir=$(pnpm store path 2>/dev/null || echo "''${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store/v3")
+
+            cat > node_modules/.modules.yaml << MODULES
+hoistedDependencies: {}
+included:
+  dependencies: true
+  devDependencies: true
+  optionalDependencies: true
+layoutVersion: 5
+nodeLinker: isolated
+packageManager: pnpm@$_pnpm_version
+pendingBuilds: []
+prunedAt: $(date -u '+%a, %d %b %Y %H:%M:%S GMT')
+registries:
+  default: https://registry.npmjs.org/
+skipped: []
+storeDir: $_store_dir
+virtualStoreDir: .pnpm
+virtualStoreDirMaxLength: 120
+MODULES
+
+            cat > node_modules/.pnpm-workspace-state-v1.json << WSSTATE
+{
+  "lastValidatedTimestamp": 32503680000000,
+  "settings": {
+    "nodeLinker": "isolated"
+  }
+}
+WSSTATE
+          fi
+
+          # Write sentinel
+          echo "$_onix_nm" > "$_onix_sentinel"
+          echo "onix: node_modules ready ($(ls node_modules/.pnpm/ | wc -l | tr -d ' ') packages)"
+        fi
+
+        export NODE_PATH="$PWD/node_modules"
       '' + shellHook;
     });
 }

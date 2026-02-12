@@ -181,81 +181,81 @@ let
   # pnpm-style .pnpm/ virtual store + top-level symlinks
   nodeModules = pkgs.runCommand "node-basic-node-modules" {} ''
     mkdir -p $out/node_modules/.pnpm $out/node_modules/.bin
-    mkdir -p $out/node_modules/.pnpm/@esbuild+aix-ppc64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/aix-ppc64@0.24.2"}/node_modules/@esbuild/aix-ppc64/. $out/node_modules/.pnpm/@esbuild+aix-ppc64@0.24.2/node_modules/@esbuild/aix-ppc64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+android-arm@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/android-arm@0.24.2"}/node_modules/@esbuild/android-arm/. $out/node_modules/.pnpm/@esbuild+android-arm@0.24.2/node_modules/@esbuild/android-arm
-    mkdir -p $out/node_modules/.pnpm/@esbuild+android-arm64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/android-arm64@0.24.2"}/node_modules/@esbuild/android-arm64/. $out/node_modules/.pnpm/@esbuild+android-arm64@0.24.2/node_modules/@esbuild/android-arm64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+android-x64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/android-x64@0.24.2"}/node_modules/@esbuild/android-x64/. $out/node_modules/.pnpm/@esbuild+android-x64@0.24.2/node_modules/@esbuild/android-x64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+darwin-arm64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/darwin-arm64@0.24.2"}/node_modules/@esbuild/darwin-arm64/. $out/node_modules/.pnpm/@esbuild+darwin-arm64@0.24.2/node_modules/@esbuild/darwin-arm64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+darwin-x64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/darwin-x64@0.24.2"}/node_modules/@esbuild/darwin-x64/. $out/node_modules/.pnpm/@esbuild+darwin-x64@0.24.2/node_modules/@esbuild/darwin-x64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+freebsd-arm64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/freebsd-arm64@0.24.2"}/node_modules/@esbuild/freebsd-arm64/. $out/node_modules/.pnpm/@esbuild+freebsd-arm64@0.24.2/node_modules/@esbuild/freebsd-arm64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+freebsd-x64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/freebsd-x64@0.24.2"}/node_modules/@esbuild/freebsd-x64/. $out/node_modules/.pnpm/@esbuild+freebsd-x64@0.24.2/node_modules/@esbuild/freebsd-x64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-arm@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/linux-arm@0.24.2"}/node_modules/@esbuild/linux-arm/. $out/node_modules/.pnpm/@esbuild+linux-arm@0.24.2/node_modules/@esbuild/linux-arm
-    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-arm64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/linux-arm64@0.24.2"}/node_modules/@esbuild/linux-arm64/. $out/node_modules/.pnpm/@esbuild+linux-arm64@0.24.2/node_modules/@esbuild/linux-arm64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-ia32@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/linux-ia32@0.24.2"}/node_modules/@esbuild/linux-ia32/. $out/node_modules/.pnpm/@esbuild+linux-ia32@0.24.2/node_modules/@esbuild/linux-ia32
-    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-loong64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/linux-loong64@0.24.2"}/node_modules/@esbuild/linux-loong64/. $out/node_modules/.pnpm/@esbuild+linux-loong64@0.24.2/node_modules/@esbuild/linux-loong64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-mips64el@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/linux-mips64el@0.24.2"}/node_modules/@esbuild/linux-mips64el/. $out/node_modules/.pnpm/@esbuild+linux-mips64el@0.24.2/node_modules/@esbuild/linux-mips64el
-    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-ppc64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/linux-ppc64@0.24.2"}/node_modules/@esbuild/linux-ppc64/. $out/node_modules/.pnpm/@esbuild+linux-ppc64@0.24.2/node_modules/@esbuild/linux-ppc64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-riscv64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/linux-riscv64@0.24.2"}/node_modules/@esbuild/linux-riscv64/. $out/node_modules/.pnpm/@esbuild+linux-riscv64@0.24.2/node_modules/@esbuild/linux-riscv64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-s390x@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/linux-s390x@0.24.2"}/node_modules/@esbuild/linux-s390x/. $out/node_modules/.pnpm/@esbuild+linux-s390x@0.24.2/node_modules/@esbuild/linux-s390x
-    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-x64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/linux-x64@0.24.2"}/node_modules/@esbuild/linux-x64/. $out/node_modules/.pnpm/@esbuild+linux-x64@0.24.2/node_modules/@esbuild/linux-x64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+netbsd-arm64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/netbsd-arm64@0.24.2"}/node_modules/@esbuild/netbsd-arm64/. $out/node_modules/.pnpm/@esbuild+netbsd-arm64@0.24.2/node_modules/@esbuild/netbsd-arm64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+netbsd-x64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/netbsd-x64@0.24.2"}/node_modules/@esbuild/netbsd-x64/. $out/node_modules/.pnpm/@esbuild+netbsd-x64@0.24.2/node_modules/@esbuild/netbsd-x64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+openbsd-arm64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/openbsd-arm64@0.24.2"}/node_modules/@esbuild/openbsd-arm64/. $out/node_modules/.pnpm/@esbuild+openbsd-arm64@0.24.2/node_modules/@esbuild/openbsd-arm64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+openbsd-x64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/openbsd-x64@0.24.2"}/node_modules/@esbuild/openbsd-x64/. $out/node_modules/.pnpm/@esbuild+openbsd-x64@0.24.2/node_modules/@esbuild/openbsd-x64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+sunos-x64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/sunos-x64@0.24.2"}/node_modules/@esbuild/sunos-x64/. $out/node_modules/.pnpm/@esbuild+sunos-x64@0.24.2/node_modules/@esbuild/sunos-x64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+win32-arm64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/win32-arm64@0.24.2"}/node_modules/@esbuild/win32-arm64/. $out/node_modules/.pnpm/@esbuild+win32-arm64@0.24.2/node_modules/@esbuild/win32-arm64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+win32-ia32@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/win32-ia32@0.24.2"}/node_modules/@esbuild/win32-ia32/. $out/node_modules/.pnpm/@esbuild+win32-ia32@0.24.2/node_modules/@esbuild/win32-ia32
-    mkdir -p $out/node_modules/.pnpm/@esbuild+win32-x64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/win32-x64@0.24.2"}/node_modules/@esbuild/win32-x64/. $out/node_modules/.pnpm/@esbuild+win32-x64@0.24.2/node_modules/@esbuild/win32-x64
-    mkdir -p $out/node_modules/.pnpm/@types+node@22.13.1/node_modules/@types
-    cp -r ${packages."@types/node@22.13.1"}/node_modules/@types/node/. $out/node_modules/.pnpm/@types+node@22.13.1/node_modules/@types/node
+    mkdir -p $out/node_modules/.pnpm/@esbuild+aix-ppc64@0.24.2/node_modules/@esbuild/aix-ppc64
+    cp -r --reflink=auto ${packages."@esbuild/aix-ppc64@0.24.2"}/node_modules/@esbuild/aix-ppc64/. $out/node_modules/.pnpm/@esbuild+aix-ppc64@0.24.2/node_modules/@esbuild/aix-ppc64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+android-arm@0.24.2/node_modules/@esbuild/android-arm
+    cp -r --reflink=auto ${packages."@esbuild/android-arm@0.24.2"}/node_modules/@esbuild/android-arm/. $out/node_modules/.pnpm/@esbuild+android-arm@0.24.2/node_modules/@esbuild/android-arm/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+android-arm64@0.24.2/node_modules/@esbuild/android-arm64
+    cp -r --reflink=auto ${packages."@esbuild/android-arm64@0.24.2"}/node_modules/@esbuild/android-arm64/. $out/node_modules/.pnpm/@esbuild+android-arm64@0.24.2/node_modules/@esbuild/android-arm64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+android-x64@0.24.2/node_modules/@esbuild/android-x64
+    cp -r --reflink=auto ${packages."@esbuild/android-x64@0.24.2"}/node_modules/@esbuild/android-x64/. $out/node_modules/.pnpm/@esbuild+android-x64@0.24.2/node_modules/@esbuild/android-x64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+darwin-arm64@0.24.2/node_modules/@esbuild/darwin-arm64
+    cp -r --reflink=auto ${packages."@esbuild/darwin-arm64@0.24.2"}/node_modules/@esbuild/darwin-arm64/. $out/node_modules/.pnpm/@esbuild+darwin-arm64@0.24.2/node_modules/@esbuild/darwin-arm64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+darwin-x64@0.24.2/node_modules/@esbuild/darwin-x64
+    cp -r --reflink=auto ${packages."@esbuild/darwin-x64@0.24.2"}/node_modules/@esbuild/darwin-x64/. $out/node_modules/.pnpm/@esbuild+darwin-x64@0.24.2/node_modules/@esbuild/darwin-x64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+freebsd-arm64@0.24.2/node_modules/@esbuild/freebsd-arm64
+    cp -r --reflink=auto ${packages."@esbuild/freebsd-arm64@0.24.2"}/node_modules/@esbuild/freebsd-arm64/. $out/node_modules/.pnpm/@esbuild+freebsd-arm64@0.24.2/node_modules/@esbuild/freebsd-arm64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+freebsd-x64@0.24.2/node_modules/@esbuild/freebsd-x64
+    cp -r --reflink=auto ${packages."@esbuild/freebsd-x64@0.24.2"}/node_modules/@esbuild/freebsd-x64/. $out/node_modules/.pnpm/@esbuild+freebsd-x64@0.24.2/node_modules/@esbuild/freebsd-x64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-arm@0.24.2/node_modules/@esbuild/linux-arm
+    cp -r --reflink=auto ${packages."@esbuild/linux-arm@0.24.2"}/node_modules/@esbuild/linux-arm/. $out/node_modules/.pnpm/@esbuild+linux-arm@0.24.2/node_modules/@esbuild/linux-arm/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-arm64@0.24.2/node_modules/@esbuild/linux-arm64
+    cp -r --reflink=auto ${packages."@esbuild/linux-arm64@0.24.2"}/node_modules/@esbuild/linux-arm64/. $out/node_modules/.pnpm/@esbuild+linux-arm64@0.24.2/node_modules/@esbuild/linux-arm64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-ia32@0.24.2/node_modules/@esbuild/linux-ia32
+    cp -r --reflink=auto ${packages."@esbuild/linux-ia32@0.24.2"}/node_modules/@esbuild/linux-ia32/. $out/node_modules/.pnpm/@esbuild+linux-ia32@0.24.2/node_modules/@esbuild/linux-ia32/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-loong64@0.24.2/node_modules/@esbuild/linux-loong64
+    cp -r --reflink=auto ${packages."@esbuild/linux-loong64@0.24.2"}/node_modules/@esbuild/linux-loong64/. $out/node_modules/.pnpm/@esbuild+linux-loong64@0.24.2/node_modules/@esbuild/linux-loong64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-mips64el@0.24.2/node_modules/@esbuild/linux-mips64el
+    cp -r --reflink=auto ${packages."@esbuild/linux-mips64el@0.24.2"}/node_modules/@esbuild/linux-mips64el/. $out/node_modules/.pnpm/@esbuild+linux-mips64el@0.24.2/node_modules/@esbuild/linux-mips64el/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-ppc64@0.24.2/node_modules/@esbuild/linux-ppc64
+    cp -r --reflink=auto ${packages."@esbuild/linux-ppc64@0.24.2"}/node_modules/@esbuild/linux-ppc64/. $out/node_modules/.pnpm/@esbuild+linux-ppc64@0.24.2/node_modules/@esbuild/linux-ppc64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-riscv64@0.24.2/node_modules/@esbuild/linux-riscv64
+    cp -r --reflink=auto ${packages."@esbuild/linux-riscv64@0.24.2"}/node_modules/@esbuild/linux-riscv64/. $out/node_modules/.pnpm/@esbuild+linux-riscv64@0.24.2/node_modules/@esbuild/linux-riscv64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-s390x@0.24.2/node_modules/@esbuild/linux-s390x
+    cp -r --reflink=auto ${packages."@esbuild/linux-s390x@0.24.2"}/node_modules/@esbuild/linux-s390x/. $out/node_modules/.pnpm/@esbuild+linux-s390x@0.24.2/node_modules/@esbuild/linux-s390x/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-x64@0.24.2/node_modules/@esbuild/linux-x64
+    cp -r --reflink=auto ${packages."@esbuild/linux-x64@0.24.2"}/node_modules/@esbuild/linux-x64/. $out/node_modules/.pnpm/@esbuild+linux-x64@0.24.2/node_modules/@esbuild/linux-x64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+netbsd-arm64@0.24.2/node_modules/@esbuild/netbsd-arm64
+    cp -r --reflink=auto ${packages."@esbuild/netbsd-arm64@0.24.2"}/node_modules/@esbuild/netbsd-arm64/. $out/node_modules/.pnpm/@esbuild+netbsd-arm64@0.24.2/node_modules/@esbuild/netbsd-arm64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+netbsd-x64@0.24.2/node_modules/@esbuild/netbsd-x64
+    cp -r --reflink=auto ${packages."@esbuild/netbsd-x64@0.24.2"}/node_modules/@esbuild/netbsd-x64/. $out/node_modules/.pnpm/@esbuild+netbsd-x64@0.24.2/node_modules/@esbuild/netbsd-x64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+openbsd-arm64@0.24.2/node_modules/@esbuild/openbsd-arm64
+    cp -r --reflink=auto ${packages."@esbuild/openbsd-arm64@0.24.2"}/node_modules/@esbuild/openbsd-arm64/. $out/node_modules/.pnpm/@esbuild+openbsd-arm64@0.24.2/node_modules/@esbuild/openbsd-arm64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+openbsd-x64@0.24.2/node_modules/@esbuild/openbsd-x64
+    cp -r --reflink=auto ${packages."@esbuild/openbsd-x64@0.24.2"}/node_modules/@esbuild/openbsd-x64/. $out/node_modules/.pnpm/@esbuild+openbsd-x64@0.24.2/node_modules/@esbuild/openbsd-x64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+sunos-x64@0.24.2/node_modules/@esbuild/sunos-x64
+    cp -r --reflink=auto ${packages."@esbuild/sunos-x64@0.24.2"}/node_modules/@esbuild/sunos-x64/. $out/node_modules/.pnpm/@esbuild+sunos-x64@0.24.2/node_modules/@esbuild/sunos-x64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+win32-arm64@0.24.2/node_modules/@esbuild/win32-arm64
+    cp -r --reflink=auto ${packages."@esbuild/win32-arm64@0.24.2"}/node_modules/@esbuild/win32-arm64/. $out/node_modules/.pnpm/@esbuild+win32-arm64@0.24.2/node_modules/@esbuild/win32-arm64/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+win32-ia32@0.24.2/node_modules/@esbuild/win32-ia32
+    cp -r --reflink=auto ${packages."@esbuild/win32-ia32@0.24.2"}/node_modules/@esbuild/win32-ia32/. $out/node_modules/.pnpm/@esbuild+win32-ia32@0.24.2/node_modules/@esbuild/win32-ia32/
+    mkdir -p $out/node_modules/.pnpm/@esbuild+win32-x64@0.24.2/node_modules/@esbuild/win32-x64
+    cp -r --reflink=auto ${packages."@esbuild/win32-x64@0.24.2"}/node_modules/@esbuild/win32-x64/. $out/node_modules/.pnpm/@esbuild+win32-x64@0.24.2/node_modules/@esbuild/win32-x64/
+    mkdir -p $out/node_modules/.pnpm/@types+node@22.13.1/node_modules/@types/node
+    cp -r --reflink=auto ${packages."@types/node@22.13.1"}/node_modules/@types/node/. $out/node_modules/.pnpm/@types+node@22.13.1/node_modules/@types/node/
     ln -sf ../../undici-types@6.20.0/node_modules/undici-types $out/node_modules/.pnpm/@types+node@22.13.1/node_modules/undici-types
-    mkdir -p $out/node_modules/.pnpm/accepts@1.3.8/node_modules
-    cp -r ${packages."accepts@1.3.8"}/node_modules/accepts/. $out/node_modules/.pnpm/accepts@1.3.8/node_modules/accepts
+    mkdir -p $out/node_modules/.pnpm/accepts@1.3.8/node_modules/accepts
+    cp -r --reflink=auto ${packages."accepts@1.3.8"}/node_modules/accepts/. $out/node_modules/.pnpm/accepts@1.3.8/node_modules/accepts/
     ln -sf ../../mime-types@2.1.35/node_modules/mime-types $out/node_modules/.pnpm/accepts@1.3.8/node_modules/mime-types
     ln -sf ../../negotiator@0.6.3/node_modules/negotiator $out/node_modules/.pnpm/accepts@1.3.8/node_modules/negotiator
-    mkdir -p $out/node_modules/.pnpm/array-flatten@1.1.1/node_modules
-    cp -r ${packages."array-flatten@1.1.1"}/node_modules/array-flatten/. $out/node_modules/.pnpm/array-flatten@1.1.1/node_modules/array-flatten
-    mkdir -p $out/node_modules/.pnpm/base64-js@1.5.1/node_modules
-    cp -r ${packages."base64-js@1.5.1"}/node_modules/base64-js/. $out/node_modules/.pnpm/base64-js@1.5.1/node_modules/base64-js
-    mkdir -p $out/node_modules/.pnpm/better-sqlite3@11.8.1/node_modules
-    cp -r ${packages."better-sqlite3@11.8.1"}/node_modules/better-sqlite3/. $out/node_modules/.pnpm/better-sqlite3@11.8.1/node_modules/better-sqlite3
+    mkdir -p $out/node_modules/.pnpm/array-flatten@1.1.1/node_modules/array-flatten
+    cp -r --reflink=auto ${packages."array-flatten@1.1.1"}/node_modules/array-flatten/. $out/node_modules/.pnpm/array-flatten@1.1.1/node_modules/array-flatten/
+    mkdir -p $out/node_modules/.pnpm/base64-js@1.5.1/node_modules/base64-js
+    cp -r --reflink=auto ${packages."base64-js@1.5.1"}/node_modules/base64-js/. $out/node_modules/.pnpm/base64-js@1.5.1/node_modules/base64-js/
+    mkdir -p $out/node_modules/.pnpm/better-sqlite3@11.8.1/node_modules/better-sqlite3
+    cp -r --reflink=auto ${packages."better-sqlite3@11.8.1"}/node_modules/better-sqlite3/. $out/node_modules/.pnpm/better-sqlite3@11.8.1/node_modules/better-sqlite3/
     ln -sf ../../bindings@1.5.0/node_modules/bindings $out/node_modules/.pnpm/better-sqlite3@11.8.1/node_modules/bindings
     ln -sf ../../prebuild-install@7.1.3/node_modules/prebuild-install $out/node_modules/.pnpm/better-sqlite3@11.8.1/node_modules/prebuild-install
-    mkdir -p $out/node_modules/.pnpm/bindings@1.5.0/node_modules
-    cp -r ${packages."bindings@1.5.0"}/node_modules/bindings/. $out/node_modules/.pnpm/bindings@1.5.0/node_modules/bindings
+    mkdir -p $out/node_modules/.pnpm/bindings@1.5.0/node_modules/bindings
+    cp -r --reflink=auto ${packages."bindings@1.5.0"}/node_modules/bindings/. $out/node_modules/.pnpm/bindings@1.5.0/node_modules/bindings/
     ln -sf ../../file-uri-to-path@1.0.0/node_modules/file-uri-to-path $out/node_modules/.pnpm/bindings@1.5.0/node_modules/file-uri-to-path
-    mkdir -p $out/node_modules/.pnpm/bl@4.1.0/node_modules
-    cp -r ${packages."bl@4.1.0"}/node_modules/bl/. $out/node_modules/.pnpm/bl@4.1.0/node_modules/bl
+    mkdir -p $out/node_modules/.pnpm/bl@4.1.0/node_modules/bl
+    cp -r --reflink=auto ${packages."bl@4.1.0"}/node_modules/bl/. $out/node_modules/.pnpm/bl@4.1.0/node_modules/bl/
     ln -sf ../../buffer@5.7.1/node_modules/buffer $out/node_modules/.pnpm/bl@4.1.0/node_modules/buffer
     ln -sf ../../inherits@2.0.4/node_modules/inherits $out/node_modules/.pnpm/bl@4.1.0/node_modules/inherits
     ln -sf ../../readable-stream@3.6.2/node_modules/readable-stream $out/node_modules/.pnpm/bl@4.1.0/node_modules/readable-stream
-    mkdir -p $out/node_modules/.pnpm/body-parser@1.20.3/node_modules
-    cp -r ${packages."body-parser@1.20.3"}/node_modules/body-parser/. $out/node_modules/.pnpm/body-parser@1.20.3/node_modules/body-parser
+    mkdir -p $out/node_modules/.pnpm/body-parser@1.20.3/node_modules/body-parser
+    cp -r --reflink=auto ${packages."body-parser@1.20.3"}/node_modules/body-parser/. $out/node_modules/.pnpm/body-parser@1.20.3/node_modules/body-parser/
     ln -sf ../../bytes@3.1.2/node_modules/bytes $out/node_modules/.pnpm/body-parser@1.20.3/node_modules/bytes
     ln -sf ../../content-type@1.0.5/node_modules/content-type $out/node_modules/.pnpm/body-parser@1.20.3/node_modules/content-type
     ln -sf ../../debug@2.6.9/node_modules/debug $out/node_modules/.pnpm/body-parser@1.20.3/node_modules/debug
@@ -268,68 +268,68 @@ let
     ln -sf ../../raw-body@2.5.2/node_modules/raw-body $out/node_modules/.pnpm/body-parser@1.20.3/node_modules/raw-body
     ln -sf ../../type-is@1.6.18/node_modules/type-is $out/node_modules/.pnpm/body-parser@1.20.3/node_modules/type-is
     ln -sf ../../unpipe@1.0.0/node_modules/unpipe $out/node_modules/.pnpm/body-parser@1.20.3/node_modules/unpipe
-    mkdir -p $out/node_modules/.pnpm/buffer@5.7.1/node_modules
-    cp -r ${packages."buffer@5.7.1"}/node_modules/buffer/. $out/node_modules/.pnpm/buffer@5.7.1/node_modules/buffer
+    mkdir -p $out/node_modules/.pnpm/buffer@5.7.1/node_modules/buffer
+    cp -r --reflink=auto ${packages."buffer@5.7.1"}/node_modules/buffer/. $out/node_modules/.pnpm/buffer@5.7.1/node_modules/buffer/
     ln -sf ../../base64-js@1.5.1/node_modules/base64-js $out/node_modules/.pnpm/buffer@5.7.1/node_modules/base64-js
     ln -sf ../../ieee754@1.2.1/node_modules/ieee754 $out/node_modules/.pnpm/buffer@5.7.1/node_modules/ieee754
-    mkdir -p $out/node_modules/.pnpm/bytes@3.1.2/node_modules
-    cp -r ${packages."bytes@3.1.2"}/node_modules/bytes/. $out/node_modules/.pnpm/bytes@3.1.2/node_modules/bytes
-    mkdir -p $out/node_modules/.pnpm/call-bind-apply-helpers@1.0.2/node_modules
-    cp -r ${packages."call-bind-apply-helpers@1.0.2"}/node_modules/call-bind-apply-helpers/. $out/node_modules/.pnpm/call-bind-apply-helpers@1.0.2/node_modules/call-bind-apply-helpers
+    mkdir -p $out/node_modules/.pnpm/bytes@3.1.2/node_modules/bytes
+    cp -r --reflink=auto ${packages."bytes@3.1.2"}/node_modules/bytes/. $out/node_modules/.pnpm/bytes@3.1.2/node_modules/bytes/
+    mkdir -p $out/node_modules/.pnpm/call-bind-apply-helpers@1.0.2/node_modules/call-bind-apply-helpers
+    cp -r --reflink=auto ${packages."call-bind-apply-helpers@1.0.2"}/node_modules/call-bind-apply-helpers/. $out/node_modules/.pnpm/call-bind-apply-helpers@1.0.2/node_modules/call-bind-apply-helpers/
     ln -sf ../../es-errors@1.3.0/node_modules/es-errors $out/node_modules/.pnpm/call-bind-apply-helpers@1.0.2/node_modules/es-errors
     ln -sf ../../function-bind@1.1.2/node_modules/function-bind $out/node_modules/.pnpm/call-bind-apply-helpers@1.0.2/node_modules/function-bind
-    mkdir -p $out/node_modules/.pnpm/call-bound@1.0.4/node_modules
-    cp -r ${packages."call-bound@1.0.4"}/node_modules/call-bound/. $out/node_modules/.pnpm/call-bound@1.0.4/node_modules/call-bound
+    mkdir -p $out/node_modules/.pnpm/call-bound@1.0.4/node_modules/call-bound
+    cp -r --reflink=auto ${packages."call-bound@1.0.4"}/node_modules/call-bound/. $out/node_modules/.pnpm/call-bound@1.0.4/node_modules/call-bound/
     ln -sf ../../call-bind-apply-helpers@1.0.2/node_modules/call-bind-apply-helpers $out/node_modules/.pnpm/call-bound@1.0.4/node_modules/call-bind-apply-helpers
     ln -sf ../../get-intrinsic@1.3.0/node_modules/get-intrinsic $out/node_modules/.pnpm/call-bound@1.0.4/node_modules/get-intrinsic
-    mkdir -p $out/node_modules/.pnpm/chownr@1.1.4/node_modules
-    cp -r ${packages."chownr@1.1.4"}/node_modules/chownr/. $out/node_modules/.pnpm/chownr@1.1.4/node_modules/chownr
-    mkdir -p $out/node_modules/.pnpm/content-disposition@0.5.4/node_modules
-    cp -r ${packages."content-disposition@0.5.4"}/node_modules/content-disposition/. $out/node_modules/.pnpm/content-disposition@0.5.4/node_modules/content-disposition
+    mkdir -p $out/node_modules/.pnpm/chownr@1.1.4/node_modules/chownr
+    cp -r --reflink=auto ${packages."chownr@1.1.4"}/node_modules/chownr/. $out/node_modules/.pnpm/chownr@1.1.4/node_modules/chownr/
+    mkdir -p $out/node_modules/.pnpm/content-disposition@0.5.4/node_modules/content-disposition
+    cp -r --reflink=auto ${packages."content-disposition@0.5.4"}/node_modules/content-disposition/. $out/node_modules/.pnpm/content-disposition@0.5.4/node_modules/content-disposition/
     ln -sf ../../safe-buffer@5.2.1/node_modules/safe-buffer $out/node_modules/.pnpm/content-disposition@0.5.4/node_modules/safe-buffer
-    mkdir -p $out/node_modules/.pnpm/content-type@1.0.5/node_modules
-    cp -r ${packages."content-type@1.0.5"}/node_modules/content-type/. $out/node_modules/.pnpm/content-type@1.0.5/node_modules/content-type
-    mkdir -p $out/node_modules/.pnpm/cookie@0.7.1/node_modules
-    cp -r ${packages."cookie@0.7.1"}/node_modules/cookie/. $out/node_modules/.pnpm/cookie@0.7.1/node_modules/cookie
-    mkdir -p $out/node_modules/.pnpm/cookie-signature@1.0.6/node_modules
-    cp -r ${packages."cookie-signature@1.0.6"}/node_modules/cookie-signature/. $out/node_modules/.pnpm/cookie-signature@1.0.6/node_modules/cookie-signature
-    mkdir -p $out/node_modules/.pnpm/debug@2.6.9/node_modules
-    cp -r ${packages."debug@2.6.9"}/node_modules/debug/. $out/node_modules/.pnpm/debug@2.6.9/node_modules/debug
+    mkdir -p $out/node_modules/.pnpm/content-type@1.0.5/node_modules/content-type
+    cp -r --reflink=auto ${packages."content-type@1.0.5"}/node_modules/content-type/. $out/node_modules/.pnpm/content-type@1.0.5/node_modules/content-type/
+    mkdir -p $out/node_modules/.pnpm/cookie@0.7.1/node_modules/cookie
+    cp -r --reflink=auto ${packages."cookie@0.7.1"}/node_modules/cookie/. $out/node_modules/.pnpm/cookie@0.7.1/node_modules/cookie/
+    mkdir -p $out/node_modules/.pnpm/cookie-signature@1.0.6/node_modules/cookie-signature
+    cp -r --reflink=auto ${packages."cookie-signature@1.0.6"}/node_modules/cookie-signature/. $out/node_modules/.pnpm/cookie-signature@1.0.6/node_modules/cookie-signature/
+    mkdir -p $out/node_modules/.pnpm/debug@2.6.9/node_modules/debug
+    cp -r --reflink=auto ${packages."debug@2.6.9"}/node_modules/debug/. $out/node_modules/.pnpm/debug@2.6.9/node_modules/debug/
     ln -sf ../../ms@2.0.0/node_modules/ms $out/node_modules/.pnpm/debug@2.6.9/node_modules/ms
-    mkdir -p $out/node_modules/.pnpm/decompress-response@6.0.0/node_modules
-    cp -r ${packages."decompress-response@6.0.0"}/node_modules/decompress-response/. $out/node_modules/.pnpm/decompress-response@6.0.0/node_modules/decompress-response
+    mkdir -p $out/node_modules/.pnpm/decompress-response@6.0.0/node_modules/decompress-response
+    cp -r --reflink=auto ${packages."decompress-response@6.0.0"}/node_modules/decompress-response/. $out/node_modules/.pnpm/decompress-response@6.0.0/node_modules/decompress-response/
     ln -sf ../../mimic-response@3.1.0/node_modules/mimic-response $out/node_modules/.pnpm/decompress-response@6.0.0/node_modules/mimic-response
-    mkdir -p $out/node_modules/.pnpm/deep-extend@0.6.0/node_modules
-    cp -r ${packages."deep-extend@0.6.0"}/node_modules/deep-extend/. $out/node_modules/.pnpm/deep-extend@0.6.0/node_modules/deep-extend
-    mkdir -p $out/node_modules/.pnpm/depd@2.0.0/node_modules
-    cp -r ${packages."depd@2.0.0"}/node_modules/depd/. $out/node_modules/.pnpm/depd@2.0.0/node_modules/depd
-    mkdir -p $out/node_modules/.pnpm/destroy@1.2.0/node_modules
-    cp -r ${packages."destroy@1.2.0"}/node_modules/destroy/. $out/node_modules/.pnpm/destroy@1.2.0/node_modules/destroy
-    mkdir -p $out/node_modules/.pnpm/detect-libc@2.1.2/node_modules
-    cp -r ${packages."detect-libc@2.1.2"}/node_modules/detect-libc/. $out/node_modules/.pnpm/detect-libc@2.1.2/node_modules/detect-libc
-    mkdir -p $out/node_modules/.pnpm/dunder-proto@1.0.1/node_modules
-    cp -r ${packages."dunder-proto@1.0.1"}/node_modules/dunder-proto/. $out/node_modules/.pnpm/dunder-proto@1.0.1/node_modules/dunder-proto
+    mkdir -p $out/node_modules/.pnpm/deep-extend@0.6.0/node_modules/deep-extend
+    cp -r --reflink=auto ${packages."deep-extend@0.6.0"}/node_modules/deep-extend/. $out/node_modules/.pnpm/deep-extend@0.6.0/node_modules/deep-extend/
+    mkdir -p $out/node_modules/.pnpm/depd@2.0.0/node_modules/depd
+    cp -r --reflink=auto ${packages."depd@2.0.0"}/node_modules/depd/. $out/node_modules/.pnpm/depd@2.0.0/node_modules/depd/
+    mkdir -p $out/node_modules/.pnpm/destroy@1.2.0/node_modules/destroy
+    cp -r --reflink=auto ${packages."destroy@1.2.0"}/node_modules/destroy/. $out/node_modules/.pnpm/destroy@1.2.0/node_modules/destroy/
+    mkdir -p $out/node_modules/.pnpm/detect-libc@2.1.2/node_modules/detect-libc
+    cp -r --reflink=auto ${packages."detect-libc@2.1.2"}/node_modules/detect-libc/. $out/node_modules/.pnpm/detect-libc@2.1.2/node_modules/detect-libc/
+    mkdir -p $out/node_modules/.pnpm/dunder-proto@1.0.1/node_modules/dunder-proto
+    cp -r --reflink=auto ${packages."dunder-proto@1.0.1"}/node_modules/dunder-proto/. $out/node_modules/.pnpm/dunder-proto@1.0.1/node_modules/dunder-proto/
     ln -sf ../../call-bind-apply-helpers@1.0.2/node_modules/call-bind-apply-helpers $out/node_modules/.pnpm/dunder-proto@1.0.1/node_modules/call-bind-apply-helpers
     ln -sf ../../es-errors@1.3.0/node_modules/es-errors $out/node_modules/.pnpm/dunder-proto@1.0.1/node_modules/es-errors
     ln -sf ../../gopd@1.2.0/node_modules/gopd $out/node_modules/.pnpm/dunder-proto@1.0.1/node_modules/gopd
-    mkdir -p $out/node_modules/.pnpm/ee-first@1.1.1/node_modules
-    cp -r ${packages."ee-first@1.1.1"}/node_modules/ee-first/. $out/node_modules/.pnpm/ee-first@1.1.1/node_modules/ee-first
-    mkdir -p $out/node_modules/.pnpm/encodeurl@1.0.2/node_modules
-    cp -r ${packages."encodeurl@1.0.2"}/node_modules/encodeurl/. $out/node_modules/.pnpm/encodeurl@1.0.2/node_modules/encodeurl
-    mkdir -p $out/node_modules/.pnpm/encodeurl@2.0.0/node_modules
-    cp -r ${packages."encodeurl@2.0.0"}/node_modules/encodeurl/. $out/node_modules/.pnpm/encodeurl@2.0.0/node_modules/encodeurl
-    mkdir -p $out/node_modules/.pnpm/end-of-stream@1.4.5/node_modules
-    cp -r ${packages."end-of-stream@1.4.5"}/node_modules/end-of-stream/. $out/node_modules/.pnpm/end-of-stream@1.4.5/node_modules/end-of-stream
+    mkdir -p $out/node_modules/.pnpm/ee-first@1.1.1/node_modules/ee-first
+    cp -r --reflink=auto ${packages."ee-first@1.1.1"}/node_modules/ee-first/. $out/node_modules/.pnpm/ee-first@1.1.1/node_modules/ee-first/
+    mkdir -p $out/node_modules/.pnpm/encodeurl@1.0.2/node_modules/encodeurl
+    cp -r --reflink=auto ${packages."encodeurl@1.0.2"}/node_modules/encodeurl/. $out/node_modules/.pnpm/encodeurl@1.0.2/node_modules/encodeurl/
+    mkdir -p $out/node_modules/.pnpm/encodeurl@2.0.0/node_modules/encodeurl
+    cp -r --reflink=auto ${packages."encodeurl@2.0.0"}/node_modules/encodeurl/. $out/node_modules/.pnpm/encodeurl@2.0.0/node_modules/encodeurl/
+    mkdir -p $out/node_modules/.pnpm/end-of-stream@1.4.5/node_modules/end-of-stream
+    cp -r --reflink=auto ${packages."end-of-stream@1.4.5"}/node_modules/end-of-stream/. $out/node_modules/.pnpm/end-of-stream@1.4.5/node_modules/end-of-stream/
     ln -sf ../../once@1.4.0/node_modules/once $out/node_modules/.pnpm/end-of-stream@1.4.5/node_modules/once
-    mkdir -p $out/node_modules/.pnpm/es-define-property@1.0.1/node_modules
-    cp -r ${packages."es-define-property@1.0.1"}/node_modules/es-define-property/. $out/node_modules/.pnpm/es-define-property@1.0.1/node_modules/es-define-property
-    mkdir -p $out/node_modules/.pnpm/es-errors@1.3.0/node_modules
-    cp -r ${packages."es-errors@1.3.0"}/node_modules/es-errors/. $out/node_modules/.pnpm/es-errors@1.3.0/node_modules/es-errors
-    mkdir -p $out/node_modules/.pnpm/es-object-atoms@1.1.1/node_modules
-    cp -r ${packages."es-object-atoms@1.1.1"}/node_modules/es-object-atoms/. $out/node_modules/.pnpm/es-object-atoms@1.1.1/node_modules/es-object-atoms
+    mkdir -p $out/node_modules/.pnpm/es-define-property@1.0.1/node_modules/es-define-property
+    cp -r --reflink=auto ${packages."es-define-property@1.0.1"}/node_modules/es-define-property/. $out/node_modules/.pnpm/es-define-property@1.0.1/node_modules/es-define-property/
+    mkdir -p $out/node_modules/.pnpm/es-errors@1.3.0/node_modules/es-errors
+    cp -r --reflink=auto ${packages."es-errors@1.3.0"}/node_modules/es-errors/. $out/node_modules/.pnpm/es-errors@1.3.0/node_modules/es-errors/
+    mkdir -p $out/node_modules/.pnpm/es-object-atoms@1.1.1/node_modules/es-object-atoms
+    cp -r --reflink=auto ${packages."es-object-atoms@1.1.1"}/node_modules/es-object-atoms/. $out/node_modules/.pnpm/es-object-atoms@1.1.1/node_modules/es-object-atoms/
     ln -sf ../../es-errors@1.3.0/node_modules/es-errors $out/node_modules/.pnpm/es-object-atoms@1.1.1/node_modules/es-errors
-    mkdir -p $out/node_modules/.pnpm/esbuild@0.24.2/node_modules
-    cp -r ${packages."esbuild@0.24.2"}/node_modules/esbuild/. $out/node_modules/.pnpm/esbuild@0.24.2/node_modules/esbuild
+    mkdir -p $out/node_modules/.pnpm/esbuild@0.24.2/node_modules/esbuild
+    cp -r --reflink=auto ${packages."esbuild@0.24.2"}/node_modules/esbuild/. $out/node_modules/.pnpm/esbuild@0.24.2/node_modules/esbuild/
     mkdir -p $out/node_modules/.pnpm/esbuild@0.24.2/node_modules/@esbuild
     ln -sf ../../@esbuild+aix-ppc64@0.24.2/node_modules/@esbuild/aix-ppc64 $out/node_modules/.pnpm/esbuild@0.24.2/node_modules/@esbuild/aix-ppc64
     mkdir -p $out/node_modules/.pnpm/esbuild@0.24.2/node_modules/@esbuild
@@ -380,14 +380,14 @@ let
     ln -sf ../../@esbuild+win32-ia32@0.24.2/node_modules/@esbuild/win32-ia32 $out/node_modules/.pnpm/esbuild@0.24.2/node_modules/@esbuild/win32-ia32
     mkdir -p $out/node_modules/.pnpm/esbuild@0.24.2/node_modules/@esbuild
     ln -sf ../../@esbuild+win32-x64@0.24.2/node_modules/@esbuild/win32-x64 $out/node_modules/.pnpm/esbuild@0.24.2/node_modules/@esbuild/win32-x64
-    mkdir -p $out/node_modules/.pnpm/escape-html@1.0.3/node_modules
-    cp -r ${packages."escape-html@1.0.3"}/node_modules/escape-html/. $out/node_modules/.pnpm/escape-html@1.0.3/node_modules/escape-html
-    mkdir -p $out/node_modules/.pnpm/etag@1.8.1/node_modules
-    cp -r ${packages."etag@1.8.1"}/node_modules/etag/. $out/node_modules/.pnpm/etag@1.8.1/node_modules/etag
-    mkdir -p $out/node_modules/.pnpm/expand-template@2.0.3/node_modules
-    cp -r ${packages."expand-template@2.0.3"}/node_modules/expand-template/. $out/node_modules/.pnpm/expand-template@2.0.3/node_modules/expand-template
-    mkdir -p $out/node_modules/.pnpm/express@4.21.2/node_modules
-    cp -r ${packages."express@4.21.2"}/node_modules/express/. $out/node_modules/.pnpm/express@4.21.2/node_modules/express
+    mkdir -p $out/node_modules/.pnpm/escape-html@1.0.3/node_modules/escape-html
+    cp -r --reflink=auto ${packages."escape-html@1.0.3"}/node_modules/escape-html/. $out/node_modules/.pnpm/escape-html@1.0.3/node_modules/escape-html/
+    mkdir -p $out/node_modules/.pnpm/etag@1.8.1/node_modules/etag
+    cp -r --reflink=auto ${packages."etag@1.8.1"}/node_modules/etag/. $out/node_modules/.pnpm/etag@1.8.1/node_modules/etag/
+    mkdir -p $out/node_modules/.pnpm/expand-template@2.0.3/node_modules/expand-template
+    cp -r --reflink=auto ${packages."expand-template@2.0.3"}/node_modules/expand-template/. $out/node_modules/.pnpm/expand-template@2.0.3/node_modules/expand-template/
+    mkdir -p $out/node_modules/.pnpm/express@4.21.2/node_modules/express
+    cp -r --reflink=auto ${packages."express@4.21.2"}/node_modules/express/. $out/node_modules/.pnpm/express@4.21.2/node_modules/express/
     ln -sf ../../accepts@1.3.8/node_modules/accepts $out/node_modules/.pnpm/express@4.21.2/node_modules/accepts
     ln -sf ../../array-flatten@1.1.1/node_modules/array-flatten $out/node_modules/.pnpm/express@4.21.2/node_modules/array-flatten
     ln -sf ../../body-parser@1.20.3/node_modules/body-parser $out/node_modules/.pnpm/express@4.21.2/node_modules/body-parser
@@ -419,10 +419,10 @@ let
     ln -sf ../../type-is@1.6.18/node_modules/type-is $out/node_modules/.pnpm/express@4.21.2/node_modules/type-is
     ln -sf ../../utils-merge@1.0.1/node_modules/utils-merge $out/node_modules/.pnpm/express@4.21.2/node_modules/utils-merge
     ln -sf ../../vary@1.1.2/node_modules/vary $out/node_modules/.pnpm/express@4.21.2/node_modules/vary
-    mkdir -p $out/node_modules/.pnpm/file-uri-to-path@1.0.0/node_modules
-    cp -r ${packages."file-uri-to-path@1.0.0"}/node_modules/file-uri-to-path/. $out/node_modules/.pnpm/file-uri-to-path@1.0.0/node_modules/file-uri-to-path
-    mkdir -p $out/node_modules/.pnpm/finalhandler@1.3.1/node_modules
-    cp -r ${packages."finalhandler@1.3.1"}/node_modules/finalhandler/. $out/node_modules/.pnpm/finalhandler@1.3.1/node_modules/finalhandler
+    mkdir -p $out/node_modules/.pnpm/file-uri-to-path@1.0.0/node_modules/file-uri-to-path
+    cp -r --reflink=auto ${packages."file-uri-to-path@1.0.0"}/node_modules/file-uri-to-path/. $out/node_modules/.pnpm/file-uri-to-path@1.0.0/node_modules/file-uri-to-path/
+    mkdir -p $out/node_modules/.pnpm/finalhandler@1.3.1/node_modules/finalhandler
+    cp -r --reflink=auto ${packages."finalhandler@1.3.1"}/node_modules/finalhandler/. $out/node_modules/.pnpm/finalhandler@1.3.1/node_modules/finalhandler/
     ln -sf ../../debug@2.6.9/node_modules/debug $out/node_modules/.pnpm/finalhandler@1.3.1/node_modules/debug
     ln -sf ../../encodeurl@2.0.0/node_modules/encodeurl $out/node_modules/.pnpm/finalhandler@1.3.1/node_modules/encodeurl
     ln -sf ../../escape-html@1.0.3/node_modules/escape-html $out/node_modules/.pnpm/finalhandler@1.3.1/node_modules/escape-html
@@ -430,16 +430,16 @@ let
     ln -sf ../../parseurl@1.3.3/node_modules/parseurl $out/node_modules/.pnpm/finalhandler@1.3.1/node_modules/parseurl
     ln -sf ../../statuses@2.0.1/node_modules/statuses $out/node_modules/.pnpm/finalhandler@1.3.1/node_modules/statuses
     ln -sf ../../unpipe@1.0.0/node_modules/unpipe $out/node_modules/.pnpm/finalhandler@1.3.1/node_modules/unpipe
-    mkdir -p $out/node_modules/.pnpm/forwarded@0.2.0/node_modules
-    cp -r ${packages."forwarded@0.2.0"}/node_modules/forwarded/. $out/node_modules/.pnpm/forwarded@0.2.0/node_modules/forwarded
-    mkdir -p $out/node_modules/.pnpm/fresh@0.5.2/node_modules
-    cp -r ${packages."fresh@0.5.2"}/node_modules/fresh/. $out/node_modules/.pnpm/fresh@0.5.2/node_modules/fresh
-    mkdir -p $out/node_modules/.pnpm/fs-constants@1.0.0/node_modules
-    cp -r ${packages."fs-constants@1.0.0"}/node_modules/fs-constants/. $out/node_modules/.pnpm/fs-constants@1.0.0/node_modules/fs-constants
-    mkdir -p $out/node_modules/.pnpm/function-bind@1.1.2/node_modules
-    cp -r ${packages."function-bind@1.1.2"}/node_modules/function-bind/. $out/node_modules/.pnpm/function-bind@1.1.2/node_modules/function-bind
-    mkdir -p $out/node_modules/.pnpm/get-intrinsic@1.3.0/node_modules
-    cp -r ${packages."get-intrinsic@1.3.0"}/node_modules/get-intrinsic/. $out/node_modules/.pnpm/get-intrinsic@1.3.0/node_modules/get-intrinsic
+    mkdir -p $out/node_modules/.pnpm/forwarded@0.2.0/node_modules/forwarded
+    cp -r --reflink=auto ${packages."forwarded@0.2.0"}/node_modules/forwarded/. $out/node_modules/.pnpm/forwarded@0.2.0/node_modules/forwarded/
+    mkdir -p $out/node_modules/.pnpm/fresh@0.5.2/node_modules/fresh
+    cp -r --reflink=auto ${packages."fresh@0.5.2"}/node_modules/fresh/. $out/node_modules/.pnpm/fresh@0.5.2/node_modules/fresh/
+    mkdir -p $out/node_modules/.pnpm/fs-constants@1.0.0/node_modules/fs-constants
+    cp -r --reflink=auto ${packages."fs-constants@1.0.0"}/node_modules/fs-constants/. $out/node_modules/.pnpm/fs-constants@1.0.0/node_modules/fs-constants/
+    mkdir -p $out/node_modules/.pnpm/function-bind@1.1.2/node_modules/function-bind
+    cp -r --reflink=auto ${packages."function-bind@1.1.2"}/node_modules/function-bind/. $out/node_modules/.pnpm/function-bind@1.1.2/node_modules/function-bind/
+    mkdir -p $out/node_modules/.pnpm/get-intrinsic@1.3.0/node_modules/get-intrinsic
+    cp -r --reflink=auto ${packages."get-intrinsic@1.3.0"}/node_modules/get-intrinsic/. $out/node_modules/.pnpm/get-intrinsic@1.3.0/node_modules/get-intrinsic/
     ln -sf ../../call-bind-apply-helpers@1.0.2/node_modules/call-bind-apply-helpers $out/node_modules/.pnpm/get-intrinsic@1.3.0/node_modules/call-bind-apply-helpers
     ln -sf ../../es-define-property@1.0.1/node_modules/es-define-property $out/node_modules/.pnpm/get-intrinsic@1.3.0/node_modules/es-define-property
     ln -sf ../../es-errors@1.3.0/node_modules/es-errors $out/node_modules/.pnpm/get-intrinsic@1.3.0/node_modules/es-errors
@@ -450,85 +450,85 @@ let
     ln -sf ../../has-symbols@1.1.0/node_modules/has-symbols $out/node_modules/.pnpm/get-intrinsic@1.3.0/node_modules/has-symbols
     ln -sf ../../hasown@2.0.2/node_modules/hasown $out/node_modules/.pnpm/get-intrinsic@1.3.0/node_modules/hasown
     ln -sf ../../math-intrinsics@1.1.0/node_modules/math-intrinsics $out/node_modules/.pnpm/get-intrinsic@1.3.0/node_modules/math-intrinsics
-    mkdir -p $out/node_modules/.pnpm/get-proto@1.0.1/node_modules
-    cp -r ${packages."get-proto@1.0.1"}/node_modules/get-proto/. $out/node_modules/.pnpm/get-proto@1.0.1/node_modules/get-proto
+    mkdir -p $out/node_modules/.pnpm/get-proto@1.0.1/node_modules/get-proto
+    cp -r --reflink=auto ${packages."get-proto@1.0.1"}/node_modules/get-proto/. $out/node_modules/.pnpm/get-proto@1.0.1/node_modules/get-proto/
     ln -sf ../../dunder-proto@1.0.1/node_modules/dunder-proto $out/node_modules/.pnpm/get-proto@1.0.1/node_modules/dunder-proto
     ln -sf ../../es-object-atoms@1.1.1/node_modules/es-object-atoms $out/node_modules/.pnpm/get-proto@1.0.1/node_modules/es-object-atoms
-    mkdir -p $out/node_modules/.pnpm/github-from-package@0.0.0/node_modules
-    cp -r ${packages."github-from-package@0.0.0"}/node_modules/github-from-package/. $out/node_modules/.pnpm/github-from-package@0.0.0/node_modules/github-from-package
-    mkdir -p $out/node_modules/.pnpm/gopd@1.2.0/node_modules
-    cp -r ${packages."gopd@1.2.0"}/node_modules/gopd/. $out/node_modules/.pnpm/gopd@1.2.0/node_modules/gopd
-    mkdir -p $out/node_modules/.pnpm/has-symbols@1.1.0/node_modules
-    cp -r ${packages."has-symbols@1.1.0"}/node_modules/has-symbols/. $out/node_modules/.pnpm/has-symbols@1.1.0/node_modules/has-symbols
-    mkdir -p $out/node_modules/.pnpm/hasown@2.0.2/node_modules
-    cp -r ${packages."hasown@2.0.2"}/node_modules/hasown/. $out/node_modules/.pnpm/hasown@2.0.2/node_modules/hasown
+    mkdir -p $out/node_modules/.pnpm/github-from-package@0.0.0/node_modules/github-from-package
+    cp -r --reflink=auto ${packages."github-from-package@0.0.0"}/node_modules/github-from-package/. $out/node_modules/.pnpm/github-from-package@0.0.0/node_modules/github-from-package/
+    mkdir -p $out/node_modules/.pnpm/gopd@1.2.0/node_modules/gopd
+    cp -r --reflink=auto ${packages."gopd@1.2.0"}/node_modules/gopd/. $out/node_modules/.pnpm/gopd@1.2.0/node_modules/gopd/
+    mkdir -p $out/node_modules/.pnpm/has-symbols@1.1.0/node_modules/has-symbols
+    cp -r --reflink=auto ${packages."has-symbols@1.1.0"}/node_modules/has-symbols/. $out/node_modules/.pnpm/has-symbols@1.1.0/node_modules/has-symbols/
+    mkdir -p $out/node_modules/.pnpm/hasown@2.0.2/node_modules/hasown
+    cp -r --reflink=auto ${packages."hasown@2.0.2"}/node_modules/hasown/. $out/node_modules/.pnpm/hasown@2.0.2/node_modules/hasown/
     ln -sf ../../function-bind@1.1.2/node_modules/function-bind $out/node_modules/.pnpm/hasown@2.0.2/node_modules/function-bind
-    mkdir -p $out/node_modules/.pnpm/http-errors@2.0.0/node_modules
-    cp -r ${packages."http-errors@2.0.0"}/node_modules/http-errors/. $out/node_modules/.pnpm/http-errors@2.0.0/node_modules/http-errors
+    mkdir -p $out/node_modules/.pnpm/http-errors@2.0.0/node_modules/http-errors
+    cp -r --reflink=auto ${packages."http-errors@2.0.0"}/node_modules/http-errors/. $out/node_modules/.pnpm/http-errors@2.0.0/node_modules/http-errors/
     ln -sf ../../depd@2.0.0/node_modules/depd $out/node_modules/.pnpm/http-errors@2.0.0/node_modules/depd
     ln -sf ../../inherits@2.0.4/node_modules/inherits $out/node_modules/.pnpm/http-errors@2.0.0/node_modules/inherits
     ln -sf ../../setprototypeof@1.2.0/node_modules/setprototypeof $out/node_modules/.pnpm/http-errors@2.0.0/node_modules/setprototypeof
     ln -sf ../../statuses@2.0.1/node_modules/statuses $out/node_modules/.pnpm/http-errors@2.0.0/node_modules/statuses
     ln -sf ../../toidentifier@1.0.1/node_modules/toidentifier $out/node_modules/.pnpm/http-errors@2.0.0/node_modules/toidentifier
-    mkdir -p $out/node_modules/.pnpm/iconv-lite@0.4.24/node_modules
-    cp -r ${packages."iconv-lite@0.4.24"}/node_modules/iconv-lite/. $out/node_modules/.pnpm/iconv-lite@0.4.24/node_modules/iconv-lite
+    mkdir -p $out/node_modules/.pnpm/iconv-lite@0.4.24/node_modules/iconv-lite
+    cp -r --reflink=auto ${packages."iconv-lite@0.4.24"}/node_modules/iconv-lite/. $out/node_modules/.pnpm/iconv-lite@0.4.24/node_modules/iconv-lite/
     ln -sf ../../safer-buffer@2.1.2/node_modules/safer-buffer $out/node_modules/.pnpm/iconv-lite@0.4.24/node_modules/safer-buffer
-    mkdir -p $out/node_modules/.pnpm/ieee754@1.2.1/node_modules
-    cp -r ${packages."ieee754@1.2.1"}/node_modules/ieee754/. $out/node_modules/.pnpm/ieee754@1.2.1/node_modules/ieee754
-    mkdir -p $out/node_modules/.pnpm/inherits@2.0.4/node_modules
-    cp -r ${packages."inherits@2.0.4"}/node_modules/inherits/. $out/node_modules/.pnpm/inherits@2.0.4/node_modules/inherits
-    mkdir -p $out/node_modules/.pnpm/ini@1.3.8/node_modules
-    cp -r ${packages."ini@1.3.8"}/node_modules/ini/. $out/node_modules/.pnpm/ini@1.3.8/node_modules/ini
-    mkdir -p $out/node_modules/.pnpm/ipaddr.js@1.9.1/node_modules
-    cp -r ${packages."ipaddr.js@1.9.1"}/node_modules/ipaddr.js/. $out/node_modules/.pnpm/ipaddr.js@1.9.1/node_modules/ipaddr.js
-    mkdir -p $out/node_modules/.pnpm/math-intrinsics@1.1.0/node_modules
-    cp -r ${packages."math-intrinsics@1.1.0"}/node_modules/math-intrinsics/. $out/node_modules/.pnpm/math-intrinsics@1.1.0/node_modules/math-intrinsics
-    mkdir -p $out/node_modules/.pnpm/media-typer@0.3.0/node_modules
-    cp -r ${packages."media-typer@0.3.0"}/node_modules/media-typer/. $out/node_modules/.pnpm/media-typer@0.3.0/node_modules/media-typer
-    mkdir -p $out/node_modules/.pnpm/merge-descriptors@1.0.3/node_modules
-    cp -r ${packages."merge-descriptors@1.0.3"}/node_modules/merge-descriptors/. $out/node_modules/.pnpm/merge-descriptors@1.0.3/node_modules/merge-descriptors
-    mkdir -p $out/node_modules/.pnpm/methods@1.1.2/node_modules
-    cp -r ${packages."methods@1.1.2"}/node_modules/methods/. $out/node_modules/.pnpm/methods@1.1.2/node_modules/methods
-    mkdir -p $out/node_modules/.pnpm/mime@1.6.0/node_modules
-    cp -r ${packages."mime@1.6.0"}/node_modules/mime/. $out/node_modules/.pnpm/mime@1.6.0/node_modules/mime
-    mkdir -p $out/node_modules/.pnpm/mime-db@1.52.0/node_modules
-    cp -r ${packages."mime-db@1.52.0"}/node_modules/mime-db/. $out/node_modules/.pnpm/mime-db@1.52.0/node_modules/mime-db
-    mkdir -p $out/node_modules/.pnpm/mime-types@2.1.35/node_modules
-    cp -r ${packages."mime-types@2.1.35"}/node_modules/mime-types/. $out/node_modules/.pnpm/mime-types@2.1.35/node_modules/mime-types
+    mkdir -p $out/node_modules/.pnpm/ieee754@1.2.1/node_modules/ieee754
+    cp -r --reflink=auto ${packages."ieee754@1.2.1"}/node_modules/ieee754/. $out/node_modules/.pnpm/ieee754@1.2.1/node_modules/ieee754/
+    mkdir -p $out/node_modules/.pnpm/inherits@2.0.4/node_modules/inherits
+    cp -r --reflink=auto ${packages."inherits@2.0.4"}/node_modules/inherits/. $out/node_modules/.pnpm/inherits@2.0.4/node_modules/inherits/
+    mkdir -p $out/node_modules/.pnpm/ini@1.3.8/node_modules/ini
+    cp -r --reflink=auto ${packages."ini@1.3.8"}/node_modules/ini/. $out/node_modules/.pnpm/ini@1.3.8/node_modules/ini/
+    mkdir -p $out/node_modules/.pnpm/ipaddr.js@1.9.1/node_modules/ipaddr.js
+    cp -r --reflink=auto ${packages."ipaddr.js@1.9.1"}/node_modules/ipaddr.js/. $out/node_modules/.pnpm/ipaddr.js@1.9.1/node_modules/ipaddr.js/
+    mkdir -p $out/node_modules/.pnpm/math-intrinsics@1.1.0/node_modules/math-intrinsics
+    cp -r --reflink=auto ${packages."math-intrinsics@1.1.0"}/node_modules/math-intrinsics/. $out/node_modules/.pnpm/math-intrinsics@1.1.0/node_modules/math-intrinsics/
+    mkdir -p $out/node_modules/.pnpm/media-typer@0.3.0/node_modules/media-typer
+    cp -r --reflink=auto ${packages."media-typer@0.3.0"}/node_modules/media-typer/. $out/node_modules/.pnpm/media-typer@0.3.0/node_modules/media-typer/
+    mkdir -p $out/node_modules/.pnpm/merge-descriptors@1.0.3/node_modules/merge-descriptors
+    cp -r --reflink=auto ${packages."merge-descriptors@1.0.3"}/node_modules/merge-descriptors/. $out/node_modules/.pnpm/merge-descriptors@1.0.3/node_modules/merge-descriptors/
+    mkdir -p $out/node_modules/.pnpm/methods@1.1.2/node_modules/methods
+    cp -r --reflink=auto ${packages."methods@1.1.2"}/node_modules/methods/. $out/node_modules/.pnpm/methods@1.1.2/node_modules/methods/
+    mkdir -p $out/node_modules/.pnpm/mime@1.6.0/node_modules/mime
+    cp -r --reflink=auto ${packages."mime@1.6.0"}/node_modules/mime/. $out/node_modules/.pnpm/mime@1.6.0/node_modules/mime/
+    mkdir -p $out/node_modules/.pnpm/mime-db@1.52.0/node_modules/mime-db
+    cp -r --reflink=auto ${packages."mime-db@1.52.0"}/node_modules/mime-db/. $out/node_modules/.pnpm/mime-db@1.52.0/node_modules/mime-db/
+    mkdir -p $out/node_modules/.pnpm/mime-types@2.1.35/node_modules/mime-types
+    cp -r --reflink=auto ${packages."mime-types@2.1.35"}/node_modules/mime-types/. $out/node_modules/.pnpm/mime-types@2.1.35/node_modules/mime-types/
     ln -sf ../../mime-db@1.52.0/node_modules/mime-db $out/node_modules/.pnpm/mime-types@2.1.35/node_modules/mime-db
-    mkdir -p $out/node_modules/.pnpm/mimic-response@3.1.0/node_modules
-    cp -r ${packages."mimic-response@3.1.0"}/node_modules/mimic-response/. $out/node_modules/.pnpm/mimic-response@3.1.0/node_modules/mimic-response
-    mkdir -p $out/node_modules/.pnpm/minimist@1.2.8/node_modules
-    cp -r ${packages."minimist@1.2.8"}/node_modules/minimist/. $out/node_modules/.pnpm/minimist@1.2.8/node_modules/minimist
-    mkdir -p $out/node_modules/.pnpm/mkdirp-classic@0.5.3/node_modules
-    cp -r ${packages."mkdirp-classic@0.5.3"}/node_modules/mkdirp-classic/. $out/node_modules/.pnpm/mkdirp-classic@0.5.3/node_modules/mkdirp-classic
-    mkdir -p $out/node_modules/.pnpm/ms@2.0.0/node_modules
-    cp -r ${packages."ms@2.0.0"}/node_modules/ms/. $out/node_modules/.pnpm/ms@2.0.0/node_modules/ms
-    mkdir -p $out/node_modules/.pnpm/ms@2.1.3/node_modules
-    cp -r ${packages."ms@2.1.3"}/node_modules/ms/. $out/node_modules/.pnpm/ms@2.1.3/node_modules/ms
-    mkdir -p $out/node_modules/.pnpm/napi-build-utils@2.0.0/node_modules
-    cp -r ${packages."napi-build-utils@2.0.0"}/node_modules/napi-build-utils/. $out/node_modules/.pnpm/napi-build-utils@2.0.0/node_modules/napi-build-utils
-    mkdir -p $out/node_modules/.pnpm/negotiator@0.6.3/node_modules
-    cp -r ${packages."negotiator@0.6.3"}/node_modules/negotiator/. $out/node_modules/.pnpm/negotiator@0.6.3/node_modules/negotiator
-    mkdir -p $out/node_modules/.pnpm/node-abi@3.87.0/node_modules
-    cp -r ${packages."node-abi@3.87.0"}/node_modules/node-abi/. $out/node_modules/.pnpm/node-abi@3.87.0/node_modules/node-abi
+    mkdir -p $out/node_modules/.pnpm/mimic-response@3.1.0/node_modules/mimic-response
+    cp -r --reflink=auto ${packages."mimic-response@3.1.0"}/node_modules/mimic-response/. $out/node_modules/.pnpm/mimic-response@3.1.0/node_modules/mimic-response/
+    mkdir -p $out/node_modules/.pnpm/minimist@1.2.8/node_modules/minimist
+    cp -r --reflink=auto ${packages."minimist@1.2.8"}/node_modules/minimist/. $out/node_modules/.pnpm/minimist@1.2.8/node_modules/minimist/
+    mkdir -p $out/node_modules/.pnpm/mkdirp-classic@0.5.3/node_modules/mkdirp-classic
+    cp -r --reflink=auto ${packages."mkdirp-classic@0.5.3"}/node_modules/mkdirp-classic/. $out/node_modules/.pnpm/mkdirp-classic@0.5.3/node_modules/mkdirp-classic/
+    mkdir -p $out/node_modules/.pnpm/ms@2.0.0/node_modules/ms
+    cp -r --reflink=auto ${packages."ms@2.0.0"}/node_modules/ms/. $out/node_modules/.pnpm/ms@2.0.0/node_modules/ms/
+    mkdir -p $out/node_modules/.pnpm/ms@2.1.3/node_modules/ms
+    cp -r --reflink=auto ${packages."ms@2.1.3"}/node_modules/ms/. $out/node_modules/.pnpm/ms@2.1.3/node_modules/ms/
+    mkdir -p $out/node_modules/.pnpm/napi-build-utils@2.0.0/node_modules/napi-build-utils
+    cp -r --reflink=auto ${packages."napi-build-utils@2.0.0"}/node_modules/napi-build-utils/. $out/node_modules/.pnpm/napi-build-utils@2.0.0/node_modules/napi-build-utils/
+    mkdir -p $out/node_modules/.pnpm/negotiator@0.6.3/node_modules/negotiator
+    cp -r --reflink=auto ${packages."negotiator@0.6.3"}/node_modules/negotiator/. $out/node_modules/.pnpm/negotiator@0.6.3/node_modules/negotiator/
+    mkdir -p $out/node_modules/.pnpm/node-abi@3.87.0/node_modules/node-abi
+    cp -r --reflink=auto ${packages."node-abi@3.87.0"}/node_modules/node-abi/. $out/node_modules/.pnpm/node-abi@3.87.0/node_modules/node-abi/
     ln -sf ../../semver@7.7.1/node_modules/semver $out/node_modules/.pnpm/node-abi@3.87.0/node_modules/semver
-    mkdir -p $out/node_modules/.pnpm/object-inspect@1.13.4/node_modules
-    cp -r ${packages."object-inspect@1.13.4"}/node_modules/object-inspect/. $out/node_modules/.pnpm/object-inspect@1.13.4/node_modules/object-inspect
-    mkdir -p $out/node_modules/.pnpm/on-finished@2.4.1/node_modules
-    cp -r ${packages."on-finished@2.4.1"}/node_modules/on-finished/. $out/node_modules/.pnpm/on-finished@2.4.1/node_modules/on-finished
+    mkdir -p $out/node_modules/.pnpm/object-inspect@1.13.4/node_modules/object-inspect
+    cp -r --reflink=auto ${packages."object-inspect@1.13.4"}/node_modules/object-inspect/. $out/node_modules/.pnpm/object-inspect@1.13.4/node_modules/object-inspect/
+    mkdir -p $out/node_modules/.pnpm/on-finished@2.4.1/node_modules/on-finished
+    cp -r --reflink=auto ${packages."on-finished@2.4.1"}/node_modules/on-finished/. $out/node_modules/.pnpm/on-finished@2.4.1/node_modules/on-finished/
     ln -sf ../../ee-first@1.1.1/node_modules/ee-first $out/node_modules/.pnpm/on-finished@2.4.1/node_modules/ee-first
-    mkdir -p $out/node_modules/.pnpm/once@1.4.0/node_modules
-    cp -r ${packages."once@1.4.0"}/node_modules/once/. $out/node_modules/.pnpm/once@1.4.0/node_modules/once
+    mkdir -p $out/node_modules/.pnpm/once@1.4.0/node_modules/once
+    cp -r --reflink=auto ${packages."once@1.4.0"}/node_modules/once/. $out/node_modules/.pnpm/once@1.4.0/node_modules/once/
     ln -sf ../../wrappy@1.0.2/node_modules/wrappy $out/node_modules/.pnpm/once@1.4.0/node_modules/wrappy
-    mkdir -p $out/node_modules/.pnpm/parseurl@1.3.3/node_modules
-    cp -r ${packages."parseurl@1.3.3"}/node_modules/parseurl/. $out/node_modules/.pnpm/parseurl@1.3.3/node_modules/parseurl
-    mkdir -p $out/node_modules/.pnpm/path-to-regexp@0.1.12/node_modules
-    cp -r ${packages."path-to-regexp@0.1.12"}/node_modules/path-to-regexp/. $out/node_modules/.pnpm/path-to-regexp@0.1.12/node_modules/path-to-regexp
-    mkdir -p $out/node_modules/.pnpm/picocolors@1.1.1/node_modules
-    cp -r ${packages."picocolors@1.1.1"}/node_modules/picocolors/. $out/node_modules/.pnpm/picocolors@1.1.1/node_modules/picocolors
-    mkdir -p $out/node_modules/.pnpm/prebuild-install@7.1.3/node_modules
-    cp -r ${packages."prebuild-install@7.1.3"}/node_modules/prebuild-install/. $out/node_modules/.pnpm/prebuild-install@7.1.3/node_modules/prebuild-install
+    mkdir -p $out/node_modules/.pnpm/parseurl@1.3.3/node_modules/parseurl
+    cp -r --reflink=auto ${packages."parseurl@1.3.3"}/node_modules/parseurl/. $out/node_modules/.pnpm/parseurl@1.3.3/node_modules/parseurl/
+    mkdir -p $out/node_modules/.pnpm/path-to-regexp@0.1.12/node_modules/path-to-regexp
+    cp -r --reflink=auto ${packages."path-to-regexp@0.1.12"}/node_modules/path-to-regexp/. $out/node_modules/.pnpm/path-to-regexp@0.1.12/node_modules/path-to-regexp/
+    mkdir -p $out/node_modules/.pnpm/picocolors@1.1.1/node_modules/picocolors
+    cp -r --reflink=auto ${packages."picocolors@1.1.1"}/node_modules/picocolors/. $out/node_modules/.pnpm/picocolors@1.1.1/node_modules/picocolors/
+    mkdir -p $out/node_modules/.pnpm/prebuild-install@7.1.3/node_modules/prebuild-install
+    cp -r --reflink=auto ${packages."prebuild-install@7.1.3"}/node_modules/prebuild-install/. $out/node_modules/.pnpm/prebuild-install@7.1.3/node_modules/prebuild-install/
     ln -sf ../../detect-libc@2.1.2/node_modules/detect-libc $out/node_modules/.pnpm/prebuild-install@7.1.3/node_modules/detect-libc
     ln -sf ../../expand-template@2.0.3/node_modules/expand-template $out/node_modules/.pnpm/prebuild-install@7.1.3/node_modules/expand-template
     ln -sf ../../github-from-package@0.0.0/node_modules/github-from-package $out/node_modules/.pnpm/prebuild-install@7.1.3/node_modules/github-from-package
@@ -541,44 +541,44 @@ let
     ln -sf ../../simple-get@4.0.1/node_modules/simple-get $out/node_modules/.pnpm/prebuild-install@7.1.3/node_modules/simple-get
     ln -sf ../../tar-fs@2.1.4/node_modules/tar-fs $out/node_modules/.pnpm/prebuild-install@7.1.3/node_modules/tar-fs
     ln -sf ../../tunnel-agent@0.6.0/node_modules/tunnel-agent $out/node_modules/.pnpm/prebuild-install@7.1.3/node_modules/tunnel-agent
-    mkdir -p $out/node_modules/.pnpm/proxy-addr@2.0.7/node_modules
-    cp -r ${packages."proxy-addr@2.0.7"}/node_modules/proxy-addr/. $out/node_modules/.pnpm/proxy-addr@2.0.7/node_modules/proxy-addr
+    mkdir -p $out/node_modules/.pnpm/proxy-addr@2.0.7/node_modules/proxy-addr
+    cp -r --reflink=auto ${packages."proxy-addr@2.0.7"}/node_modules/proxy-addr/. $out/node_modules/.pnpm/proxy-addr@2.0.7/node_modules/proxy-addr/
     ln -sf ../../forwarded@0.2.0/node_modules/forwarded $out/node_modules/.pnpm/proxy-addr@2.0.7/node_modules/forwarded
     ln -sf ../../ipaddr.js@1.9.1/node_modules/ipaddr.js $out/node_modules/.pnpm/proxy-addr@2.0.7/node_modules/ipaddr.js
-    mkdir -p $out/node_modules/.pnpm/pump@3.0.3/node_modules
-    cp -r ${packages."pump@3.0.3"}/node_modules/pump/. $out/node_modules/.pnpm/pump@3.0.3/node_modules/pump
+    mkdir -p $out/node_modules/.pnpm/pump@3.0.3/node_modules/pump
+    cp -r --reflink=auto ${packages."pump@3.0.3"}/node_modules/pump/. $out/node_modules/.pnpm/pump@3.0.3/node_modules/pump/
     ln -sf ../../end-of-stream@1.4.5/node_modules/end-of-stream $out/node_modules/.pnpm/pump@3.0.3/node_modules/end-of-stream
     ln -sf ../../once@1.4.0/node_modules/once $out/node_modules/.pnpm/pump@3.0.3/node_modules/once
-    mkdir -p $out/node_modules/.pnpm/qs@6.13.0/node_modules
-    cp -r ${packages."qs@6.13.0"}/node_modules/qs/. $out/node_modules/.pnpm/qs@6.13.0/node_modules/qs
+    mkdir -p $out/node_modules/.pnpm/qs@6.13.0/node_modules/qs
+    cp -r --reflink=auto ${packages."qs@6.13.0"}/node_modules/qs/. $out/node_modules/.pnpm/qs@6.13.0/node_modules/qs/
     ln -sf ../../side-channel@1.1.0/node_modules/side-channel $out/node_modules/.pnpm/qs@6.13.0/node_modules/side-channel
-    mkdir -p $out/node_modules/.pnpm/range-parser@1.2.1/node_modules
-    cp -r ${packages."range-parser@1.2.1"}/node_modules/range-parser/. $out/node_modules/.pnpm/range-parser@1.2.1/node_modules/range-parser
-    mkdir -p $out/node_modules/.pnpm/raw-body@2.5.2/node_modules
-    cp -r ${packages."raw-body@2.5.2"}/node_modules/raw-body/. $out/node_modules/.pnpm/raw-body@2.5.2/node_modules/raw-body
+    mkdir -p $out/node_modules/.pnpm/range-parser@1.2.1/node_modules/range-parser
+    cp -r --reflink=auto ${packages."range-parser@1.2.1"}/node_modules/range-parser/. $out/node_modules/.pnpm/range-parser@1.2.1/node_modules/range-parser/
+    mkdir -p $out/node_modules/.pnpm/raw-body@2.5.2/node_modules/raw-body
+    cp -r --reflink=auto ${packages."raw-body@2.5.2"}/node_modules/raw-body/. $out/node_modules/.pnpm/raw-body@2.5.2/node_modules/raw-body/
     ln -sf ../../bytes@3.1.2/node_modules/bytes $out/node_modules/.pnpm/raw-body@2.5.2/node_modules/bytes
     ln -sf ../../http-errors@2.0.0/node_modules/http-errors $out/node_modules/.pnpm/raw-body@2.5.2/node_modules/http-errors
     ln -sf ../../iconv-lite@0.4.24/node_modules/iconv-lite $out/node_modules/.pnpm/raw-body@2.5.2/node_modules/iconv-lite
     ln -sf ../../unpipe@1.0.0/node_modules/unpipe $out/node_modules/.pnpm/raw-body@2.5.2/node_modules/unpipe
-    mkdir -p $out/node_modules/.pnpm/rc@1.2.8/node_modules
-    cp -r ${packages."rc@1.2.8"}/node_modules/rc/. $out/node_modules/.pnpm/rc@1.2.8/node_modules/rc
+    mkdir -p $out/node_modules/.pnpm/rc@1.2.8/node_modules/rc
+    cp -r --reflink=auto ${packages."rc@1.2.8"}/node_modules/rc/. $out/node_modules/.pnpm/rc@1.2.8/node_modules/rc/
     ln -sf ../../deep-extend@0.6.0/node_modules/deep-extend $out/node_modules/.pnpm/rc@1.2.8/node_modules/deep-extend
     ln -sf ../../ini@1.3.8/node_modules/ini $out/node_modules/.pnpm/rc@1.2.8/node_modules/ini
     ln -sf ../../minimist@1.2.8/node_modules/minimist $out/node_modules/.pnpm/rc@1.2.8/node_modules/minimist
     ln -sf ../../strip-json-comments@2.0.1/node_modules/strip-json-comments $out/node_modules/.pnpm/rc@1.2.8/node_modules/strip-json-comments
-    mkdir -p $out/node_modules/.pnpm/readable-stream@3.6.2/node_modules
-    cp -r ${packages."readable-stream@3.6.2"}/node_modules/readable-stream/. $out/node_modules/.pnpm/readable-stream@3.6.2/node_modules/readable-stream
+    mkdir -p $out/node_modules/.pnpm/readable-stream@3.6.2/node_modules/readable-stream
+    cp -r --reflink=auto ${packages."readable-stream@3.6.2"}/node_modules/readable-stream/. $out/node_modules/.pnpm/readable-stream@3.6.2/node_modules/readable-stream/
     ln -sf ../../inherits@2.0.4/node_modules/inherits $out/node_modules/.pnpm/readable-stream@3.6.2/node_modules/inherits
     ln -sf ../../string_decoder@1.3.0/node_modules/string_decoder $out/node_modules/.pnpm/readable-stream@3.6.2/node_modules/string_decoder
     ln -sf ../../util-deprecate@1.0.2/node_modules/util-deprecate $out/node_modules/.pnpm/readable-stream@3.6.2/node_modules/util-deprecate
-    mkdir -p $out/node_modules/.pnpm/safe-buffer@5.2.1/node_modules
-    cp -r ${packages."safe-buffer@5.2.1"}/node_modules/safe-buffer/. $out/node_modules/.pnpm/safe-buffer@5.2.1/node_modules/safe-buffer
-    mkdir -p $out/node_modules/.pnpm/safer-buffer@2.1.2/node_modules
-    cp -r ${packages."safer-buffer@2.1.2"}/node_modules/safer-buffer/. $out/node_modules/.pnpm/safer-buffer@2.1.2/node_modules/safer-buffer
-    mkdir -p $out/node_modules/.pnpm/semver@7.7.1/node_modules
-    cp -r ${packages."semver@7.7.1"}/node_modules/semver/. $out/node_modules/.pnpm/semver@7.7.1/node_modules/semver
-    mkdir -p $out/node_modules/.pnpm/send@0.19.0/node_modules
-    cp -r ${packages."send@0.19.0"}/node_modules/send/. $out/node_modules/.pnpm/send@0.19.0/node_modules/send
+    mkdir -p $out/node_modules/.pnpm/safe-buffer@5.2.1/node_modules/safe-buffer
+    cp -r --reflink=auto ${packages."safe-buffer@5.2.1"}/node_modules/safe-buffer/. $out/node_modules/.pnpm/safe-buffer@5.2.1/node_modules/safe-buffer/
+    mkdir -p $out/node_modules/.pnpm/safer-buffer@2.1.2/node_modules/safer-buffer
+    cp -r --reflink=auto ${packages."safer-buffer@2.1.2"}/node_modules/safer-buffer/. $out/node_modules/.pnpm/safer-buffer@2.1.2/node_modules/safer-buffer/
+    mkdir -p $out/node_modules/.pnpm/semver@7.7.1/node_modules/semver
+    cp -r --reflink=auto ${packages."semver@7.7.1"}/node_modules/semver/. $out/node_modules/.pnpm/semver@7.7.1/node_modules/semver/
+    mkdir -p $out/node_modules/.pnpm/send@0.19.0/node_modules/send
+    cp -r --reflink=auto ${packages."send@0.19.0"}/node_modules/send/. $out/node_modules/.pnpm/send@0.19.0/node_modules/send/
     ln -sf ../../debug@2.6.9/node_modules/debug $out/node_modules/.pnpm/send@0.19.0/node_modules/debug
     ln -sf ../../depd@2.0.0/node_modules/depd $out/node_modules/.pnpm/send@0.19.0/node_modules/depd
     ln -sf ../../destroy@1.2.0/node_modules/destroy $out/node_modules/.pnpm/send@0.19.0/node_modules/destroy
@@ -592,88 +592,88 @@ let
     ln -sf ../../on-finished@2.4.1/node_modules/on-finished $out/node_modules/.pnpm/send@0.19.0/node_modules/on-finished
     ln -sf ../../range-parser@1.2.1/node_modules/range-parser $out/node_modules/.pnpm/send@0.19.0/node_modules/range-parser
     ln -sf ../../statuses@2.0.1/node_modules/statuses $out/node_modules/.pnpm/send@0.19.0/node_modules/statuses
-    mkdir -p $out/node_modules/.pnpm/serve-static@1.16.2/node_modules
-    cp -r ${packages."serve-static@1.16.2"}/node_modules/serve-static/. $out/node_modules/.pnpm/serve-static@1.16.2/node_modules/serve-static
+    mkdir -p $out/node_modules/.pnpm/serve-static@1.16.2/node_modules/serve-static
+    cp -r --reflink=auto ${packages."serve-static@1.16.2"}/node_modules/serve-static/. $out/node_modules/.pnpm/serve-static@1.16.2/node_modules/serve-static/
     ln -sf ../../encodeurl@2.0.0/node_modules/encodeurl $out/node_modules/.pnpm/serve-static@1.16.2/node_modules/encodeurl
     ln -sf ../../escape-html@1.0.3/node_modules/escape-html $out/node_modules/.pnpm/serve-static@1.16.2/node_modules/escape-html
     ln -sf ../../parseurl@1.3.3/node_modules/parseurl $out/node_modules/.pnpm/serve-static@1.16.2/node_modules/parseurl
     ln -sf ../../send@0.19.0/node_modules/send $out/node_modules/.pnpm/serve-static@1.16.2/node_modules/send
-    mkdir -p $out/node_modules/.pnpm/setprototypeof@1.2.0/node_modules
-    cp -r ${packages."setprototypeof@1.2.0"}/node_modules/setprototypeof/. $out/node_modules/.pnpm/setprototypeof@1.2.0/node_modules/setprototypeof
-    mkdir -p $out/node_modules/.pnpm/side-channel@1.1.0/node_modules
-    cp -r ${packages."side-channel@1.1.0"}/node_modules/side-channel/. $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/side-channel
+    mkdir -p $out/node_modules/.pnpm/setprototypeof@1.2.0/node_modules/setprototypeof
+    cp -r --reflink=auto ${packages."setprototypeof@1.2.0"}/node_modules/setprototypeof/. $out/node_modules/.pnpm/setprototypeof@1.2.0/node_modules/setprototypeof/
+    mkdir -p $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/side-channel
+    cp -r --reflink=auto ${packages."side-channel@1.1.0"}/node_modules/side-channel/. $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/side-channel/
     ln -sf ../../es-errors@1.3.0/node_modules/es-errors $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/es-errors
     ln -sf ../../object-inspect@1.13.4/node_modules/object-inspect $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/object-inspect
     ln -sf ../../side-channel-list@1.0.0/node_modules/side-channel-list $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/side-channel-list
     ln -sf ../../side-channel-map@1.0.1/node_modules/side-channel-map $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/side-channel-map
     ln -sf ../../side-channel-weakmap@1.0.2/node_modules/side-channel-weakmap $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/side-channel-weakmap
-    mkdir -p $out/node_modules/.pnpm/side-channel-list@1.0.0/node_modules
-    cp -r ${packages."side-channel-list@1.0.0"}/node_modules/side-channel-list/. $out/node_modules/.pnpm/side-channel-list@1.0.0/node_modules/side-channel-list
+    mkdir -p $out/node_modules/.pnpm/side-channel-list@1.0.0/node_modules/side-channel-list
+    cp -r --reflink=auto ${packages."side-channel-list@1.0.0"}/node_modules/side-channel-list/. $out/node_modules/.pnpm/side-channel-list@1.0.0/node_modules/side-channel-list/
     ln -sf ../../es-errors@1.3.0/node_modules/es-errors $out/node_modules/.pnpm/side-channel-list@1.0.0/node_modules/es-errors
     ln -sf ../../object-inspect@1.13.4/node_modules/object-inspect $out/node_modules/.pnpm/side-channel-list@1.0.0/node_modules/object-inspect
-    mkdir -p $out/node_modules/.pnpm/side-channel-map@1.0.1/node_modules
-    cp -r ${packages."side-channel-map@1.0.1"}/node_modules/side-channel-map/. $out/node_modules/.pnpm/side-channel-map@1.0.1/node_modules/side-channel-map
+    mkdir -p $out/node_modules/.pnpm/side-channel-map@1.0.1/node_modules/side-channel-map
+    cp -r --reflink=auto ${packages."side-channel-map@1.0.1"}/node_modules/side-channel-map/. $out/node_modules/.pnpm/side-channel-map@1.0.1/node_modules/side-channel-map/
     ln -sf ../../call-bound@1.0.4/node_modules/call-bound $out/node_modules/.pnpm/side-channel-map@1.0.1/node_modules/call-bound
     ln -sf ../../es-errors@1.3.0/node_modules/es-errors $out/node_modules/.pnpm/side-channel-map@1.0.1/node_modules/es-errors
     ln -sf ../../get-intrinsic@1.3.0/node_modules/get-intrinsic $out/node_modules/.pnpm/side-channel-map@1.0.1/node_modules/get-intrinsic
     ln -sf ../../object-inspect@1.13.4/node_modules/object-inspect $out/node_modules/.pnpm/side-channel-map@1.0.1/node_modules/object-inspect
-    mkdir -p $out/node_modules/.pnpm/side-channel-weakmap@1.0.2/node_modules
-    cp -r ${packages."side-channel-weakmap@1.0.2"}/node_modules/side-channel-weakmap/. $out/node_modules/.pnpm/side-channel-weakmap@1.0.2/node_modules/side-channel-weakmap
+    mkdir -p $out/node_modules/.pnpm/side-channel-weakmap@1.0.2/node_modules/side-channel-weakmap
+    cp -r --reflink=auto ${packages."side-channel-weakmap@1.0.2"}/node_modules/side-channel-weakmap/. $out/node_modules/.pnpm/side-channel-weakmap@1.0.2/node_modules/side-channel-weakmap/
     ln -sf ../../call-bound@1.0.4/node_modules/call-bound $out/node_modules/.pnpm/side-channel-weakmap@1.0.2/node_modules/call-bound
     ln -sf ../../es-errors@1.3.0/node_modules/es-errors $out/node_modules/.pnpm/side-channel-weakmap@1.0.2/node_modules/es-errors
     ln -sf ../../get-intrinsic@1.3.0/node_modules/get-intrinsic $out/node_modules/.pnpm/side-channel-weakmap@1.0.2/node_modules/get-intrinsic
     ln -sf ../../object-inspect@1.13.4/node_modules/object-inspect $out/node_modules/.pnpm/side-channel-weakmap@1.0.2/node_modules/object-inspect
     ln -sf ../../side-channel-map@1.0.1/node_modules/side-channel-map $out/node_modules/.pnpm/side-channel-weakmap@1.0.2/node_modules/side-channel-map
-    mkdir -p $out/node_modules/.pnpm/simple-concat@1.0.1/node_modules
-    cp -r ${packages."simple-concat@1.0.1"}/node_modules/simple-concat/. $out/node_modules/.pnpm/simple-concat@1.0.1/node_modules/simple-concat
-    mkdir -p $out/node_modules/.pnpm/simple-get@4.0.1/node_modules
-    cp -r ${packages."simple-get@4.0.1"}/node_modules/simple-get/. $out/node_modules/.pnpm/simple-get@4.0.1/node_modules/simple-get
+    mkdir -p $out/node_modules/.pnpm/simple-concat@1.0.1/node_modules/simple-concat
+    cp -r --reflink=auto ${packages."simple-concat@1.0.1"}/node_modules/simple-concat/. $out/node_modules/.pnpm/simple-concat@1.0.1/node_modules/simple-concat/
+    mkdir -p $out/node_modules/.pnpm/simple-get@4.0.1/node_modules/simple-get
+    cp -r --reflink=auto ${packages."simple-get@4.0.1"}/node_modules/simple-get/. $out/node_modules/.pnpm/simple-get@4.0.1/node_modules/simple-get/
     ln -sf ../../decompress-response@6.0.0/node_modules/decompress-response $out/node_modules/.pnpm/simple-get@4.0.1/node_modules/decompress-response
     ln -sf ../../once@1.4.0/node_modules/once $out/node_modules/.pnpm/simple-get@4.0.1/node_modules/once
     ln -sf ../../simple-concat@1.0.1/node_modules/simple-concat $out/node_modules/.pnpm/simple-get@4.0.1/node_modules/simple-concat
-    mkdir -p $out/node_modules/.pnpm/statuses@2.0.1/node_modules
-    cp -r ${packages."statuses@2.0.1"}/node_modules/statuses/. $out/node_modules/.pnpm/statuses@2.0.1/node_modules/statuses
-    mkdir -p $out/node_modules/.pnpm/string_decoder@1.3.0/node_modules
-    cp -r ${packages."string_decoder@1.3.0"}/node_modules/string_decoder/. $out/node_modules/.pnpm/string_decoder@1.3.0/node_modules/string_decoder
+    mkdir -p $out/node_modules/.pnpm/statuses@2.0.1/node_modules/statuses
+    cp -r --reflink=auto ${packages."statuses@2.0.1"}/node_modules/statuses/. $out/node_modules/.pnpm/statuses@2.0.1/node_modules/statuses/
+    mkdir -p $out/node_modules/.pnpm/string_decoder@1.3.0/node_modules/string_decoder
+    cp -r --reflink=auto ${packages."string_decoder@1.3.0"}/node_modules/string_decoder/. $out/node_modules/.pnpm/string_decoder@1.3.0/node_modules/string_decoder/
     ln -sf ../../safe-buffer@5.2.1/node_modules/safe-buffer $out/node_modules/.pnpm/string_decoder@1.3.0/node_modules/safe-buffer
-    mkdir -p $out/node_modules/.pnpm/strip-json-comments@2.0.1/node_modules
-    cp -r ${packages."strip-json-comments@2.0.1"}/node_modules/strip-json-comments/. $out/node_modules/.pnpm/strip-json-comments@2.0.1/node_modules/strip-json-comments
-    mkdir -p $out/node_modules/.pnpm/tar-fs@2.1.4/node_modules
-    cp -r ${packages."tar-fs@2.1.4"}/node_modules/tar-fs/. $out/node_modules/.pnpm/tar-fs@2.1.4/node_modules/tar-fs
+    mkdir -p $out/node_modules/.pnpm/strip-json-comments@2.0.1/node_modules/strip-json-comments
+    cp -r --reflink=auto ${packages."strip-json-comments@2.0.1"}/node_modules/strip-json-comments/. $out/node_modules/.pnpm/strip-json-comments@2.0.1/node_modules/strip-json-comments/
+    mkdir -p $out/node_modules/.pnpm/tar-fs@2.1.4/node_modules/tar-fs
+    cp -r --reflink=auto ${packages."tar-fs@2.1.4"}/node_modules/tar-fs/. $out/node_modules/.pnpm/tar-fs@2.1.4/node_modules/tar-fs/
     ln -sf ../../chownr@1.1.4/node_modules/chownr $out/node_modules/.pnpm/tar-fs@2.1.4/node_modules/chownr
     ln -sf ../../mkdirp-classic@0.5.3/node_modules/mkdirp-classic $out/node_modules/.pnpm/tar-fs@2.1.4/node_modules/mkdirp-classic
     ln -sf ../../pump@3.0.3/node_modules/pump $out/node_modules/.pnpm/tar-fs@2.1.4/node_modules/pump
     ln -sf ../../tar-stream@2.2.0/node_modules/tar-stream $out/node_modules/.pnpm/tar-fs@2.1.4/node_modules/tar-stream
-    mkdir -p $out/node_modules/.pnpm/tar-stream@2.2.0/node_modules
-    cp -r ${packages."tar-stream@2.2.0"}/node_modules/tar-stream/. $out/node_modules/.pnpm/tar-stream@2.2.0/node_modules/tar-stream
+    mkdir -p $out/node_modules/.pnpm/tar-stream@2.2.0/node_modules/tar-stream
+    cp -r --reflink=auto ${packages."tar-stream@2.2.0"}/node_modules/tar-stream/. $out/node_modules/.pnpm/tar-stream@2.2.0/node_modules/tar-stream/
     ln -sf ../../bl@4.1.0/node_modules/bl $out/node_modules/.pnpm/tar-stream@2.2.0/node_modules/bl
     ln -sf ../../end-of-stream@1.4.5/node_modules/end-of-stream $out/node_modules/.pnpm/tar-stream@2.2.0/node_modules/end-of-stream
     ln -sf ../../fs-constants@1.0.0/node_modules/fs-constants $out/node_modules/.pnpm/tar-stream@2.2.0/node_modules/fs-constants
     ln -sf ../../inherits@2.0.4/node_modules/inherits $out/node_modules/.pnpm/tar-stream@2.2.0/node_modules/inherits
     ln -sf ../../readable-stream@3.6.2/node_modules/readable-stream $out/node_modules/.pnpm/tar-stream@2.2.0/node_modules/readable-stream
-    mkdir -p $out/node_modules/.pnpm/toidentifier@1.0.1/node_modules
-    cp -r ${packages."toidentifier@1.0.1"}/node_modules/toidentifier/. $out/node_modules/.pnpm/toidentifier@1.0.1/node_modules/toidentifier
-    mkdir -p $out/node_modules/.pnpm/tunnel-agent@0.6.0/node_modules
-    cp -r ${packages."tunnel-agent@0.6.0"}/node_modules/tunnel-agent/. $out/node_modules/.pnpm/tunnel-agent@0.6.0/node_modules/tunnel-agent
+    mkdir -p $out/node_modules/.pnpm/toidentifier@1.0.1/node_modules/toidentifier
+    cp -r --reflink=auto ${packages."toidentifier@1.0.1"}/node_modules/toidentifier/. $out/node_modules/.pnpm/toidentifier@1.0.1/node_modules/toidentifier/
+    mkdir -p $out/node_modules/.pnpm/tunnel-agent@0.6.0/node_modules/tunnel-agent
+    cp -r --reflink=auto ${packages."tunnel-agent@0.6.0"}/node_modules/tunnel-agent/. $out/node_modules/.pnpm/tunnel-agent@0.6.0/node_modules/tunnel-agent/
     ln -sf ../../safe-buffer@5.2.1/node_modules/safe-buffer $out/node_modules/.pnpm/tunnel-agent@0.6.0/node_modules/safe-buffer
-    mkdir -p $out/node_modules/.pnpm/type-is@1.6.18/node_modules
-    cp -r ${packages."type-is@1.6.18"}/node_modules/type-is/. $out/node_modules/.pnpm/type-is@1.6.18/node_modules/type-is
+    mkdir -p $out/node_modules/.pnpm/type-is@1.6.18/node_modules/type-is
+    cp -r --reflink=auto ${packages."type-is@1.6.18"}/node_modules/type-is/. $out/node_modules/.pnpm/type-is@1.6.18/node_modules/type-is/
     ln -sf ../../media-typer@0.3.0/node_modules/media-typer $out/node_modules/.pnpm/type-is@1.6.18/node_modules/media-typer
     ln -sf ../../mime-types@2.1.35/node_modules/mime-types $out/node_modules/.pnpm/type-is@1.6.18/node_modules/mime-types
-    mkdir -p $out/node_modules/.pnpm/typescript@5.7.3/node_modules
-    cp -r ${packages."typescript@5.7.3"}/node_modules/typescript/. $out/node_modules/.pnpm/typescript@5.7.3/node_modules/typescript
-    mkdir -p $out/node_modules/.pnpm/undici-types@6.20.0/node_modules
-    cp -r ${packages."undici-types@6.20.0"}/node_modules/undici-types/. $out/node_modules/.pnpm/undici-types@6.20.0/node_modules/undici-types
-    mkdir -p $out/node_modules/.pnpm/unpipe@1.0.0/node_modules
-    cp -r ${packages."unpipe@1.0.0"}/node_modules/unpipe/. $out/node_modules/.pnpm/unpipe@1.0.0/node_modules/unpipe
-    mkdir -p $out/node_modules/.pnpm/util-deprecate@1.0.2/node_modules
-    cp -r ${packages."util-deprecate@1.0.2"}/node_modules/util-deprecate/. $out/node_modules/.pnpm/util-deprecate@1.0.2/node_modules/util-deprecate
-    mkdir -p $out/node_modules/.pnpm/utils-merge@1.0.1/node_modules
-    cp -r ${packages."utils-merge@1.0.1"}/node_modules/utils-merge/. $out/node_modules/.pnpm/utils-merge@1.0.1/node_modules/utils-merge
-    mkdir -p $out/node_modules/.pnpm/vary@1.1.2/node_modules
-    cp -r ${packages."vary@1.1.2"}/node_modules/vary/. $out/node_modules/.pnpm/vary@1.1.2/node_modules/vary
-    mkdir -p $out/node_modules/.pnpm/wrappy@1.0.2/node_modules
-    cp -r ${packages."wrappy@1.0.2"}/node_modules/wrappy/. $out/node_modules/.pnpm/wrappy@1.0.2/node_modules/wrappy
+    mkdir -p $out/node_modules/.pnpm/typescript@5.7.3/node_modules/typescript
+    cp -r --reflink=auto ${packages."typescript@5.7.3"}/node_modules/typescript/. $out/node_modules/.pnpm/typescript@5.7.3/node_modules/typescript/
+    mkdir -p $out/node_modules/.pnpm/undici-types@6.20.0/node_modules/undici-types
+    cp -r --reflink=auto ${packages."undici-types@6.20.0"}/node_modules/undici-types/. $out/node_modules/.pnpm/undici-types@6.20.0/node_modules/undici-types/
+    mkdir -p $out/node_modules/.pnpm/unpipe@1.0.0/node_modules/unpipe
+    cp -r --reflink=auto ${packages."unpipe@1.0.0"}/node_modules/unpipe/. $out/node_modules/.pnpm/unpipe@1.0.0/node_modules/unpipe/
+    mkdir -p $out/node_modules/.pnpm/util-deprecate@1.0.2/node_modules/util-deprecate
+    cp -r --reflink=auto ${packages."util-deprecate@1.0.2"}/node_modules/util-deprecate/. $out/node_modules/.pnpm/util-deprecate@1.0.2/node_modules/util-deprecate/
+    mkdir -p $out/node_modules/.pnpm/utils-merge@1.0.1/node_modules/utils-merge
+    cp -r --reflink=auto ${packages."utils-merge@1.0.1"}/node_modules/utils-merge/. $out/node_modules/.pnpm/utils-merge@1.0.1/node_modules/utils-merge/
+    mkdir -p $out/node_modules/.pnpm/vary@1.1.2/node_modules/vary
+    cp -r --reflink=auto ${packages."vary@1.1.2"}/node_modules/vary/. $out/node_modules/.pnpm/vary@1.1.2/node_modules/vary/
+    mkdir -p $out/node_modules/.pnpm/wrappy@1.0.2/node_modules/wrappy
+    cp -r --reflink=auto ${packages."wrappy@1.0.2"}/node_modules/wrappy/. $out/node_modules/.pnpm/wrappy@1.0.2/node_modules/wrappy/
 
     # top-level symlinks
     mkdir -p $out/node_modules/@esbuild
@@ -1655,7 +1655,66 @@ in packages // {
       name = "node-basic-devshell";
       buildInputs = [ nodejs ] ++ buildInputs;
       shellHook = ''
-        export NODE_PATH="${nodeModules}/node_modules"
+        _onix_nm="${nodeModules}"
+        _onix_sentinel="node_modules/.nix-sentinel"
+
+        if [ ! -f "$_onix_sentinel" ] || [ "$(cat "$_onix_sentinel" 2>/dev/null)" != "$_onix_nm" ]; then
+          # Remove stale node_modules if sentinel exists (derivation changed)
+          if [ -f "$_onix_sentinel" ]; then
+            chmod -R u+w node_modules 2>/dev/null; rm -rf node_modules
+          fi
+
+          # Sync: copy symlink tree from Nix store
+          cp -rP "$_onix_nm/node_modules" node_modules
+
+          # Make the copied directory writable (for metadata files)
+          chmod u+w node_modules node_modules/.pnpm
+
+          # Copy lockfile as pnpm's "current lockfile" (what's installed = what's desired)
+          if [ -f pnpm-lock.yaml ]; then
+            cp pnpm-lock.yaml node_modules/.pnpm/lock.yaml
+          fi
+
+          # Generate pnpm metadata (optional — only if pnpm available)
+          if command -v pnpm >/dev/null 2>&1; then
+            _pnpm_version=$(pnpm --version 2>/dev/null || echo "9.0.0")
+            _store_dir=$(pnpm store path 2>/dev/null || echo "''${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store/v3")
+
+            cat > node_modules/.modules.yaml << MODULES
+hoistedDependencies: {}
+included:
+  dependencies: true
+  devDependencies: true
+  optionalDependencies: true
+layoutVersion: 5
+nodeLinker: isolated
+packageManager: pnpm@$_pnpm_version
+pendingBuilds: []
+prunedAt: $(date -u '+%a, %d %b %Y %H:%M:%S GMT')
+registries:
+  default: https://registry.npmjs.org/
+skipped: []
+storeDir: $_store_dir
+virtualStoreDir: .pnpm
+virtualStoreDirMaxLength: 120
+MODULES
+
+            cat > node_modules/.pnpm-workspace-state-v1.json << WSSTATE
+{
+  "lastValidatedTimestamp": 32503680000000,
+  "settings": {
+    "nodeLinker": "isolated"
+  }
+}
+WSSTATE
+          fi
+
+          # Write sentinel
+          echo "$_onix_nm" > "$_onix_sentinel"
+          echo "onix: node_modules ready ($(ls node_modules/.pnpm/ | wc -l | tr -d ' ') packages)"
+        fi
+
+        export NODE_PATH="$PWD/node_modules"
       '' + shellHook;
     });
 }

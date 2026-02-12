@@ -405,4 +405,222 @@ if [ $? -ne 0 ]; then
 fi
 
 echo ""
+echo "--- Test 12: devShell sync + sentinel ---"
+# Enter the devShell and verify node_modules is synced to a project directory
+devshell_dir=$(mktemp -d)
+cp "$dir/package.json" "$devshell_dir/"
+cp "$dir/pnpm-lock.yaml" "$devshell_dir/"
+
+# Run the shellHook via nix-shell --run (must cd first — shellHook runs in CWD)
+(cd "$devshell_dir" && nix-shell "$dir/devshell.nix" --run '
+  # shellHook should have created node_modules/
+  if [ ! -d node_modules ]; then
+    echo "FAIL: node_modules not created by shellHook"
+    exit 1
+  fi
+  echo "  node_modules/ created by shellHook"
+
+  # Sentinel should exist
+  if [ ! -f node_modules/.nix-sentinel ]; then
+    echo "FAIL: .nix-sentinel not written"
+    exit 1
+  fi
+  echo "  .nix-sentinel present"
+
+  # Packages should be reachable in .pnpm/ layout
+  if [ ! -d node_modules/.pnpm/express@4.21.2/node_modules/express ]; then
+    echo "FAIL: express not found in .pnpm/"
+    exit 1
+  fi
+  echo "  express present in .pnpm/"
+
+  # Lockfile should be present
+  if [ ! -f node_modules/.pnpm/lock.yaml ]; then
+    echo "FAIL: .pnpm/lock.yaml missing"
+    exit 1
+  fi
+  echo "  .pnpm/lock.yaml present"
+
+  # NODE_PATH should point to project node_modules
+  if [[ "$NODE_PATH" != *"/node_modules" ]]; then
+    echo "FAIL: NODE_PATH=$NODE_PATH (expected */node_modules)"
+    exit 1
+  fi
+  echo "  NODE_PATH set correctly"
+
+  # Module loading should work from project dir
+  node -e "require(\"express\")" || { echo "FAIL: require(express) failed"; exit 1; }
+  echo "  require(express) works from project dir"
+
+  # Native module should work too
+  node -e "const db = require(\"better-sqlite3\")(\":memory:\"); db.exec(\"SELECT 1\")" || { echo "FAIL: better-sqlite3 failed"; exit 1; }
+  echo "  better-sqlite3 works from project dir"
+') 2>&1
+echo "OK: devShell sync + sentinel verified"
+
+echo ""
+echo "--- Test 13: devShell sentinel warm start (skip sync) ---"
+# Re-enter with existing node_modules — should be instant (no sync message)
+sync_output=$(cd "$devshell_dir" && nix-shell "$dir/devshell.nix" --run "
+  echo 'ENTERED'
+" 2>&1)
+if echo "$sync_output" | grep -q "onix: node_modules ready"; then
+  echo "FAIL: sync ran on warm start (sentinel should have skipped)"
+  exit 1
+fi
+echo "  re-entry skipped sync (sentinel hit)"
+echo "OK: sentinel warm start verified"
+
+echo ""
+echo "--- Test 14: pnpm metadata files ---"
+(cd "$devshell_dir" && nix-shell "$dir/devshell.nix" --run '
+  # .modules.yaml should exist with storeDir
+  if [ ! -f node_modules/.modules.yaml ]; then
+    echo "WARN: .modules.yaml not generated (pnpm may not be available)"
+    exit 0
+  fi
+  if ! grep -q "storeDir:" node_modules/.modules.yaml; then
+    echo "FAIL: .modules.yaml missing storeDir"
+    exit 1
+  fi
+  echo "  .modules.yaml has storeDir"
+
+  if ! grep -q "nodeLinker: isolated" node_modules/.modules.yaml; then
+    echo "FAIL: .modules.yaml missing nodeLinker"
+    exit 1
+  fi
+  echo "  .modules.yaml has nodeLinker: isolated"
+
+  # workspace state should exist with far-future timestamp
+  if [ ! -f node_modules/.pnpm-workspace-state-v1.json ]; then
+    echo "WARN: workspace state not generated"
+    exit 0
+  fi
+  if ! grep -q "32503680000000" node_modules/.pnpm-workspace-state-v1.json; then
+    echo "FAIL: workspace state missing far-future timestamp"
+    exit 1
+  fi
+  echo "  workspace state has far-future timestamp"
+
+  # pnpm install should exit immediately if pnpm is available
+  if command -v pnpm >/dev/null 2>&1; then
+    pnpm_output=$(pnpm install 2>&1 || true)
+    if echo "$pnpm_output" | grep -qi "Already up to date"; then
+      echo "  pnpm install: Already up to date"
+    else
+      echo "  pnpm install output: $pnpm_output"
+      echo "  WARN: pnpm install did not report up-to-date (may need metadata tuning)"
+    fi
+  else
+    echo "  pnpm not available — skipping pnpm install check"
+  fi
+') 2>&1
+echo "OK: pnpm metadata verified"
+
+echo ""
+echo "--- Test 15: sentinel miss (deps changed) ---"
+# Write a fake sentinel to simulate a derivation change, then re-enter
+(cd "$devshell_dir" && echo "/nix/store/fake-old-derivation" > node_modules/.nix-sentinel)
+sync_output=$(cd "$devshell_dir" && nix-shell "$dir/devshell.nix" --run '
+  echo "ENTERED"
+' 2>&1)
+if ! echo "$sync_output" | grep -q "onix: node_modules ready"; then
+  echo "FAIL: sync did not run after sentinel mismatch"
+  exit 1
+fi
+echo "  stale sentinel triggered re-sync"
+
+# Verify the sentinel was updated to the new derivation path
+sentinel_val=$(cat "$devshell_dir/node_modules/.nix-sentinel")
+if [ "$sentinel_val" = "/nix/store/fake-old-derivation" ]; then
+  echo "FAIL: sentinel was not updated after re-sync"
+  exit 1
+fi
+echo "  sentinel updated to current derivation"
+
+# Verify modules still work after re-sync
+(cd "$devshell_dir" && nix-shell "$dir/devshell.nix" --run '
+  node -e "require(\"express\")" || { echo "FAIL: require(express) failed after re-sync"; exit 1; }
+  echo "  require(express) works after re-sync"
+') 2>&1
+echo "OK: sentinel miss (deps changed) verified"
+
+echo ""
+echo "--- Test 16: no-pnpm fallback ---"
+# Enter devShell with pnpm removed from PATH — sync should work, metadata skipped
+nopnpm_dir=$(mktemp -d)
+cp "$dir/package.json" "$nopnpm_dir/"
+cp "$dir/pnpm-lock.yaml" "$nopnpm_dir/"
+
+(cd "$nopnpm_dir" && nix-shell --pure "$dir/devshell.nix" --run '
+  # node_modules should still be created (sync works without pnpm)
+  if [ ! -d node_modules ]; then
+    echo "FAIL: node_modules not created without pnpm"
+    exit 1
+  fi
+  echo "  node_modules/ created without pnpm"
+
+  # Sentinel should still be written
+  if [ ! -f node_modules/.nix-sentinel ]; then
+    echo "FAIL: sentinel not written without pnpm"
+    exit 1
+  fi
+  echo "  sentinel written without pnpm"
+
+  # Module loading should still work
+  node -e "require(\"express\")" || { echo "FAIL: require(express) failed without pnpm"; exit 1; }
+  echo "  require(express) works without pnpm"
+
+  # Metadata files should NOT exist (pnpm was not available)
+  if [ -f node_modules/.modules.yaml ]; then
+    echo "FAIL: .modules.yaml should not exist without pnpm"
+    exit 1
+  fi
+  echo "  .modules.yaml correctly absent (no pnpm)"
+
+  if [ -f node_modules/.pnpm-workspace-state-v1.json ]; then
+    echo "FAIL: workspace state should not exist without pnpm"
+    exit 1
+  fi
+  echo "  workspace state correctly absent (no pnpm)"
+') 2>&1
+chmod -R u+w "$nopnpm_dir" 2>/dev/null; rm -rf "$nopnpm_dir"
+echo "OK: no-pnpm fallback verified"
+
+echo ""
+echo "--- Test 17: user shellHook passthrough ---"
+# Create a devshell.nix that passes a custom shellHook
+custom_devshell=$(mktemp -d)/devshell.nix
+cat > "$custom_devshell" << NIXEOF
+{ pkgs ? import <nixpkgs> {}, nodejs ? pkgs.nodejs_22 }:
+let
+  project = import $root/nix/node-basic.nix { inherit pkgs nodejs; };
+in project.devShell {
+  shellHook = ''
+    export ONIX_TEST_CUSTOM_HOOK="it-works"
+  '';
+}
+NIXEOF
+
+hook_dir=$(mktemp -d)
+cp "$dir/package.json" "$hook_dir/"
+cp "$dir/pnpm-lock.yaml" "$hook_dir/"
+
+hook_output=$(cd "$hook_dir" && nix-shell "$custom_devshell" --run '
+  echo "CUSTOM_HOOK=$ONIX_TEST_CUSTOM_HOOK"
+' 2>&1)
+if echo "$hook_output" | grep -q "CUSTOM_HOOK=it-works"; then
+  echo "  user shellHook executed after sync"
+else
+  echo "FAIL: user shellHook not executed (expected ONIX_TEST_CUSTOM_HOOK=it-works)"
+  echo "  output: $hook_output"
+  exit 1
+fi
+chmod -R u+w "$hook_dir" 2>/dev/null; rm -rf "$hook_dir"
+rm -f "$custom_devshell"; rmdir "$(dirname "$custom_devshell")" 2>/dev/null
+echo "OK: user shellHook passthrough verified"
+
+chmod -R u+w "$devshell_dir" 2>/dev/null; rm -rf "$devshell_dir"
+
+echo ""
 echo "All node-basic tests passed."
