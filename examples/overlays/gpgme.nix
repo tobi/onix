@@ -11,7 +11,7 @@
   buildGems = [
     (buildGem "mini_portile2")
   ];
-  beforeBuild = ''
+  preBuild = ''
     export RUBY_GPGME_USE_SYSTEM_LIBRARIES=1
   '';
 }

@@ -5,7 +5,7 @@
     libxml2
     pkg-config
   ];
-  beforeBuild = ''
+  preBuild = ''
     export C_INCLUDE_PATH="${pkgs.libxml2.dev}/include/libxml2''${C_INCLUDE_PATH:+:$C_INCLUDE_PATH}"
   '';
 }

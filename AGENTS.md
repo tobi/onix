@@ -144,26 +144,14 @@ An overlay file `overlays/<name>.nix` is a function `{ pkgs, ruby, buildGem, ...
 |-------|------|-------------|
 | `deps` | list | Extra `nativeBuildInputs` |
 | `extconfFlags` | string | Flags appended to every `ruby extconf.rb` call |
-| `beforeBuild` | string | Shell commands run before the default build phase |
-| `afterBuild` | string | Shell commands run after the default build phase |
+| `preBuild` | string | Shell commands run before the build phase (also runs as `preInstall`) |
+| `postBuild` | string | Shell commands run after the build phase |
 | `buildPhase` | string | **Replaces** the entire default build phase |
-| `postInstall` | string | Shell commands run at the end of `installPhase` (with `$dest` set to `$out/ruby/3.4.0`) |
+| `postInstall` | string | Shell commands run at the end of `installPhase` |
 
-Hooks compose with the default build phase. You only need `buildPhase` when the default `extconf.rb` + `make` approach won't work at all.
+Hooks compose with nixpkgs' `buildRubyGem` build phases. You only need `buildPhase` when extra source-level modifications are required before `gem build`.
 
-The default build phase (when `buildPhase` is not set) runs:
-```bash
-extconfFlags="<overlayExtconfFlags>"   # from overlay, or ""
-<overlayBeforeBuild>                    # from overlay, or ""
-for extconf in $(find ext -name extconf.rb); do
-  dir=$(dirname "$extconf")
-  (cd "$dir" && ruby extconf.rb $extconfFlags && make -j$NIX_BUILD_CORES)
-done
-# copies built .so from ext/ to lib/
-<overlayAfterBuild>                     # from overlay, or ""
-```
-
-The `$dest` variable (`$out/ruby/3.4.0`) is available in `postInstall` and contains the full BUNDLE_PATH prefix — `gems/`, `specifications/`, `extensions/` are all under `$dest`.
+The build uses nixpkgs' `buildRubyGem` under the hood. Extension compilation is handled automatically by `gem install`. The `preBuild` hook also runs as `preInstall` so environment variables persist into extension compilation.
 
 ## Workflow for fixing a failing gem
 
@@ -254,36 +242,36 @@ After writing an overlay, always run `onix check` to verify the gem is complete.
 
 | Overlay | Type | What it provides |
 |---------|------|-----------------|
-| `charlock_holmes.nix` | attrset | icu, zlib, pkg-config, which + `beforeBuild` (C++17 flags for ICU 76+) |
-| `commonmarker.nix` | attrset | rustc, cargo, libclang + `beforeBuild` (GEM_PATH for rb_sys, CARGO_HOME, LIBCLANG_PATH) |
+| `charlock_holmes.nix` | attrset | icu, zlib, pkg-config, which + `preBuild` (C++17 flags for ICU 76+) |
+| `commonmarker.nix` | attrset | rustc, cargo, libclang + `preBuild` (GEM_PATH for rb_sys, CARGO_HOME, LIBCLANG_PATH) |
 | `debase.nix` | attrset | skipped build (incompatible with Ruby 3.4) |
 | `extralite-bundle.nix` | attrset | sqlite, pkg-config (uses system sqlite via pkg-config) |
-| `ffi-yajl.nix` | attrset | yajl, pkg-config + `beforeBuild` (GEM_PATH for libyajl2) |
+| `ffi-yajl.nix` | attrset | yajl, pkg-config + `preBuild` (GEM_PATH for libyajl2) |
 | `ffi.nix` | deps list | libffi, pkg-config |
-| `field_test.nix` | attrset | `beforeBuild` (GEM_PATH for rice gem — mkmf-rice at build time) |
-| `google-protobuf.nix` | attrset | `beforeBuild` (disable -Werror=format-security) |
-| `gpgme.nix` | attrset | gpgme, libgpg-error, libassuan, pkg-config + `extconfFlags = "--use-system-libraries"` + `beforeBuild` (GEM_PATH for mini_portile2) |
+| `field_test.nix` | attrset | `preBuild` (GEM_PATH for rice gem — mkmf-rice at build time) |
+| `google-protobuf.nix` | attrset | `preBuild` (disable -Werror=format-security) |
+| `gpgme.nix` | attrset | gpgme, libgpg-error, libassuan, pkg-config + `extconfFlags = "--use-system-libraries"` + `preBuild` (GEM_PATH for mini_portile2) |
 | `hiredis-client.nix` | deps list | openssl, pkg-config |
 | `hiredis.nix` | attrset | hiredis C library + custom `buildPhase` (vendor/hiredis from system lib) |
 | `idn-ruby.nix` | deps list | libidn, pkg-config |
 | `libv8-node.nix` | attrset | custom `buildPhase` (symlinks nixpkgs nodejs libv8 into vendor/) |
 | `libv8.nix` | attrset | skipped build (use libv8-node instead) |
-| `libxml-ruby.nix` | attrset | libxml2, pkg-config + `beforeBuild` (C_INCLUDE_PATH for libxml2 headers) |
+| `libxml-ruby.nix` | attrset | libxml2, pkg-config + `preBuild` (C_INCLUDE_PATH for libxml2 headers) |
 | `mini_racer.nix` | attrset | skipped build (libv8_monolith.a relocation error) |
 | `mittens.nix` | deps list | perl |
 | `mysql2.nix` | deps list | libmysqlclient, openssl, pkg-config, zlib |
-| `nokogiri.nix` | attrset | libxml2, libxslt, pkg-config, zlib + `extconfFlags = "--use-system-libraries"` + `beforeBuild` (GEM_PATH for mini_portile2) |
+| `nokogiri.nix` | attrset | libxml2, libxslt, pkg-config, zlib + `extconfFlags = "--use-system-libraries"` + `preBuild` (GEM_PATH for mini_portile2) |
 | `openssl.nix` | deps list | openssl, pkg-config |
 | `pg.nix` | deps list | libpq, pkg-config |
 | `psych.nix` | deps list | libyaml, pkg-config |
 | `puma.nix` | deps list | openssl |
-| `rmagick.nix` | attrset | imagemagick, pkg-config + `beforeBuild` (GEM_PATH for pkg-config gem) |
+| `rmagick.nix` | attrset | imagemagick, pkg-config + `preBuild` (GEM_PATH for pkg-config gem) |
 | `rpam2.nix` | deps list | pam |
 | `rugged.nix` | deps list | cmake, pkg-config, openssl, zlib, libssh2 |
 | `sqlite3.nix` | attrset | sqlite, pkg-config + `extconfFlags = "--enable-system-libraries"` |
 | `therubyracer.nix` | attrset | skipped build (abandoned, use mini_racer) |
-| `tiktoken_ruby.nix` | attrset | rustc, cargo, libclang + `beforeBuild` (GEM_PATH for rb_sys, CARGO_HOME, LIBCLANG_PATH) |
-| `tokenizers.nix` | attrset | rustc, cargo, libclang + `beforeBuild` (GEM_PATH for rb_sys, CARGO_HOME, LIBCLANG_PATH) |
+| `tiktoken_ruby.nix` | attrset | rustc, cargo, libclang + `preBuild` (GEM_PATH for rb_sys, CARGO_HOME, LIBCLANG_PATH) |
+| `tokenizers.nix` | attrset | rustc, cargo, libclang + `preBuild` (GEM_PATH for rb_sys, CARGO_HOME, LIBCLANG_PATH) |
 | `trilogy.nix` | deps list | openssl, zlib |
 | `zlib.nix` | deps list | zlib, pkg-config |
 
@@ -380,7 +368,7 @@ postPatch = ''
 Other gems that need this pattern: `ethon` (curl), `ffi-rzmq-core` (zeromq), `rbnacl` (libsodium),
 `ruby-vips` (vips, glib, gobject), `h3` (h3_3).
 
-In our overlay contract, use `beforeBuild` or `buildPhase` to do the substitution.
+In our overlay contract, use `preBuild` or `buildPhase` to do the substitution.
 
 #### Gems that download during build
 
@@ -405,9 +393,9 @@ hardeningDisable = [ "format" ];
 hardeningDisable = [ "format" ];
 ```
 
-In our overlay contract, use `beforeBuild` to set `NIX_CFLAGS_COMPILE` or `CFLAGS`:
+In our overlay contract, use `preBuild` to set `NIX_CFLAGS_COMPILE` or `CFLAGS`:
 ```nix
-beforeBuild = ''
+preBuild = ''
   export CFLAGS="$CFLAGS -Wno-error=format-security"
 '';
 ```
@@ -423,7 +411,7 @@ Modern gems increasingly use Rust via `rb_sys`. Pattern (already used for common
   buildGems = [
     (buildGem "rb_sys")
   ];
-  beforeBuild = ''
+  preBuild = ''
     export CARGO_HOME="$TMPDIR/cargo"
     mkdir -p "$CARGO_HOME"
     export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"

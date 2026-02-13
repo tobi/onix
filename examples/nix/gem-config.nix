@@ -3,7 +3,7 @@
 # Reads overlays/<name>.nix files and returns an attrset of gem configs.
 # Each overlay is { pkgs, ruby, buildGem?, ... } -> <deps list or config attrset>.
 #
-# Returns: { gemName = { deps, extconfFlags, beforeBuild, ... }; ... }
+# Returns: { gemName = { deps, extconfFlags, preBuild, ... }; ... }
 
 { pkgs, ruby, overlayDir, rubyDir ? null, buildGemFn ? null }:
 

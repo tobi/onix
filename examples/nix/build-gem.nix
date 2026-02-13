@@ -1,4 +1,11 @@
-# build-gem.nix — generic builder for any Ruby gem
+# build-gem.nix — wrapper around nixpkgs buildRubyGem
+#
+# Accepts onix's argument format and translates to buildRubyGem parameters.
+# Provides backward compatibility with existing overlays while using the
+# standard Ruby gem build infrastructure from nixpkgs.
+#
+# Any attrs not listed below (e.g. patches, meta, propagatedBuildInputs)
+# are passed through to buildRubyGem unchanged.
 #
 # Usage:
 #   buildGem = import ./build-gem.nix { inherit pkgs ruby; };
@@ -11,218 +18,95 @@
 { pkgs, ruby }:
 
 let
-  inherit (pkgs) lib stdenv fetchurl fetchgit;
-  rubyVersion = "${ruby.version.majMin}.0";
+  inherit (pkgs) lib;
+  buildRubyGem = pkgs.buildRubyGem.override { inherit ruby; };
 in
 
 {
-  gemName,
-  version,
-  platform ? null,           # non-null for prebuilt-only gems (e.g. sorbet-static)
   source,
+  skip ? false,
   subdir ? ".",              # subdirectory within git repo (monorepo support)
-  nativeBuildInputs ? [],
-  buildInputs ? [],
   buildGems ? [],
   extconfFlags ? "",
-  beforeBuild ? "",
-  afterBuild ? "",
+  preBuild ? "",
   buildPhase ? null,
-  postInstall ? "",
+  platform ? null,           # non-null for prebuilt-only gems (e.g. sorbet-static)
   requirePaths ? [ "lib" ],
   executables ? [],
   bindir ? "exe",
-  skip ? false,
-}:
+  ...
+}@args:
 
 let
-  key = "${gemName}-${version}";
-  bundle_path = "ruby/${rubyVersion}";
-  arch = stdenv.hostPlatform.system;
+  key = "${args.gemName}-${args.version}";
+  rp = builtins.concatStringsSep ", " (map (p: ''"${p}"'') requirePaths);
 
-  slug = if platform != null then "${gemName}-${version}-${platform}" else "${gemName}-${version}";
-
-  src =
-    if source.type == "gem" then
-      fetchurl {
-        urls = map (remote: "${remote}/gems/${slug}.gem")
-          (source.remotes or [ "https://rubygems.org" ]);
-        inherit (source) sha256;
-      }
-    else if source.type == "git" then
+  # For git sources with subdir, pre-extract the subdirectory
+  gitSrc =
+    if source.type == "git" then
       builtins.fetchGit {
         inherit (source) url rev;
         allRefs = true;
         submodules = source.fetchSubmodules or false;
       }
-    else
-      throw "buildGem: unknown source type '${source.type}' for ${gemName}";
+    else null;
 
-  # Platform gems (e.g. sorbet-static) ship prebuilt binaries — don't strip them.
-  isPlatformGem = platform != null;
+  hasSubdir = source.type == "git" && subdir != "."
+    && gitSrc != null
+    && builtins.pathExists (gitSrc + "/${subdir}/lib");
 
-  # Unpack .gem into a source directory
-  sourceDir =
-    if source.type == "gem" then
-      pkgs.runCommand "${key}-source" { inherit src; nativeBuildInputs = [ ruby ]; } (''
-        mkdir -p $out
-        gem unpack $src --target=tmp
-        cp -r tmp/*/* $out/ 2>/dev/null || cp -r tmp/* $out/
-      '' + lib.optionalString (!isPlatformGem) ''
-        find $out -name '*.so' -o -name '*.bundle' -o -name '*.dylib' | xargs rm -f 2>/dev/null || true
-      '')
-    else if subdir != "." && builtins.pathExists (src + "/${subdir}/lib") then
-      # Git monorepo: extract just the gem's subdirectory
-      src + "/${subdir}"
-    else
-      src;
+  # Whether we need to unpack and modify source before building.
+  # When true, dontBuild is false so the gem is unpacked, allowing
+  # preBuild hooks to modify the source before gem build + gem install.
+  needsUnpack = buildPhase != null || preBuild != "";
 
-  gemPathSetup = lib.optionalString (buildGems != []) ''
-    export GEM_PATH="${lib.concatMapStringsSep ":" (g: "${g}/${bundle_path}") buildGems}''${GEM_PATH:+:$GEM_PATH}"
-  '';
+  # Combine preBuild and custom buildPhase content into preBuild hook.
+  # Custom buildPhase from overlays (which manually ran extconf.rb + make)
+  # is placed in preBuild since buildRubyGem's own buildPhase handles
+  # gem build, and gem install handles extension compilation.
+  preBuildHook = lib.concatStrings [
+    (lib.optionalString (preBuild != "") preBuild)
+    (lib.optionalString (buildPhase != null && preBuild != "") "\n")
+    (lib.optionalString (buildPhase != null) buildPhase)
+  ];
 
-  defaultBuildPhase = ''
-    ${beforeBuild}
-    extconfFlags="${extconfFlags}"
-    for extconf in $(find ext -name extconf.rb 2>/dev/null); do
-      dir=$(dirname "$extconf")
-      echo "Building extension in $dir"
-      (cd "$dir" && ruby extconf.rb $extconfFlags && make -j$NIX_BUILD_CORES)
-    done
-    for makefile in $(find ext -name Makefile 2>/dev/null); do
-      dir=$(dirname "$makefile")
-      target_name=$(sed -n 's/^TARGET = //p' "$makefile")
-      target_prefix=$(sed -n 's/^target_prefix = //p' "$makefile")
-      for ext in so bundle; do
-        if [ -n "$target_name" ] && [ -f "$dir/$target_name.$ext" ]; then
-          mkdir -p "lib$target_prefix"
-          cp "$dir/$target_name.$ext" "lib$target_prefix/$target_name.$ext"
-        fi
-      done
-    done
-    ${afterBuild}
-  '';
-
-  rp = builtins.concatStringsSep ", " (map (p: ''"${p}"'') requirePaths);
+  # Attrs to strip before forwarding to buildRubyGem
+  removedAttrs = [
+    "source" "skip" "subdir" "buildGems" "extconfFlags"
+    "preBuild" "buildPhase" "platform" "requirePaths"
+    "executables" "bindir"
+  ];
 
 in
 if skip then
-  # Produce an empty derivation for gems we can't build
+  # Produce an empty derivation with a minimal gemspec
   pkgs.runCommand key {} ''
-    mkdir -p $out/${bundle_path}/gems/${key}
-    mkdir -p $out/${bundle_path}/specifications
-    cat > $out/${bundle_path}/specifications/${key}.gemspec <<'EOF'
+    mkdir -p $out/${ruby.gemPath}/gems/${key}
+    mkdir -p $out/${ruby.gemPath}/specifications
+    cat > $out/${ruby.gemPath}/specifications/${key}.gemspec <<'EOF'
     Gem::Specification.new do |s|
-      s.name = "${gemName}"
-      s.version = "${version}"
-      s.summary = "${gemName} (skipped)"
+      s.name = "${args.gemName}"
+      s.version = "${args.version}"
+      s.summary = "${args.gemName} (skipped)"
       s.require_paths = [${rp}]
       s.files = []
     end
     EOF
   ''
 else
-stdenv.mkDerivation {
-  pname = gemName;
-  inherit version;
-  src = sourceDir;
-
-  nativeBuildInputs = [ ruby ] ++ nativeBuildInputs;
-  inherit buildInputs;
-  dontConfigure = true;
-
-  buildPhase = gemPathSetup + (
-      if buildPhase != null then buildPhase
-      else if builtins.pathExists (sourceDir + "/ext") then defaultBuildPhase
-      else "true"
-    );
-
-  passthru = { inherit bundle_path; };
-
-  installPhase = ''
-    local dest=$out/${bundle_path}
-    mkdir -p $dest/gems/${key}
-    cp -r . $dest/gems/${key}/
-
-    # Extensions: copy .so/.bundle and create platform links
-    local has_ext=0
-    find . \( -name '*.so' -o -name '*.bundle' \) -path '*/lib/*' 2>/dev/null | head -1 | grep -q . && has_ext=1
-
-    if [ "$has_ext" = "1" ]; then
-      local extdir=$dest/extensions/${arch}/${rubyVersion}/${key}
-      mkdir -p $extdir
-      find . \( -name '*.so' -o -name '*.bundle' \) -path '*/lib/*' | while read so; do
-        cp "$so" "$extdir/"
-      done
-      local cpu="${stdenv.hostPlatform.parsed.cpu.name}"
-      if [ "$cpu" = "aarch64" ]; then cpu="arm64"; fi
-      local gp="$cpu-${stdenv.hostPlatform.parsed.kernel.name}"
-      if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
-        gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
-      fi
-      ln -sf ${key} $dest/gems/${key}-$gp
-      ln -sf ${key} $dest/extensions/${arch}/${rubyVersion}/${key}-$gp
-      if [ "${stdenv.hostPlatform.parsed.kernel.name}" = "darwin" ]; then
-        ln -sf ${key} $dest/gems/${key}-universal-darwin
-        ln -sf ${key} $dest/extensions/${arch}/${rubyVersion}/${key}-universal-darwin
-      fi
-    fi
-
-    # Gemspecs
-    mkdir -p $dest/specifications
-    cat > $dest/specifications/${key}.gemspec <<'EOF'
-    Gem::Specification.new do |s|
-      s.name = "${gemName}"
-      s.version = "${version}"
-      s.summary = "${gemName}"
-      s.require_paths = [${rp}]
-      s.files = []
-    end
-    EOF
-
-    if [ "$has_ext" = "1" ]; then
-      local cpu="${stdenv.hostPlatform.parsed.cpu.name}"
-      if [ "$cpu" = "aarch64" ]; then cpu="arm64"; fi
-      local gp="$cpu-${stdenv.hostPlatform.parsed.kernel.name}"
-      if [ "${stdenv.hostPlatform.parsed.abi.name}" != "unknown" ]; then
-        gp="$gp-${stdenv.hostPlatform.parsed.abi.name}"
-      fi
-      cat > $dest/specifications/${key}-$gp.gemspec <<PLATSPEC
-    Gem::Specification.new do |s|
-      s.name = "${gemName}"
-      s.version = "${version}"
-      s.platform = "$gp"
-      s.summary = "${gemName}"
-      s.require_paths = [${rp}]
-      s.files = []
-    end
-    PLATSPEC
-      if [ "${stdenv.hostPlatform.parsed.kernel.name}" = "darwin" ]; then
-        cat > $dest/specifications/${key}-universal-darwin.gemspec <<'UNISPEC'
-    Gem::Specification.new do |s|
-      s.name = "${gemName}"
-      s.version = "${version}"
-      s.platform = "universal-darwin"
-      s.summary = "${gemName}"
-      s.require_paths = [${rp}]
-      s.files = []
-    end
-    UNISPEC
-      fi
-    fi
-
-    ${lib.optionalString (executables != []) ''
-      mkdir -p $dest/bin
-      ${builtins.concatStringsSep "\n" (map (exe: ''
-        cat > $dest/bin/${exe} <<'BINSTUB'
-        #!/usr/bin/env ruby
-        require "rubygems"
-        load Gem.bin_path("${gemName}", "${exe}", "${version}")
-        BINSTUB
-        chmod +x $dest/bin/${exe}
-      '') executables)}
-    ''}
-
-    ${postInstall}
-  '';
-}
+  buildRubyGem (builtins.removeAttrs args removedAttrs // {
+    # For git+subdir, use "url" type (path-based install via bundler)
+    # since the subdirectory is pre-extracted from the git repo
+    type = if hasSubdir then "url" else source.type;
+    source = builtins.removeAttrs source [ "type" ];
+    platform = if platform != null then platform else "ruby";
+    gemPath = buildGems;
+    buildFlags = lib.optional (extconfFlags != "") extconfFlags;
+    dontBuild = !needsUnpack;
+  }
+  // lib.optionalAttrs (preBuildHook != "") { preBuild = preBuildHook; }
+  # Environment setup from preBuild also goes in preInstall since
+  # extension compilation happens during gem install (installPhase)
+  // lib.optionalAttrs (preBuild != "") { preInstall = preBuild; }
+  // lib.optionalAttrs hasSubdir { src = gitSrc + "/${subdir}"; }
+  )

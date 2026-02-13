@@ -3,7 +3,7 @@
 { pkgs, ruby, ... }:
 {
   deps = [ ];
-  beforeBuild = ''
+  preBuild = ''
     export CFLAGS="$CFLAGS -Wno-error=format-security"
     export NIX_CFLAGS_COMPILE="''${NIX_CFLAGS_COMPILE:-} -Wno-error=format-security"
   '';

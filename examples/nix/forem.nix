@@ -24,8 +24,8 @@ let
       gemName = name;
       nativeBuildInputs = config.deps or [];
       extconfFlags = config.extconfFlags or "";
-      beforeBuild = config.beforeBuild or "";
-      afterBuild = config.afterBuild or "";
+      preBuild = config.preBuild or "";
+      postBuild = config.postBuild or "";
     } // (if config ? buildPhase then { inherit (config) buildPhase; } else {})
       // (if config ? postInstall then { inherit (config) postInstall; } else {})
       // (if config ? skip then { inherit (config) skip; } else {})
@@ -413,7 +413,7 @@ in gems // {
       shellHook = ''
         export BUNDLE_PATH="${bundlePath}"
         export BUNDLE_GEMFILE="''${BUNDLE_GEMFILE:-$PWD/Gemfile}"
-        export GEM_PATH="${bundlePath}/ruby/${ruby.version.majMinTiny}''${GEM_PATH:+:$GEM_PATH}"
+        export GEM_PATH="${bundlePath}/${ruby.gemPath}''${GEM_PATH:+:$GEM_PATH}"
       '' + shellHook;
     });
 }

@@ -112,7 +112,7 @@ Gems using Rust via `rb_sys`:
   buildGems = [
     (buildGem "rb_sys")
   ];
-  beforeBuild = ''
+  preBuild = ''
     export CARGO_HOME="$TMPDIR/cargo"
     mkdir -p "$CARGO_HOME"
     export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"
@@ -140,29 +140,29 @@ that returns one of:
 | `deps` | list | Extra `nativeBuildInputs` |
 | `extconfFlags` | string | Flags appended to `ruby extconf.rb` |
 | `buildGems` | list | Gem derivations needed at build time (auto `GEM_PATH`) |
-| `beforeBuild` | string | Shell commands before default build |
-| `afterBuild` | string | Shell commands after default build |
+| `preBuild` | string | Shell commands before build (also runs before install) |
+| `postBuild` | string | Shell commands after build |
 | `buildPhase` | string | **Replaces** entire default build phase |
-| `postInstall` | string | Shell commands at end of install (`$dest` = `$out/ruby/3.4.0`) |
+| `postInstall` | string | Shell commands at end of install |
 
-Hooks compose with the default build phase. You only need `buildPhase` when
-the default `extconf.rb` + `make` approach won't work at all.
+Hooks compose with nixpkgs' `buildRubyGem` build phases. The `preBuild`
+content runs as a `preBuild` hook (and again as `preInstall` so environment
+variables persist into extension compilation). You only need `buildPhase` when
+extra source-level modifications are required before `gem build`.
 
-### Default build phase
+### Build mechanism
 
-When `buildPhase` is not set, the derivation runs:
+Onix uses nixpkgs' `buildRubyGem` under the hood. The `build-gem.nix` wrapper
+translates overlay parameters to `buildRubyGem` arguments:
 
-```bash
-# GEM_PATH set from buildGems (if any)
-extconfFlags="<overlayExtconfFlags>"   # from overlay, or ""
-<overlayBeforeBuild>                    # from overlay, or ""
-for extconf in $(find ext -name extconf.rb); do
-  dir=$(dirname "$extconf")
-  (cd "$dir" && ruby extconf.rb $extconfFlags && make -j$NIX_BUILD_CORES)
-done
-# copies built .so from ext/ to lib/
-<overlayAfterBuild>                     # from overlay, or ""
-```
+- `deps` → `nativeBuildInputs`
+- `extconfFlags` → `buildFlags` (passed to `gem install` after `--`)
+- `buildGems` → `gemPath` (sets `GEM_PATH` for build-time gem dependencies)
+- `preBuild` → `preBuild` + `preInstall` hooks
+- `postBuild` → `postBuild` hook
+- `buildPhase` → `preBuild` (runs before `gem build`)
+
+Extension compilation is handled automatically by `gem install`.
 
 ---
 
