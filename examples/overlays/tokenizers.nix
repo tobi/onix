@@ -9,7 +9,7 @@
   buildGems = [
     (buildGem "rb_sys")
   ];
-  beforeBuild = ''
+  preBuild = ''
     export CARGO_HOME="$TMPDIR/cargo"
     mkdir -p "$CARGO_HOME"
     export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"

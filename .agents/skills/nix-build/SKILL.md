@@ -95,7 +95,7 @@ When you need flags, environment setup, or custom build logic:
 {
   deps = with pkgs; [ sqlite pkg-config ];
   extconfFlags = "--enable-system-libraries";
-  beforeBuild = ''
+  preBuild = ''
     export SOME_VAR="value"
   '';
 }
@@ -105,8 +105,8 @@ When you need flags, environment setup, or custom build logic:
 |---|---|---|
 | `deps` | list | Added to `nativeBuildInputs` (system libs, tools) |
 | `extconfFlags` | string | Appended to every `ruby extconf.rb` invocation |
-| `beforeBuild` | string | Shell commands before the default build loop |
-| `afterBuild` | string | Shell commands after the default build loop |
+| `preBuild` | string | Shell commands before the default build loop |
+| `postBuild` | string | Shell commands after the default build loop |
 | `buildPhase` | string | **Replaces** the entire default build phase |
 | `postInstall` | string | Shell commands at end of install (`$dest` = `$out/ruby/3.4.0`) |
 
@@ -157,7 +157,7 @@ The most common failure. The gem's `extconf.rb` looks for a header or library vi
 { pkgs, ruby }:
 {
   deps = with pkgs; [ libxml2 pkg-config ];
-  beforeBuild = ''
+  preBuild = ''
     export C_INCLUDE_PATH="${pkgs.libxml2.dev}/include/libxml2''${C_INCLUDE_PATH:+:$C_INCLUDE_PATH}"
   '';
 }
@@ -222,13 +222,13 @@ The gem bundles a vendored copy of a library but supports a flag to use the syst
   deps = with pkgs; [ gpgme libgpg-error libassuan pkg-config ];
   extconfFlags = "--use-system-libraries";
   buildGems = [ (buildGem "mini_portile2") ];
-  beforeBuild = ''
+  preBuild = ''
     export RUBY_GPGME_USE_SYSTEM_LIBRARIES=1
   '';
 }
 ```
 
-Some gems also check environment variables like `BUNDLE_BUILD__NOKOGIRI`, `RUBY_GPGME_USE_SYSTEM_LIBRARIES`, etc. Set these in `beforeBuild` when needed.
+Some gems also check environment variables like `BUNDLE_BUILD__NOKOGIRI`, `RUBY_GPGME_USE_SYSTEM_LIBRARIES`, etc. Set these in `preBuild` when needed.
 
 ### Pattern 3 — Build-time gem dependency
 
@@ -313,7 +313,7 @@ Some gems fail with GCC security hardening (common with protobuf, grpc).
 { pkgs, ruby }:
 {
   deps = [ ];
-  beforeBuild = ''
+  preBuild = ''
     export CFLAGS="$CFLAGS -Wno-error=format-security"
     export NIX_CFLAGS_COMPILE="''${NIX_CFLAGS_COMPILE:-} -Wno-error=format-security"
   '';
@@ -338,7 +338,7 @@ Modern gems with Rust extensions use `rb_sys` + `cargo`. They need:
 {
   deps = with pkgs; [ rustc cargo libclang ];
   buildGems = [ (buildGem "rb_sys") ];
-  beforeBuild = ''
+  preBuild = ''
     export CARGO_HOME="$TMPDIR/cargo"
     mkdir -p "$CARGO_HOME"
     export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"
@@ -387,7 +387,7 @@ Modern gems with Rust extensions use `rb_sys` + `cargo`. They need:
 }
 ```
 
-**Why `buildPhase` instead of `beforeBuild` for crate pinning:** The lockfile must exist before `make` calls `cargo rustc`. With `beforeBuild`, the lockfile is generated, but `ruby extconf.rb` may regenerate it. A custom `buildPhase` gives you full control over the sequence: generate lockfile → pin crates → extconf → make.
+**Why `buildPhase` instead of `preBuild` for crate pinning:** The lockfile must exist before `make` calls `cargo rustc`. With `preBuild`, the lockfile is generated, but `ruby extconf.rb` may regenerate it. A custom `buildPhase` gives you full control over the sequence: generate lockfile → pin crates → extconf → make.
 
 ### Pattern 8 — C++ standard mismatch
 
@@ -398,7 +398,7 @@ Older gem versions hardcode `-std=c++11` but link against libraries (like ICU 76
 { pkgs, ruby }:
 {
   deps = with pkgs; [ icu zlib pkg-config which ];
-  beforeBuild = ''
+  preBuild = ''
     find ext -name extconf.rb -exec sed -i 's/-std=c++11/-std=c++17/g' {} +
   '';
 }
@@ -473,7 +473,7 @@ let hiredis-c = pkgs.hiredis; in
 3. **Always include `pkg-config`** when the gem uses pkg-config in its extconf.
 4. **Use `buildGem` for gem deps** — not `callPackage` with hardcoded paths.
 5. **Run `onix build` then `onix check`** after writing or changing an overlay.
-6. **Prefer hooks (`beforeBuild`, `extconfFlags`, `buildGems`) over `buildPhase`** — hooks compose with the default build loop. Only use `buildPhase` when the default loop won't work.
+6. **Prefer hooks (`preBuild`, `extconfFlags`, `buildGems`) over `buildPhase`** — hooks compose with the default build loop. Only use `buildPhase` when the default loop won't work.
 7. **Escape `${` as `''${` in Nix strings** when you need a literal shell variable expansion.
 
 ## Nix String Escaping Quick Reference
@@ -485,7 +485,7 @@ Inside Nix `'' ... ''` multi-line strings:
 
 Example:
 ```nix
-beforeBuild = ''
+preBuild = ''
   export FOO="''${FOO:-default}"          # shell: ${FOO:-default}
   export BAR="${pkgs.openssl}/lib"         # nix interpolation
 '';

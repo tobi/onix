@@ -15,11 +15,11 @@ nixpkgs gem-config and our overlay system solve the same problem differently:
 | Build system | `buildRubyGem` (runs `gem build` + `gem install`) | `stdenv.mkDerivation` (runs `extconf.rb` + `make`) |
 | Deps field | `buildInputs` / `nativeBuildInputs` (separate) | `deps` (single list, all go to `nativeBuildInputs`) |
 | Build flags | `buildFlags = [ "--flag" ]` (list) | `extconfFlags = "--flag"` (string) |
-| Pre-build hooks | `postPatch`, `preBuild`, `preInstall` | `beforeBuild` |
-| Post-build hooks | `postInstall`, `postFixup` | `afterBuild`, `postInstall` |
+| Pre-build hooks | `postPatch`, `preBuild`, `preInstall` | `preBuild` |
+| Post-build hooks | `postInstall`, `postFixup` | `postBuild`, `postInstall` |
 | Full override | `dontBuild = false; preBuild = ...` | `buildPhase = "..."` |
 | Network | Sandbox blocks; use `fetchurl` for artifacts | Sandbox blocks; sources pre-fetched; some gems need `__noChroot` or skip |
-| Patching | `substituteInPlace`, `fetchpatch` | `sed -i` in `beforeBuild` or `buildPhase` |
+| Patching | `substituteInPlace`, `fetchpatch` | `sed -i` in `preBuild` or `buildPhase` |
 
 ### Key mapping: gem-config → overlay
 
@@ -64,15 +64,15 @@ We usually **don't** need the explicit `--with-*-lib=` / `--with-*-include=` pat
 
 | gem-config pattern | Our approach |
 |---|---|
-| `fetchurl` / `fetchpatch` for downloads | Nix fetches sources at build time. For patches, use `sed -i` in `beforeBuild`. |
-| `postPatch` + `substituteInPlace` | `sed -i` in `beforeBuild` or `buildPhase`. |
+| `fetchurl` / `fetchpatch` for downloads | Nix fetches sources at build time. For patches, use `sed -i` in `preBuild`. |
+| `postPatch` + `substituteInPlace` | `sed -i` in `preBuild` or `buildPhase`. |
 | `dontBuild = false` (to re-enable build) | Not needed — our derivations always build if extensions exist. |
 | `meta.broken = true` | Skip overlay: `buildPhase = ''echo "skipping"'';` |
-| `hardeningDisable = [ "format" ]` | `beforeBuild = ''export CFLAGS="$CFLAGS -Wno-error=format-security"'';` |
+| `hardeningDisable = [ "format" ]` | `preBuild = ''export CFLAGS="$CFLAGS -Wno-error=format-security"'';` |
 | `installPath=$(cat $out/nix-support/gem-meta/install-path)` | `$dest` variable in `postInstall` (= `$out/ruby/3.4.0`). Gem is at `$dest/gems/<name>-<version>/`. |
 | `postFixup` with `patchelf --set-rpath` | Not typically needed; nix auto-patches rpaths. Use `postInstall` if required. |
 | `propagatedBuildInputs` | Just add to `deps` — our derivations don't have the propagation distinction. |
-| Version-conditional logic `lib.versionAtLeast attrs.version "X"` | Our overlays apply to all versions of a gem. If versions need different treatment, use shell conditionals in `beforeBuild` or `buildPhase` checking `$version` (pname/version are in scope). |
+| Version-conditional logic `lib.versionAtLeast attrs.version "X"` | Our overlays apply to all versions of a gem. If versions need different treatment, use shell conditionals in `preBuild` or `buildPhase` checking `$version` (pname/version are in scope). |
 
 ---
 
@@ -142,14 +142,14 @@ Gems using Ruby FFI (`ffi_lib "name"`) need the absolute nix store path substitu
 | `ethon` | `curl` | Replace `"libcurl"` with full path |
 | `magic` | `file` (libmagic) | Patch `lib/magic/api.rb` to prepend nix store path |
 
-**Our translation:** Use `sed -i` in `beforeBuild` or `postInstall`:
+**Our translation:** Use `sed -i` in `preBuild` or `postInstall`:
 
 ```nix
 # Example: opus-ruby
 { pkgs, ruby }:
 {
   deps = [ ];
-  beforeBuild = ''
+  preBuild = ''
     sed -i "s|ffi_lib 'opus'|ffi_lib '${pkgs.libopus}/lib/libopus.so'|" lib/opus-ruby.rb
   '';
 }
@@ -176,20 +176,20 @@ These gems try to fetch artifacts at build time, which fails in the nix sandbox.
 
 | Gem | What it downloads | nixpkgs fix | Our approach |
 |---|---|---|---|
-| `gitlab-pg_query` | libpg_query tarball | `fetchurl` + `sed` to replace URL | Pre-fetch source; `sed -i` to point at local file in `beforeBuild` |
+| `gitlab-pg_query` | libpg_query tarball | `fetchurl` + `sed` to replace URL | Pre-fetch source; `sed -i` to point at local file in `preBuild` |
 | `pg_query` | libpg_query tarball (version-specific) | Same — `fetchurl` + `sed` | Same |
-| `sass-embedded` | dart-sass binary | `substituteInPlace ext/sass/Rakefile` to use nixpkgs `dart-sass` | `beforeBuild` with `sed -i` to use `pkgs.dart-sass` |
-| `h3` | h3 source for cmake build | Skip cmake, use system `h3_3` lib | `beforeBuild` with `sed -i` to point at `pkgs.h3_3` |
+| `sass-embedded` | dart-sass binary | `substituteInPlace ext/sass/Rakefile` to use nixpkgs `dart-sass` | `preBuild` with `sed -i` to use `pkgs.dart-sass` |
+| `h3` | h3 source for cmake build | Skip cmake, use system `h3_3` lib | `preBuild` with `sed -i` to point at `pkgs.h3_3` |
 | `libv8` / `libv8-node` | V8 / Node.js source | `mini_racer` uses `--with-v8-dir` pointing at `nodejs.libv8` | Custom `buildPhase` symlinking nixpkgs `nodejs_24.libv8` into vendor/ |
 
 ### Hardening and compiler flag workarounds
 
 | Gem | Issue | nixpkgs fix | Our approach |
 |---|---|---|---|
-| `google-protobuf` (≥3.25) | `-Werror=format-security` | `hardeningDisable = [ "format" ]` | `beforeBuild`: `export CFLAGS -Wno-error=format-security` |
+| `google-protobuf` (≥3.25) | `-Werror=format-security` | `hardeningDisable = [ "format" ]` | `preBuild`: `export CFLAGS -Wno-error=format-security` |
 | `grpc` | Same + more | `hardeningDisable = [ "format" ]` + `NIX_CFLAGS_COMPILE` | Same approach |
 | `digest-sha3` | Format string issues | `hardeningDisable = [ "format" ]` | Same |
-| `hpricot` | Incompatible pointer types | `NIX_CFLAGS_COMPILE = "-Wno-error=..."` + patch | `beforeBuild` with `CFLAGS` |
+| `hpricot` | Incompatible pointer types | `NIX_CFLAGS_COMPILE = "-Wno-error=..."` + patch | `preBuild` with `CFLAGS` |
 | `iconv` | Incompatible pointer types | `NIX_CFLAGS_COMPILE` | Same |
 | `ruby-lxc` | Incompatible pointer types | `NIX_CFLAGS_COMPILE` | Same |
 | `grpc` (<1.65) | GCC-14 boringssl fixes | `fetchpatch` from boringssl upstream | `sed -i` patch or skip version |
@@ -197,7 +197,7 @@ These gems try to fetch artifacts at build time, which fails in the nix sandbox.
 
 ### Source patching (substituteInPlace)
 
-nixpkgs extensively uses `substituteInPlace` to patch gem source files. We use `sed -i` in `beforeBuild` or `buildPhase` for the same effect.
+nixpkgs extensively uses `substituteInPlace` to patch gem source files. We use `sed -i` in `preBuild` or `buildPhase` for the same effect.
 
 | Gem | What's patched | Why |
 |---|---|---|

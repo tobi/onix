@@ -76,6 +76,8 @@ Prefetches SHA256 hashes via `nix-prefetch-url` and `nix-prefetch-git`, then wri
 - `nix/build-npm.nix`, `nix/npm-config.nix`
 
 Ruby and Node packagesets can coexist — `generate` processes both in one pass.
+- `nix/build-gem.nix` — wrapper around nixpkgs `buildRubyGem`
+- `nix/gem-config.nix` — overlay loader
 
 ### 4. Build
 
