@@ -1648,39 +1648,37 @@ let
       done
     fi
   '';
-in packages // {
-  inherit nodeModules;
-  devShell = { buildInputs ? [], shellHook ? "", ... }@args:
-    pkgs.mkShell (builtins.removeAttrs args ["buildInputs" "shellHook"] // {
-      name = "node-basic-devshell";
-      buildInputs = [ nodejs ] ++ buildInputs;
-      shellHook = ''
-        _onix_nm="${nodeModules}"
-        _onix_sentinel="node_modules/.nix-sentinel"
 
-        if [ ! -f "$_onix_sentinel" ] || [ "$(cat "$_onix_sentinel" 2>/dev/null)" != "$_onix_nm" ]; then
-          # Remove stale node_modules if sentinel exists (derivation changed)
-          if [ -f "$_onix_sentinel" ]; then
-            chmod -R u+w node_modules 2>/dev/null; rm -rf node_modules
-          fi
+  # Core sync logic (sentinel check, copy, pnpm metadata)
+  # NOTE: Does NOT include 'export NODE_PATH' — that only works in
+  # sourced contexts (devShell), not executed contexts (syncScript/dev.yml meet)
+  syncBash = ''
+    _onix_nm="${nodeModules}"
+    _onix_sentinel="node_modules/.nix-sentinel"
 
-          # Sync: copy symlink tree from Nix store
-          cp -rP "$_onix_nm/node_modules" node_modules
+    if [ ! -f "$_onix_sentinel" ] || [ "$(cat "$_onix_sentinel" 2>/dev/null)" != "$_onix_nm" ]; then
+      # Remove stale node_modules if sentinel exists (derivation changed)
+      if [ -f "$_onix_sentinel" ]; then
+        chmod -R u+w node_modules 2>/dev/null; rm -rf node_modules
+      fi
 
-          # Make the copied directory writable (for metadata files)
-          chmod u+w node_modules node_modules/.pnpm
+      # Sync: copy symlink tree from Nix store
+      cp -rP "$_onix_nm/node_modules" node_modules
 
-          # Copy lockfile as pnpm's "current lockfile" (what's installed = what's desired)
-          if [ -f pnpm-lock.yaml ]; then
-            cp pnpm-lock.yaml node_modules/.pnpm/lock.yaml
-          fi
+      # Make the copied directory writable (for metadata files)
+      chmod u+w node_modules node_modules/.pnpm
 
-          # Generate pnpm metadata (optional — only if pnpm available)
-          if command -v pnpm >/dev/null 2>&1; then
-            _pnpm_version=$(pnpm --version 2>/dev/null || echo "9.0.0")
-            _store_dir=$(pnpm store path 2>/dev/null || echo "''${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store/v3")
+      # Copy lockfile as pnpm's "current lockfile" (what's installed = what's desired)
+      if [ -f pnpm-lock.yaml ]; then
+        cp pnpm-lock.yaml node_modules/.pnpm/lock.yaml
+      fi
 
-            cat > node_modules/.modules.yaml << MODULES
+      # Generate pnpm metadata (optional — only if pnpm available)
+      if command -v pnpm >/dev/null 2>&1; then
+        _pnpm_version=$(pnpm --version 2>/dev/null || echo "9.0.0")
+        _store_dir=$(pnpm store path 2>/dev/null || echo "''${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store/v3")
+
+        cat > node_modules/.modules.yaml << MODULES
 hoistedDependencies: {}
 included:
   dependencies: true
@@ -1699,7 +1697,7 @@ virtualStoreDir: .pnpm
 virtualStoreDirMaxLength: 120
 MODULES
 
-            cat > node_modules/.pnpm-workspace-state-v1.json << WSSTATE
+        cat > node_modules/.pnpm-workspace-state-v1.json << WSSTATE
 {
   "lastValidatedTimestamp": 32503680000000,
   "settings": {
@@ -1707,13 +1705,30 @@ MODULES
   }
 }
 WSSTATE
-          fi
+      fi
 
-          # Write sentinel
-          echo "$_onix_nm" > "$_onix_sentinel"
-          echo "onix: node_modules ready ($(ls node_modules/.pnpm/ | wc -l | tr -d ' ') packages)"
-        fi
+      # Write sentinel
+      echo "$_onix_nm" > "$_onix_sentinel"
+      # shellcheck disable=SC2012
+      echo "onix: node_modules ready ($(ls node_modules/.pnpm/ | wc -l | tr -d ' ') packages)"
+    fi
+  '';
+in packages // {
+  inherit nodeModules;
 
+  # Standalone script for dev.yml meet — runs as subprocess
+  # Uses writeShellApplication for build-time shellcheck validation
+  syncScript = pkgs.writeShellApplication {
+    name = "node-basic-onix-sync";
+    text = syncBash;
+  };
+
+  # devShell — shellHook is sourced, so NODE_PATH export works here
+  devShell = { buildInputs ? [], shellHook ? "", ... }@args:
+    pkgs.mkShell (builtins.removeAttrs args ["buildInputs" "shellHook"] // {
+      name = "node-basic-devshell";
+      buildInputs = [ nodejs ] ++ buildInputs;
+      shellHook = syncBash + ''
         export NODE_PATH="$PWD/node_modules"
       '' + shellHook;
     });
