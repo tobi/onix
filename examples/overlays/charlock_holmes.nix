@@ -8,7 +8,7 @@
     pkg-config
     which
   ];
-  beforeBuild = ''
+  preBuild = ''
     # Remove -std=c++11 from extconf.rb (old versions) so ICU 76 C++17 headers work
     find ext -name extconf.rb -exec sed -i 's/-std=c++11/-std=c++17/g' {} +
   '';

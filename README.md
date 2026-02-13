@@ -55,7 +55,7 @@ onix generate -j 8   # fewer jobs
 Prefetches SHA256 hashes for all gems via `nix-prefetch-url` and `nix-prefetch-git`, then writes:
 - `nix/ruby/<name>.nix` — one file per gem with all versions and hashes
 - `nix/<project>.nix` — per-project gem selection, bundlePath, and devShell
-- `nix/build-gem.nix` — generic builder
+- `nix/build-gem.nix` — wrapper around nixpkgs `buildRubyGem`
 - `nix/gem-config.nix` — overlay loader
 
 ### 4. Build
@@ -151,7 +151,7 @@ Some gems need other gems during `extconf.rb`. Use `buildGems` with the `buildGe
 { pkgs, ruby, buildGem, ... }: {
   deps = with pkgs; [ rustc cargo libclang ];
   buildGems = [ (buildGem "rb_sys") ];
-  beforeBuild = ''
+  preBuild = ''
     export CARGO_HOME="$TMPDIR/cargo"
     mkdir -p "$CARGO_HOME"
     export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"
@@ -166,10 +166,10 @@ Some gems need other gems during `extconf.rb`. Use `buildGems` with the `buildGe
 | `deps` | list | Added to `nativeBuildInputs` |
 | `extconfFlags` | string | Appended to `ruby extconf.rb` |
 | `buildGems` | list | Gems needed at build time (`GEM_PATH` set automatically) |
-| `beforeBuild` | string | Runs before the default build phase |
-| `afterBuild` | string | Runs after `make` |
+| `preBuild` | string | Runs before the build phase |
+| `postBuild` | string | Runs after the build phase |
 | `buildPhase` | string | **Replaces** the default build entirely |
-| `postInstall` | string | Runs after install (`$dest` available) |
+| `postInstall` | string | Runs after install |
 
 ### Skip a gem
 
