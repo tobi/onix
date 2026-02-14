@@ -544,6 +544,30 @@ else
   echo "  tsc bin works"
   echo "  esbuild bin works"
   echo "OK: bin entries linked"
+
+  echo ""
+  echo "--- Test 18: pnpm add works after Nix store install ---"
+  cd "$dir"
+  # Add a package not in the Nix store — fetcher should fall back to remoteTarball
+  ONIX_PACKAGE_DIR="$pkg_dir" pnpm add is-odd@3.0.1 --ignore-scripts --config.global-pnpmfile=nix/pnpmfile.cjs 2>&1
+  output=$("$NODE" -e "console.log(require('is-odd')('3'))")
+  if [ "$output" != "true" ]; then
+    echo "FAIL: require('is-odd')('3') returned $output (expected 'true')"
+    exit 1
+  fi
+  echo "  pnpm add is-odd@3.0.1 succeeded"
+  echo "  require('is-odd')('3') = true"
+  # Verify existing Nix-sourced packages still work after the add
+  output=$("$NODE" -e "console.log(require('ms')(3600000))")
+  if [ "$output" != "1h" ]; then
+    echo "FAIL: require('ms')(3600000) returned $output after pnpm add (expected '1h')"
+    exit 1
+  fi
+  echo "  existing packages still work after add"
+  # Clean up: remove is-odd and restore package.json so it doesn't pollute future runs
+  ONIX_PACKAGE_DIR="$pkg_dir" pnpm remove is-odd --config.global-pnpmfile=nix/pnpmfile.cjs 2>&1
+  git checkout -- package.json pnpm-lock.yaml 2>/dev/null || true
+  echo "OK: pnpm add works after Nix store install"
 fi  # end of pnpm prerequisite check
 
 echo ""
