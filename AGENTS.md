@@ -278,7 +278,7 @@ Integration tests live in `examples/tests/`. Each project has a `run-tests` scri
 cd examples
 
 # Run one project's tests
-tests/node-basic/run-tests       # 18 tests: packageDir, packages, manifests, platform, pnpm custom fetcher
+tests/node-basic/run-tests       # 19 tests: packageDir, packages, manifests, platform, pnpm custom fetcher
 tests/tsdown-starter/run-tests   # 5 tests: Rust NAPI, TS bundling, platform bindings
 tests/remix-v3/run-tests         # 6 tests: ESM, scoped packages, reactive primitives
 
@@ -326,10 +326,11 @@ The generated `nix/` files are committed — they must be regenerated and re-com
 | 14 | pnpmfile.cjs API surface: v10 hooks.fetchers + v11 fetchers array |
 | 15 | pnpm install with custom fetcher: virtual store + symlinks (requires pnpm >= 10) |
 | 16 | require works from pnpm-installed node_modules (express, ms) |
-| 17 | Bin entries linked (tsc, esbuild) |
-| 18 | pnpm add after Nix store install: fallback to remoteTarball, existing packages still work |
+| 17 | ESM imports from pnpm-installed node_modules (ms, picocolors, semver) |
+| 18 | Bin entries linked (tsc, esbuild) |
+| 19 | pnpm add after Nix store install: fallback to remoteTarball, existing packages still work |
 
-Test 14 always runs (only needs Node). Tests 15-18 skip gracefully if pnpm is not installed.
+Test 14 always runs (only needs Node). Tests 15-19 skip gracefully if pnpm is not installed.
 
 ## Lint suite
 

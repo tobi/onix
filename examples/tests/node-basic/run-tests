@@ -532,7 +532,30 @@ else
   echo "OK: require works"
 
   echo ""
-  echo "--- Test 17: bin entries linked ---"
+  echo "--- Test 17: ESM imports from pnpm-installed node_modules ---"
+  cd "$dir"
+  output=$("$NODE" --input-type=module -e 'import ms from "ms"; console.log(ms(3600000))')
+  if [ "$output" != "1h" ]; then
+    echo "FAIL: import ms from 'ms'; ms(3600000) returned $output (expected '1h')"
+    exit 1
+  fi
+  output=$("$NODE" --input-type=module -e 'import pico from "picocolors"; console.log(typeof pico.red)')
+  if [ "$output" != "function" ]; then
+    echo "FAIL: import pico from 'picocolors'; typeof pico.red returned $output (expected 'function')"
+    exit 1
+  fi
+  output=$("$NODE" --input-type=module -e 'import semver from "semver"; console.log(semver.valid("1.2.3"))')
+  if [ "$output" != "1.2.3" ]; then
+    echo "FAIL: import semver; semver.valid('1.2.3') returned $output (expected '1.2.3')"
+    exit 1
+  fi
+  echo "  import ms from 'ms' works"
+  echo "  import pico from 'picocolors' works"
+  echo "  import semver from 'semver' works"
+  echo "OK: ESM imports work"
+
+  echo ""
+  echo "--- Test 18: bin entries linked ---"
   cd "$dir"
   test -x node_modules/.bin/tsc || { echo "FAIL: tsc bin not executable"; exit 1; }
   test -x node_modules/.bin/esbuild || { echo "FAIL: esbuild bin not executable"; exit 1; }
@@ -546,7 +569,7 @@ else
   echo "OK: bin entries linked"
 
   echo ""
-  echo "--- Test 18: pnpm add works after Nix store install ---"
+  echo "--- Test 19: pnpm add works after Nix store install ---"
   cd "$dir"
   # Add a package not in the Nix store — fetcher should fall back to remoteTarball
   ONIX_PACKAGE_DIR="$pkg_dir" pnpm add is-odd@3.0.1 --ignore-scripts --config.global-pnpmfile=nix/pnpmfile.cjs 2>&1
