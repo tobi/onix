@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require "json"
 
 module Onix
   module Commands
@@ -45,7 +46,8 @@ module Onix
         nix_file = project_nix(project)
         UI.header "Build"
         UI.info project
-        cmd = ["nix-build", "--no-out-link", nix_file, "-A", "bundlePath"]
+        attr = project_build_attr(project)
+        cmd = ["nix-build", "--no-out-link", nix_file, "-A", attr]
         cmd << "--keep-going" if @keep_going
         run_nix(cmd)
       end
@@ -65,7 +67,8 @@ module Onix
           next unless File.exist?(nix_file)
 
           UI.info "#{UI.bold(name)}"
-          cmd = ["nix-build", "--no-out-link", nix_file, "-A", "bundlePath"]
+          attr = project_build_attr(name)
+          cmd = ["nix-build", "--no-out-link", nix_file, "-A", attr]
           cmd << "--keep-going" if @keep_going
           run_nix(cmd)
         end
@@ -75,6 +78,19 @@ module Onix
         path = File.join(@project.nix_dir, "#{name}.nix")
         abort "No nix file for project '#{name}'. Run 'onix generate' first." unless File.exist?(path)
         path
+      end
+
+      # Detect whether a project uses ruby (bundlePath) or node (nodeModules)
+      # by reading the meta header (line 1) and checking for pnpm/node fields.
+      def project_build_attr(name)
+        jsonl = File.join(@project.packagesets_dir, "#{name}.jsonl")
+        return "bundlePath" unless File.exist?(jsonl)
+
+        meta_line = File.foreach(jsonl).first&.strip
+        return "bundlePath" unless meta_line
+
+        meta = JSON.parse(meta_line, symbolize_names: true) rescue {}
+        (meta[:pnpm] || meta[:node]) ? "nodeModules" : "bundlePath"
       end
 
       def run_nix(cmd)

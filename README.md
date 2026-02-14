@@ -1,20 +1,26 @@
 # onix
 
-Hermetic Ruby packages from `Gemfile.lock`. Import a lockfile, build every gem once, cache forever.
+Hermetic packages from lockfiles. Import a lockfile, build every package once, cache forever.
 
 ```
-$ onix import ~/src/rails     # parse Gemfile.lock → packagesets/rails.jsonl
-$ onix generate               # prefetch hashes, write nix derivations
-$ onix build                  # build everything
+# Ruby
+$ onix import ~/src/rails            # parse Gemfile.lock → packagesets/rails.jsonl
+$ onix generate                      # prefetch hashes, write nix derivations
+$ onix build                         # build everything
+
+# Node (pnpm)
+$ onix import-pnpm ~/src/myapp       # parse pnpm-lock.yaml → packagesets/myapp.jsonl
+$ onix generate                      # prefetch hashes, write nix derivations
+$ onix build                         # build everything
 ```
 
 ## Why
 
-Bundler solves dependency resolution but not hermetic builds. Nix solves hermetic builds but doesn't understand lockfiles. onix bridges them:
+Package managers solve dependency resolution but not hermetic builds. Nix solves hermetic builds but doesn't understand lockfiles. onix bridges them:
 
-- **Lockfile in, nix derivations out.** Your existing `Gemfile.lock` becomes the source of truth.
+- **Lockfile in, nix derivations out.** Your existing `Gemfile.lock` or `pnpm-lock.yaml` becomes the source of truth.
 - **System libraries only.** Native extensions link against nixpkgs — no vendored copies of openssl, libxml2, sqlite, etc.
-- **One derivation per gem.** Individually cacheable, parallel builds, content-addressed store paths.
+- **One derivation per package.** Individually cacheable, parallel builds, content-addressed store paths.
 - **Build once, cache forever.** Same lockfile + same nixpkgs = same store paths. CI and dev share the cache.
 
 ## Install
@@ -34,16 +40,21 @@ mkdir my-packages && cd my-packages
 onix init
 ```
 
-Creates the directory structure: `packagesets/`, `overlays/`, `nix/ruby/`.
+Creates the directory structure: `packagesets/`, `overlays/`, `nix/`.
 
 ### 2. Import a lockfile
 
 ```bash
+# Ruby
 onix import ~/src/myapp              # reads myapp/Gemfile.lock
-onix import --name blog Gemfile.lock # explicit name
+onix import --name blog Gemfile.lock  # explicit name
+
+# Node (pnpm)
+onix import-pnpm ~/src/myapp         # reads myapp/pnpm-lock.yaml
+onix import-pnpm --name blog path/to/pnpm-lock.yaml
 ```
 
-Parses the lockfile and writes a hermetic JSONL packageset to `packagesets/<name>.jsonl`. For git-sourced gems, clones the repo to discover monorepo subdirectories.
+Parses the lockfile and writes a hermetic JSONL packageset to `packagesets/<name>.jsonl`.
 
 ### 3. Generate nix derivations
 
@@ -52,18 +63,28 @@ onix generate        # default: 20 parallel prefetch jobs
 onix generate -j 8   # fewer jobs
 ```
 
-Prefetches SHA256 hashes for all gems via `nix-prefetch-url` and `nix-prefetch-git`, then writes:
+Prefetches SHA256 hashes via `nix-prefetch-url` and `nix-prefetch-git`, then writes:
+
+**Ruby projects:**
 - `nix/ruby/<name>.nix` — one file per gem with all versions and hashes
 - `nix/<project>.nix` — per-project gem selection, bundlePath, and devShell
-- `nix/build-gem.nix` — generic builder
+- `nix/build-gem.nix`, `nix/gem-config.nix`
+
+**Node projects:**
+- `nix/node/<name>.nix` — one file per npm package with all versions and hashes
+- `nix/<project>.nix` — per-project package selection and packageDir
+- `nix/build-npm.nix`, `nix/npm-config.nix`, `nix/pnpmfile.cjs`
+
+Ruby and Node packagesets can coexist — `generate` processes both in one pass.
+- `nix/build-gem.nix` — wrapper around nixpkgs `buildRubyGem`
 - `nix/gem-config.nix` — overlay loader
 
 ### 4. Build
 
 ```bash
 onix build                    # build all projects
-onix build myapp              # build all gems for one project
-onix build myapp nokogiri     # build a single gem
+onix build myapp              # build all packages for one project
+onix build myapp nokogiri     # build a single package
 onix build -k                 # keep going past failures
 ```
 
@@ -84,9 +105,7 @@ Runs `nix-eval`, `packageset-complete`, and `secrets` checks in parallel.
 
 ## Using built packages
 
-Each project nix file exports individual gems, a merged `bundlePath`, and a `devShell`:
-
-### devShell (recommended)
+### Ruby — devShell
 
 ```nix
 { pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
@@ -97,102 +116,91 @@ in project.devShell {
 }
 ```
 
-Sets `BUNDLE_PATH`, `BUNDLE_GEMFILE`, and `GEM_PATH` automatically. Ruby can `require` any gem in the bundle without `bundler/setup`.
+Sets `BUNDLE_PATH`, `BUNDLE_GEMFILE`, and `GEM_PATH` automatically.
 
-### bundlePath
-
-For CI scripts, Docker images, or custom derivations:
+### Ruby — bundlePath
 
 ```nix
 project.bundlePath   # → /nix/store/...-rails-bundle
-                     # contains gems/*, specifications/*, extensions/*
 ```
+
+### Node — packageDir + pnpm install
+
+```nix
+{ pkgs ? import <nixpkgs> {}, nodejs ? pkgs.nodejs_22 }:
+let
+  project = import ./nix/myapp.nix { inherit pkgs nodejs; };
+in project.packageDir   # → /nix/store/...-myapp-packages
+                        # symlinks: express@4.21.2 → /nix/store/...-express-4.21.2/
+```
+
+The `packageDir` collects symlinks to all individually-built packages. To get a working `node_modules/`, use pnpm with the custom fetcher:
+
+```bash
+pkg_dir=$(nix-build nix/myapp.nix -A packageDir --no-out-link)
+ONIX_PACKAGE_DIR="$pkg_dir" pnpm install --frozen-lockfile --ignore-scripts \
+  --config.global-pnpmfile=nix/pnpmfile.cjs
+```
+
+pnpm reads packages from the Nix store (via the custom fetcher) instead of downloading tarballs, then materializes a standard `node_modules/` with its virtual store layout, dependency symlinks, and bin entries. Requires pnpm >= 10.
 
 ## Overlays
 
-When a gem needs system libraries or custom build steps, create `overlays/<gem-name>.nix`.
+When a package needs system libraries or custom build steps, create `overlays/<name>.nix`.
 
-### System library deps
+### Ruby overlays
 
 ```nix
 # overlays/pg.nix
 { pkgs, ruby, ... }: with pkgs; [ libpq pkg-config ]
-```
 
-### Use system libraries instead of vendored copies
-
-```nix
-# overlays/sqlite3.nix
-{ pkgs, ruby, ... }: {
-  deps = with pkgs; [ sqlite pkg-config ];
-  extconfFlags = "--enable-system-libraries";
-}
-```
-
-### Build-time gem dependencies
-
-Some gems need other gems during `extconf.rb`. Use `buildGems` with the `buildGem` function:
-
-```nix
 # overlays/nokogiri.nix
 { pkgs, ruby, buildGem, ... }: {
   deps = with pkgs; [ libxml2 libxslt pkg-config zlib ];
   extconfFlags = "--use-system-libraries";
-  buildGems = [
-    (buildGem "mini_portile2")
-  ];
+  buildGems = [ (buildGem "mini_portile2") ];
 }
 ```
 
-### Rust extensions
+### Node overlays
 
 ```nix
-# overlays/tiktoken_ruby.nix
-{ pkgs, ruby, buildGem, ... }: {
-  deps = with pkgs; [ rustc cargo libclang ];
-  buildGems = [ (buildGem "rb_sys") ];
-  beforeBuild = ''
-    export CARGO_HOME="$TMPDIR/cargo"
-    mkdir -p "$CARGO_HOME"
-    export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"
-  '';
+# overlays/better-sqlite3.nix
+{ pkgs, nodejs, ... }: {
+  deps = with pkgs; [ sqlite pkg-config python3 ]
+    ++ lib.optionals stdenv.hostPlatform.isDarwin [ darwin.cctools ];
+  buildFlags = "--build-from-source";
 }
 ```
 
 ### All overlay fields
 
-| Field | Type | Effect |
-|-------|------|--------|
-| `deps` | list | Added to `nativeBuildInputs` |
-| `extconfFlags` | string | Appended to `ruby extconf.rb` |
-| `buildGems` | list | Gems needed at build time (`GEM_PATH` set automatically) |
-| `beforeBuild` | string | Runs before the default build phase |
-| `afterBuild` | string | Runs after `make` |
-| `buildPhase` | string | **Replaces** the default build entirely |
-| `postInstall` | string | Runs after install (`$dest` available) |
+**Ruby:** `deps`, `extconfFlags`, `buildGems`, `beforeBuild`, `afterBuild`, `buildPhase`, `postInstall`
 
-### Skip a gem
-
-```nix
-# overlays/therubyracer.nix — abandoned, use mini_racer
-{ pkgs, ruby, ... }: { buildPhase = "true"; }
-```
+**Node:** `deps`, `buildFlags`, `buildPackages`, `beforeBuild`, `afterBuild`, `buildPhase`, `postInstall`
 
 ## Directory structure
 
 ```
 my-packages/
 ├── packagesets/       # JSONL packagesets (one per project)
-│   ├── rails.jsonl
-│   └── liquid.jsonl
+│   ├── rails.jsonl    # Ruby project
+│   └── myapp.jsonl    # Node project
 ├── overlays/          # Hand-written build overrides
-│   ├── nokogiri.nix
-│   └── sqlite3.nix
+│   ├── ruby/          # Ruby gem overlays ({ pkgs, ruby, buildGem, ... })
+│   │   └── nokogiri.nix
+│   └── node/          # Node package overlays ({ pkgs, nodejs, buildPackage, ... })
+│       └── better-sqlite3.nix
 └── nix/               # Generated — never edit
     ├── ruby/          # Per-gem derivations
-    ├── rails.nix      # Per-project entry point
+    ├── node/          # Per-npm-package derivations
+    ├── rails.nix      # Ruby project entry point
+    ├── myapp.nix      # Node project entry point
     ├── build-gem.nix
-    └── gem-config.nix
+    ├── gem-config.nix
+    ├── build-npm.nix
+    ├── npm-config.nix
+    └── pnpmfile.cjs   # pnpm custom fetcher (serves packages from Nix store)
 ```
 
 ## Design
@@ -200,6 +208,7 @@ my-packages/
 - **Nix-native fetch.** `generate` prefetches hashes; `build` uses `fetchurl`/`builtins.fetchGit`. No local cache.
 - **System libraries only.** Native extensions link against nixpkgs. Vendored copies are replaced.
 - **Lockfile is truth.** Packagesets are hermetic JSONL parsed once during import.
-- **One derivation per gem.** Individually cacheable, parallel, content-addressed.
+- **One derivation per package.** Individually cacheable, parallel, content-addressed.
 - **Overlays win.** Manual overrides always take precedence over auto-detection.
-- **Parameterized runtime.** `ruby` flows through every derivation — one argument changes the whole build.
+- **Parameterized runtime.** `ruby` or `nodejs` flows through every derivation — one argument changes the whole build.
+- **Multi-ecosystem.** Ruby and Node packagesets coexist in one project, sharing overlays and the generate/build/check pipeline.

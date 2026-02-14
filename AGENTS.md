@@ -2,6 +2,8 @@
 
 ## Architecture
 
+### Ruby (gems)
+
 ```
 Gemfile.lock
     ↓
@@ -12,6 +14,48 @@ onix generate         prefetch hashes → nix/ruby/<name>.nix (per gem)
     ↓
 onix build            nix-build → /nix/store/<hash>-<gem>-<ver>/
 ```
+
+### Node (pnpm)
+
+```
+pnpm-lock.yaml
+    ↓
+onix import-pnpm      parse lockfile → packagesets/<name>.jsonl (installer:"node")
+    ↓
+onix generate         prefetch hashes → nix/node/<name>.nix (per package)
+                                      → nix/<project>.nix (packageDir)
+                                      → nix/pnpmfile.cjs (custom fetcher)
+    ↓
+nix-build -A packageDir   builds all packages → /nix/store/...-packages/ (symlinks)
+    ↓
+ONIX_PACKAGE_DIR=$pkg_dir pnpm install --frozen-lockfile --config.global-pnpmfile=nix/pnpmfile.cjs
+    → pnpmfile.cjs intercepts fetches, serves files from Nix store
+    → pnpm materializes node_modules/ with virtual store, symlinks, bin entries
+```
+
+### Key differences from Ruby
+
+- **Versioned deps.** Node JSONL entries store deps as `{"body-parser":"1.20.3"}` (hash with versions), not `["body-parser"]` (array of names). This preserves the full dependency graph for pnpm layout.
+- **packageDir, not nodeModules.** The generated `nix/<project>.nix` produces a `packageDir` — a directory of symlinks (`express@4.21.2 → /nix/store/...`) rather than assembling a full `node_modules/` tree. pnpm handles the tree layout via a custom fetcher.
+- **pnpm custom fetcher.** `nix/pnpmfile.cjs` intercepts pnpm's package fetching and serves files directly from the Nix store. It indexes packages by integrity hash (primary) and name@version (fallback), supports scoped packages, and falls back to standard pnpm fetchers for packages not in the Nix store.
+- **Bin auto-detection.** `build-npm.nix` reads `package.json` at build time to discover and link bin entries — no need to specify them in the packageset.
+- **Platform filtering.** Platform-specific packages (e.g. `@esbuild/darwin-arm64`) have `os`/`cpu` constraints in the JSONL. Only host-platform packages are prefetched and built — wrong-platform packages get empty sha256 hashes. Use `--platforms` to include additional targets or `--all-platforms` to disable filtering.
+- **Overlay signature.** Node overlays use `{ pkgs, nodejs, buildPackage, ... }:` instead of `{ pkgs, ruby, buildGem, ... }:`.
+
+### pnpm custom fetcher
+
+The custom fetcher (`nix/pnpmfile.cjs`) bridges pnpm's headless install with the Nix store:
+
+1. **Module load.** Reads `ONIX_PACKAGE_DIR` env var (fails with actionable error if missing).
+2. **Index building.** Walks `packageDir` symlinks (including scoped `@scope/` directories), resolves each to its Nix store path, reads `.onix-manifest` for integrity hash. Builds two indexes:
+   - `byIntegrity`: `Map<sha512-..., {storePath, pkgName}>` (primary lookup)
+   - `byNameVersion`: `Map<name@version, {storePath, pkgName}>` (fallback)
+3. **canFetch(pkgId, resolution).** Returns `true` if the package exists in either index.
+4. **fetch(cafs, resolution, opts, fetchers).** Builds a `filesMap` (Map<relPath, absPath>) by walking the package's files in the Nix store, skipping `node_modules/` and `.bin/` subdirs. Returns `{filesMap, manifest, requiresBuild: false}`. Falls back to `fetchers.remoteTarball(...)` if not found.
+
+pnpm then handles all the heavy lifting: virtual store layout (`.pnpm/`), dependency symlinking, bin linking, and `.modules.yaml` metadata.
+
+**Why `requiresBuild: false`?** Nix already compiled native addons (e.g., better-sqlite3's `.node` binary). Skipping pnpm's build step avoids redundant compilation and the `ERR_PNPM_IGNORED_BUILDS` error.
 
 Everything under `nix/` is generated. Never hand-edit — run `onix generate` to regenerate.
 
@@ -144,26 +188,14 @@ An overlay file `overlays/<name>.nix` is a function `{ pkgs, ruby, buildGem, ...
 |-------|------|-------------|
 | `deps` | list | Extra `nativeBuildInputs` |
 | `extconfFlags` | string | Flags appended to every `ruby extconf.rb` call |
-| `beforeBuild` | string | Shell commands run before the default build phase |
-| `afterBuild` | string | Shell commands run after the default build phase |
+| `preBuild` | string | Shell commands run before the build phase (also runs as `preInstall`) |
+| `postBuild` | string | Shell commands run after the build phase |
 | `buildPhase` | string | **Replaces** the entire default build phase |
-| `postInstall` | string | Shell commands run at the end of `installPhase` (with `$dest` set to `$out/ruby/3.4.0`) |
+| `postInstall` | string | Shell commands run at the end of `installPhase` |
 
-Hooks compose with the default build phase. You only need `buildPhase` when the default `extconf.rb` + `make` approach won't work at all.
+Hooks compose with nixpkgs' `buildRubyGem` build phases. You only need `buildPhase` when extra source-level modifications are required before `gem build`.
 
-The default build phase (when `buildPhase` is not set) runs:
-```bash
-extconfFlags="<overlayExtconfFlags>"   # from overlay, or ""
-<overlayBeforeBuild>                    # from overlay, or ""
-for extconf in $(find ext -name extconf.rb); do
-  dir=$(dirname "$extconf")
-  (cd "$dir" && ruby extconf.rb $extconfFlags && make -j$NIX_BUILD_CORES)
-done
-# copies built .so from ext/ to lib/
-<overlayAfterBuild>                     # from overlay, or ""
-```
-
-The `$dest` variable (`$out/ruby/3.4.0`) is available in `postInstall` and contains the full BUNDLE_PATH prefix — `gems/`, `specifications/`, `extensions/` are all under `$dest`.
+The build uses nixpkgs' `buildRubyGem` under the hood. Extension compilation is handled automatically by `gem install`. The `preBuild` hook also runs as `preInstall` so environment variables persist into extension compilation.
 
 ## Workflow for fixing a failing gem
 
@@ -193,6 +225,14 @@ onix check
 ```
 
 ## Debugging tips
+
+### Node: "Cannot open: Permission denied" during tar extraction
+
+Some npm tarballs (e.g. `pngjs`) ship files with read-only directory permissions. When tar
+extracts into a directory it just created read-only, subsequent files in that directory fail
+with `Permission denied`. The fix is `--no-same-permissions` on the tar command in
+`build-npm.nix`, which is already applied. If you see this error, check that `build-npm.nix`
+has `--no-same-permissions` on all `tar xzf` calls.
 
 ```bash
 # Build a single gem with verbose output
@@ -236,6 +276,70 @@ $BUNDLE_PATH/ruby/3.4.0/
 
 Git gems use `bundler/gems/<base>-<shortref>/` with real `.gemspec` files inside. Bundler resolves them via `Bundler::Source::Git` → `load_spec_files`, not through `specifications/`. The shortref is the first 12 chars of the commit SHA.
 
+## Tests
+
+Integration tests live in `examples/tests/`. Each project has a `run-tests` script.
+
+### Running tests
+
+```bash
+cd examples
+
+# Run one project's tests
+tests/node-basic/run-tests       # 19 tests: packageDir, packages, manifests, platform, pnpm custom fetcher
+tests/tsdown-starter/run-tests   # 5 tests: Rust NAPI, TS bundling, platform bindings
+tests/remix-v3/run-tests         # 6 tests: ESM, scoped packages, reactive primitives
+
+# Run all Ruby project tests
+tests/run-all
+
+# Run just the Justfile targets
+just test node-basic
+just test-all
+```
+
+### Regenerating nix after code changes
+
+After modifying `lib/onix/commands/generate_node.rb` (or any generator code), you must regenerate the nix files before tests will reflect your changes:
+
+```bash
+cd examples
+ONIX_ROOT="$(cd .. && pwd)"
+BUNDLE_GEMFILE="$ONIX_ROOT/Gemfile" bundle exec ruby -I"$ONIX_ROOT/lib" -e '
+  require "onix/packageset"; require "onix/project"; require "onix/ui"; require "onix/version"
+  class Onix::Project; def initialize(r=nil); @root = r || Dir.pwd; end; end
+  require "onix/commands/generate"; Onix::Commands::Generate.new.run([])
+'
+```
+
+The generated `nix/` files are committed — they must be regenerated and re-committed when the generator changes. Tests that use `nix-build` or `nix-shell` read the generated nix, not the Ruby source directly.
+
+### Node test coverage
+
+| Test | What it verifies |
+|------|-----------------|
+| 1 | packageDir builds: symlinks point to Nix store |
+| 2 | Individual package build (express): correct package.json |
+| 3 | Pure JS package (ms): runtime execution |
+| 4 | Native extension (better-sqlite3): compiled .node binary |
+| 5 | .onix-manifest: present in all packages |
+| 6 | .onix-manifest sha512 spot-check: hash and size match |
+| 7 | Bin entries in individual packages (tsc, esbuild, semver) |
+| 8 | Integrity field in generated .nix files |
+| 9 | Platform packages: host-only hashes, os/cpu metadata |
+| 10 | Lockfile version validation (v6 rejected) |
+| 11 | --node-version flag propagation |
+| 12 | Platform matching unit tests |
+| 13 | Generated nix structure: has packageDir, no removed attrs |
+| 14 | pnpmfile.cjs API surface: v10 hooks.fetchers + v11 fetchers array |
+| 15 | pnpm install with custom fetcher: virtual store + symlinks (requires pnpm >= 10) |
+| 16 | require works from pnpm-installed node_modules (express, ms) |
+| 17 | ESM imports from pnpm-installed node_modules (ms, picocolors, semver) |
+| 18 | Bin entries linked (tsc, esbuild) |
+| 19 | pnpm add after Nix store install: fallback to remoteTarball, existing packages still work |
+
+Test 14 always runs (only needs Node). Tests 15-19 skip gracefully if pnpm is not installed.
+
 ## Lint suite
 
 ```bash
@@ -254,36 +358,36 @@ After writing an overlay, always run `onix check` to verify the gem is complete.
 
 | Overlay | Type | What it provides |
 |---------|------|-----------------|
-| `charlock_holmes.nix` | attrset | icu, zlib, pkg-config, which + `beforeBuild` (C++17 flags for ICU 76+) |
-| `commonmarker.nix` | attrset | rustc, cargo, libclang + `beforeBuild` (GEM_PATH for rb_sys, CARGO_HOME, LIBCLANG_PATH) |
+| `charlock_holmes.nix` | attrset | icu, zlib, pkg-config, which + `preBuild` (C++17 flags for ICU 76+) |
+| `commonmarker.nix` | attrset | rustc, cargo, libclang + `preBuild` (GEM_PATH for rb_sys, CARGO_HOME, LIBCLANG_PATH) |
 | `debase.nix` | attrset | skipped build (incompatible with Ruby 3.4) |
 | `extralite-bundle.nix` | attrset | sqlite, pkg-config (uses system sqlite via pkg-config) |
-| `ffi-yajl.nix` | attrset | yajl, pkg-config + `beforeBuild` (GEM_PATH for libyajl2) |
+| `ffi-yajl.nix` | attrset | yajl, pkg-config + `preBuild` (GEM_PATH for libyajl2) |
 | `ffi.nix` | deps list | libffi, pkg-config |
-| `field_test.nix` | attrset | `beforeBuild` (GEM_PATH for rice gem — mkmf-rice at build time) |
-| `google-protobuf.nix` | attrset | `beforeBuild` (disable -Werror=format-security) |
-| `gpgme.nix` | attrset | gpgme, libgpg-error, libassuan, pkg-config + `extconfFlags = "--use-system-libraries"` + `beforeBuild` (GEM_PATH for mini_portile2) |
+| `field_test.nix` | attrset | `preBuild` (GEM_PATH for rice gem — mkmf-rice at build time) |
+| `google-protobuf.nix` | attrset | `preBuild` (disable -Werror=format-security) |
+| `gpgme.nix` | attrset | gpgme, libgpg-error, libassuan, pkg-config + `extconfFlags = "--use-system-libraries"` + `preBuild` (GEM_PATH for mini_portile2) |
 | `hiredis-client.nix` | deps list | openssl, pkg-config |
 | `hiredis.nix` | attrset | hiredis C library + custom `buildPhase` (vendor/hiredis from system lib) |
 | `idn-ruby.nix` | deps list | libidn, pkg-config |
 | `libv8-node.nix` | attrset | custom `buildPhase` (symlinks nixpkgs nodejs libv8 into vendor/) |
 | `libv8.nix` | attrset | skipped build (use libv8-node instead) |
-| `libxml-ruby.nix` | attrset | libxml2, pkg-config + `beforeBuild` (C_INCLUDE_PATH for libxml2 headers) |
+| `libxml-ruby.nix` | attrset | libxml2, pkg-config + `preBuild` (C_INCLUDE_PATH for libxml2 headers) |
 | `mini_racer.nix` | attrset | skipped build (libv8_monolith.a relocation error) |
 | `mittens.nix` | deps list | perl |
 | `mysql2.nix` | deps list | libmysqlclient, openssl, pkg-config, zlib |
-| `nokogiri.nix` | attrset | libxml2, libxslt, pkg-config, zlib + `extconfFlags = "--use-system-libraries"` + `beforeBuild` (GEM_PATH for mini_portile2) |
+| `nokogiri.nix` | attrset | libxml2, libxslt, pkg-config, zlib + `extconfFlags = "--use-system-libraries"` + `preBuild` (GEM_PATH for mini_portile2) |
 | `openssl.nix` | deps list | openssl, pkg-config |
 | `pg.nix` | deps list | libpq, pkg-config |
 | `psych.nix` | deps list | libyaml, pkg-config |
 | `puma.nix` | deps list | openssl |
-| `rmagick.nix` | attrset | imagemagick, pkg-config + `beforeBuild` (GEM_PATH for pkg-config gem) |
+| `rmagick.nix` | attrset | imagemagick, pkg-config + `preBuild` (GEM_PATH for pkg-config gem) |
 | `rpam2.nix` | deps list | pam |
 | `rugged.nix` | deps list | cmake, pkg-config, openssl, zlib, libssh2 |
 | `sqlite3.nix` | attrset | sqlite, pkg-config + `extconfFlags = "--enable-system-libraries"` |
 | `therubyracer.nix` | attrset | skipped build (abandoned, use mini_racer) |
-| `tiktoken_ruby.nix` | attrset | rustc, cargo, libclang + `beforeBuild` (GEM_PATH for rb_sys, CARGO_HOME, LIBCLANG_PATH) |
-| `tokenizers.nix` | attrset | rustc, cargo, libclang + `beforeBuild` (GEM_PATH for rb_sys, CARGO_HOME, LIBCLANG_PATH) |
+| `tiktoken_ruby.nix` | attrset | rustc, cargo, libclang + `preBuild` (GEM_PATH for rb_sys, CARGO_HOME, LIBCLANG_PATH) |
+| `tokenizers.nix` | attrset | rustc, cargo, libclang + `preBuild` (GEM_PATH for rb_sys, CARGO_HOME, LIBCLANG_PATH) |
 | `trilogy.nix` | deps list | openssl, zlib |
 | `zlib.nix` | deps list | zlib, pkg-config |
 
@@ -380,7 +484,7 @@ postPatch = ''
 Other gems that need this pattern: `ethon` (curl), `ffi-rzmq-core` (zeromq), `rbnacl` (libsodium),
 `ruby-vips` (vips, glib, gobject), `h3` (h3_3).
 
-In our overlay contract, use `beforeBuild` or `buildPhase` to do the substitution.
+In our overlay contract, use `preBuild` or `buildPhase` to do the substitution.
 
 #### Gems that download during build
 
@@ -405,9 +509,9 @@ hardeningDisable = [ "format" ];
 hardeningDisable = [ "format" ];
 ```
 
-In our overlay contract, use `beforeBuild` to set `NIX_CFLAGS_COMPILE` or `CFLAGS`:
+In our overlay contract, use `preBuild` to set `NIX_CFLAGS_COMPILE` or `CFLAGS`:
 ```nix
-beforeBuild = ''
+preBuild = ''
   export CFLAGS="$CFLAGS -Wno-error=format-security"
 '';
 ```
@@ -423,7 +527,7 @@ Modern gems increasingly use Rust via `rb_sys`. Pattern (already used for common
   buildGems = [
     (buildGem "rb_sys")
   ];
-  beforeBuild = ''
+  preBuild = ''
     export CARGO_HOME="$TMPDIR/cargo"
     mkdir -p "$CARGO_HOME"
     export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"

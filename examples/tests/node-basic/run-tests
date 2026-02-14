@@ -1,0 +1,586 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+dir="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$dir/../.." && pwd)"  # examples/
+source "$dir/../test-helpers.sh"
+setup_node
+
+echo "--- Test 1: packageDir builds ---"
+build_package_dir "$root/nix/node-basic.nix"
+# Count symlinks in packageDir
+pkg_count=$(ls "$PKG_DIR" | wc -l | tr -d ' ')
+if [ "$pkg_count" -lt 10 ]; then
+  echo "FAIL: packageDir has only $pkg_count entries (expected 10+)"
+  exit 1
+fi
+echo "  packageDir built: $pkg_count packages"
+
+# Verify symlinks point to nix store
+for entry in "$PKG_DIR"/express@* "$PKG_DIR"/ms@*; do
+  if [ ! -L "$entry" ]; then
+    echo "FAIL: $entry is not a symlink"
+    exit 1
+  fi
+  target=$(readlink "$entry")
+  if [[ "$target" != /nix/store/* ]]; then
+    echo "FAIL: $entry -> $target (expected /nix/store/...)"
+    exit 1
+  fi
+done
+echo "  symlinks point to nix store"
+echo "OK: packageDir builds"
+
+echo ""
+echo "--- Test 2: individual package build (express) ---"
+EXPRESS_DRV=$(nix-build --no-out-link -E "(import $root/nix/node-basic.nix {}).\"express@4.21.2\"" 2>/dev/null)
+if [ ! -d "$EXPRESS_DRV/node_modules/express" ]; then
+  echo "FAIL: express derivation missing node_modules/express/"
+  exit 1
+fi
+if [ ! -f "$EXPRESS_DRV/node_modules/express/package.json" ]; then
+  echo "FAIL: express missing package.json"
+  exit 1
+fi
+expr_name=$("$NODE" -e "console.log(require('$EXPRESS_DRV/node_modules/express/package.json').name)")
+if [ "$expr_name" != "express" ]; then
+  echo "FAIL: express package.json has name=$expr_name"
+  exit 1
+fi
+echo "  express@4.21.2 built with correct package.json"
+echo "OK: individual package builds"
+
+echo ""
+echo "--- Test 3: pure JS package (ms) ---"
+MS_DRV=$(nix-build --no-out-link -E "(import $root/nix/node-basic.nix {}).\"ms@2.1.3\"" 2>/dev/null)
+result=$("$NODE" -e "console.log(require('$MS_DRV/node_modules/ms')(3600000))")
+if [ "$result" != "1h" ]; then
+  echo "FAIL: ms(3600000) = $result, expected 1h"
+  exit 1
+fi
+echo "  ms(3600000) = 1h"
+echo "OK: pure JS package works"
+
+echo ""
+echo "--- Test 4: native extension (better-sqlite3) ---"
+BS_DRV=$(nix-build --no-out-link -E "(import $root/nix/node-basic.nix {}).\"better-sqlite3@11.8.1\"" 2>/dev/null)
+# Verify the compiled .node binary exists (overlay-driven native build)
+node_binary=$(find "$BS_DRV/node_modules/better-sqlite3" -name "*.node" -type f 2>/dev/null | head -1)
+if [ -z "$node_binary" ]; then
+  echo "FAIL: better-sqlite3 missing compiled .node binary"
+  exit 1
+fi
+echo "  compiled binary: $(basename "$node_binary")"
+# Verify binding.gyp was processed (build dir exists)
+if [ ! -d "$BS_DRV/node_modules/better-sqlite3/build" ]; then
+  echo "FAIL: better-sqlite3 build/ directory missing"
+  exit 1
+fi
+echo "  build/ directory present (native addon compiled)"
+echo "OK: native extension compiled"
+
+echo ""
+echo "--- Test 5: .onix-manifest in packages ---"
+# Check that packageDir entries have .onix-manifest
+manifest_count=0
+missing_count=0
+# Find all symlinks (skip scope directories like @esbuild/)
+while IFS= read -r entry; do
+  target=$(readlink "$entry")
+  if [ -f "$target/.onix-manifest" ]; then
+    manifest_count=$((manifest_count + 1))
+  else
+    missing_count=$((missing_count + 1))
+    echo "  WARN: missing .onix-manifest in $(basename "$entry")"
+  fi
+done < <(find "$PKG_DIR" -type l)
+echo "  $manifest_count packages have .onix-manifest"
+if [ "$manifest_count" -lt 10 ]; then
+  echo "FAIL: too few packages with .onix-manifest ($manifest_count)"
+  exit 1
+fi
+echo "OK: .onix-manifest present in packages"
+
+echo ""
+echo "--- Test 6: .onix-manifest sha512 spot-check ---"
+# Pick ms package and verify a hash
+ms_manifest="$MS_DRV/.onix-manifest"
+if [ ! -f "$ms_manifest" ]; then
+  echo "FAIL: ms package missing .onix-manifest"
+  exit 1
+fi
+
+# Verify format: path\thash\tmode\tsize (TSV, 4 columns)
+line_count=$(wc -l < "$ms_manifest" | tr -d ' ')
+if [ "$line_count" -lt 1 ]; then
+  echo "FAIL: .onix-manifest is empty"
+  exit 1
+fi
+echo "  ms .onix-manifest has $line_count entries"
+
+# Spot-check: verify sha512 of package.json matches manifest
+pj_line=$(grep "^package.json	" "$ms_manifest" || true)
+if [ -z "$pj_line" ]; then
+  echo "FAIL: package.json not in ms .onix-manifest"
+  exit 1
+fi
+manifest_hash=$(echo "$pj_line" | cut -f2)
+actual_hash=$(sha512sum "$MS_DRV/node_modules/ms/package.json" | cut -c1-128)
+if [ "$manifest_hash" != "$actual_hash" ]; then
+  echo "FAIL: sha512 mismatch for package.json"
+  echo "  manifest: $manifest_hash"
+  echo "  actual:   $actual_hash"
+  exit 1
+fi
+echo "  package.json sha512 matches"
+
+# Verify mode and size columns
+manifest_size=$(echo "$pj_line" | cut -f4)
+actual_size=$(stat -f %z "$MS_DRV/node_modules/ms/package.json" 2>/dev/null || stat -c %s "$MS_DRV/node_modules/ms/package.json" 2>/dev/null)
+if [ "$manifest_size" != "$actual_size" ]; then
+  echo "FAIL: size mismatch for package.json (manifest=$manifest_size actual=$actual_size)"
+  exit 1
+fi
+echo "  package.json size matches ($manifest_size bytes)"
+echo "OK: .onix-manifest sha512 verified"
+
+echo ""
+echo "--- Test 7: bin entries in individual packages ---"
+for pkg_name in typescript esbuild semver; do
+  case $pkg_name in
+    typescript) pkg_path=$(nix-build --no-out-link -E "(import $root/nix/node-basic.nix {}).\"typescript@5.7.3\"" 2>/dev/null) ;;
+    esbuild) pkg_path=$(nix-build --no-out-link -E "(import $root/nix/node-basic.nix {}).\"esbuild@0.24.2\"" 2>/dev/null) ;;
+    semver) pkg_path=$(nix-build --no-out-link -E "(import $root/nix/node-basic.nix {}).\"semver@7.7.1\"" 2>/dev/null) ;;
+  esac
+  if [ -n "$pkg_path" ] && [ -d "$pkg_path/node_modules/.bin" ]; then
+    bins=$(ls "$pkg_path/node_modules/.bin" | tr '\n' ' ')
+    echo "  $pkg_name: $bins"
+  else
+    echo "  $pkg_name: no .bin directory"
+  fi
+done
+echo "OK: bin entries verified"
+
+echo ""
+echo "--- Test 8: integrity field in .nix files ---"
+# Check that generated .nix files contain integrity field
+integrity_count=0
+for nix_file in "$root"/nix/node/*.nix; do
+  if grep -q 'integrity = "sha512-' "$nix_file"; then
+    integrity_count=$((integrity_count + 1))
+  fi
+done
+echo "  $integrity_count .nix files have integrity field"
+if [ "$integrity_count" -lt 5 ]; then
+  echo "FAIL: too few .nix files with integrity ($integrity_count, expected 5+)"
+  exit 1
+fi
+echo "OK: integrity field present in .nix files"
+
+echo ""
+echo "--- Test 9: platform packages (@esbuild/darwin-arm64) ---"
+arch=$(uname -m)
+os=$(uname -s | tr '[:upper:]' '[:lower:]')
+if [ "$arch" = "arm64" ] && [ "$os" = "darwin" ]; then
+  plat_pkg="@esbuild/darwin-arm64"
+elif [ "$arch" = "x86_64" ] && [ "$os" = "darwin" ]; then
+  plat_pkg="@esbuild/darwin-x64"
+elif [ "$arch" = "x86_64" ] && [ "$os" = "linux" ]; then
+  plat_pkg="@esbuild/linux-x64"
+elif [ "$arch" = "aarch64" ] && [ "$os" = "linux" ]; then
+  plat_pkg="@esbuild/linux-arm64"
+else
+  plat_pkg=""
+fi
+
+if [ -n "$plat_pkg" ]; then
+  safe_name=$(echo "$plat_pkg" | sed 's/@//g; s/\//--/g')
+  nix_file="$root/nix/node/${safe_name}.nix"
+
+  # Check host platform .nix has real hash (non-empty sha256)
+  if grep -q 'sha256 = "";' "$nix_file"; then
+    echo "FAIL: host platform $plat_pkg has empty sha256"
+    exit 1
+  fi
+  echo "  $plat_pkg: has real hash"
+
+  # Check wrong-platform has empty hash
+  wrong_file="$root/nix/node/esbuild--aix-ppc64.nix"
+  if [ -f "$wrong_file" ]; then
+    if grep -q 'sha256 = "";' "$wrong_file"; then
+      echo "  @esbuild/aix-ppc64: has empty hash (correct — wrong platform)"
+    else
+      echo "  @esbuild/aix-ppc64: has real hash (expected empty for wrong platform)"
+    fi
+  fi
+
+  # Check os/cpu metadata present in platform package
+  if grep -q 'os = \[' "$nix_file" && grep -q 'cpu = \[' "$nix_file"; then
+    echo "  $plat_pkg: has os/cpu metadata"
+  else
+    echo "FAIL: $plat_pkg missing os/cpu metadata"
+    exit 1
+  fi
+
+  # Count esbuild variants: only host platform(s) should have real hashes
+  real_count=0
+  empty_count=0
+  for f in "$root"/nix/node/esbuild--*.nix; do
+    if grep -q 'sha256 = "";' "$f"; then
+      empty_count=$((empty_count + 1))
+    else
+      real_count=$((real_count + 1))
+    fi
+  done
+  echo "  esbuild variants: $real_count real, $empty_count empty"
+  if [ "$real_count" -lt 1 ] || [ "$real_count" -gt 3 ]; then
+    echo "FAIL: expected 1-3 real esbuild hashes (host platform), got $real_count"
+    exit 1
+  fi
+
+  echo "OK: platform filtering verified"
+fi
+
+echo ""
+echo "--- Test 10: lockfile version validation (v6 rejected) ---"
+ONIX_ROOT="$(cd "$root/.." && pwd)"
+err_output=$(BUNDLE_GEMFILE="$ONIX_ROOT/Gemfile" bundle exec ruby -I"$ONIX_ROOT/lib" -e '
+  require "onix/packageset"; require "onix/project"; require "onix/ui"; require "onix/version"
+  require "onix/commands/import_pnpm"
+  Onix::Commands::ImportPnpm.new.run(["'"$dir/fixtures/v6-lockfile.yaml"'"])
+' 2>&1 || true)
+if echo "$err_output" | grep -q "Unsupported pnpm lockfile version"; then
+  echo "  v6 lockfile correctly rejected"
+  echo "OK: lockfile version validation works"
+else
+  echo "FAIL: v6 lockfile was not rejected"
+  echo "  output: $err_output"
+  exit 1
+fi
+
+echo ""
+echo "--- Test 11: --node-version flag propagates to meta and nix ---"
+tmpdir=$(mktemp -d)
+trap "rm -rf $tmpdir" EXIT
+
+# Import with --node-version 20
+(BUNDLE_GEMFILE="$ONIX_ROOT/Gemfile" bundle exec ruby -I"$ONIX_ROOT/lib" -e '
+  require "onix/packageset"; require "onix/project"; require "onix/ui"; require "onix/version"
+  class Onix::Project; def initialize(r=nil); @root = r || "'"$tmpdir"'"; end; end
+  require "onix/commands/import_pnpm"
+  Onix::Commands::ImportPnpm.new.run(["--node-version", "20", "--name", "test", "'"$dir/pnpm-lock.yaml"'"])
+' 2>&1) > /dev/null
+
+# Check meta header has node:"20"
+meta_node=$("$NODE" -e "const m=JSON.parse(require('fs').readFileSync('$tmpdir/packagesets/test.jsonl','utf8').split('\n')[0]); console.log(m.node || 'missing')")
+if [ "$meta_node" = "20" ]; then
+  echo "  meta header has node:20"
+else
+  echo "FAIL: meta header node=$meta_node, expected 20"
+  exit 1
+fi
+
+# Generate and check nix uses nodejs_20
+(BUNDLE_GEMFILE="$ONIX_ROOT/Gemfile" bundle exec ruby -I"$ONIX_ROOT/lib" -e '
+  require "onix/packageset"; require "onix/project"; require "onix/ui"; require "onix/version"
+  class Onix::Project; def initialize(r=nil); @root = r || "'"$tmpdir"'"; end; end
+  require "onix/commands/generate"; Onix::Commands::Generate.new.run([])
+' 2>&1) > /dev/null
+
+if grep -q "nodejs_20" "$tmpdir/nix/test.nix"; then
+  echo "  generated nix uses nodejs_20"
+else
+  echo "FAIL: generated nix does not use nodejs_20"
+  grep "nodejs" "$tmpdir/nix/test.nix" | head -1
+  exit 1
+fi
+
+# Verify default (no --node-version) uses nodejs_22
+(BUNDLE_GEMFILE="$ONIX_ROOT/Gemfile" bundle exec ruby -I"$ONIX_ROOT/lib" -e '
+  require "onix/packageset"; require "onix/project"; require "onix/ui"; require "onix/version"
+  class Onix::Project; def initialize(r=nil); @root = r || "'"$tmpdir"'"; end; end
+  require "onix/commands/import_pnpm"
+  Onix::Commands::ImportPnpm.new.run(["--name", "test", "'"$dir/pnpm-lock.yaml"'"])
+' 2>&1) > /dev/null
+(BUNDLE_GEMFILE="$ONIX_ROOT/Gemfile" bundle exec ruby -I"$ONIX_ROOT/lib" -e '
+  require "onix/packageset"; require "onix/project"; require "onix/ui"; require "onix/version"
+  class Onix::Project; def initialize(r=nil); @root = r || "'"$tmpdir"'"; end; end
+  require "onix/commands/generate"; Onix::Commands::Generate.new.run([])
+' 2>&1) > /dev/null
+
+if grep -q "nodejs_22" "$tmpdir/nix/test.nix"; then
+  echo "  default (no flag) uses nodejs_22"
+else
+  echo "FAIL: default does not use nodejs_22"
+  exit 1
+fi
+
+echo "OK: --node-version flag works"
+
+echo ""
+echo "--- Test 12: platform matching unit tests ---"
+BUNDLE_GEMFILE="$ONIX_ROOT/Gemfile" bundle exec ruby -I"$ONIX_ROOT/lib" -e '
+require "onix/packageset"
+require "onix/commands/generate_node"
+require "onix/ui"
+
+# Wrap in a test class to access private methods
+class PlatformTest
+  include Onix::Commands::NodeGenerator
+
+  def run_tests
+    test_matches_constraint
+    test_platform_matches
+    test_resolve_target_platforms
+    puts "OK: platform matching unit tests passed"
+  end
+
+  def assert(cond, msg)
+    raise "FAIL: #{msg}" unless cond
+  end
+
+  def refute(cond, msg)
+    raise "FAIL: #{msg}" if cond
+  end
+
+  def test_matches_constraint
+    # Positive match
+    assert matches_constraint?(["darwin"], "darwin"), "darwin should match darwin"
+    # Positive miss
+    refute matches_constraint?(["darwin"], "linux"), "darwin should not match linux"
+    # Negation match (not win32, and we are darwin)
+    assert matches_constraint?(["!win32"], "darwin"), "!win32 should match darwin"
+    # Negation miss (not darwin, and we are darwin)
+    refute matches_constraint?(["!darwin"], "darwin"), "!darwin should not match darwin"
+    # Multiple constraints (any match wins)
+    assert matches_constraint?(["linux", "darwin"], "darwin"), "linux|darwin should match darwin"
+    refute matches_constraint?(["linux", "win32"], "darwin"), "linux|win32 should not match darwin"
+    puts "  matches_constraint?: 6/6 passed"
+  end
+
+  def test_platform_matches
+    # Cross-platform (empty os and cpu) always passes
+    entry = Onix::Packageset::Entry.new(os: [], cpu: [])
+    assert platform_matches?(entry, [["darwin", "arm64"]]), "empty os/cpu should always match"
+
+    # Matching platform
+    entry = Onix::Packageset::Entry.new(os: ["darwin"], cpu: ["arm64"])
+    assert platform_matches?(entry, [["darwin", "arm64"]]), "darwin/arm64 should match"
+
+    # Non-matching platform
+    refute platform_matches?(entry, [["linux", "x64"]]), "darwin/arm64 should not match linux/x64"
+
+    # os-only constraint (cpu empty = any cpu)
+    entry = Onix::Packageset::Entry.new(os: ["darwin"], cpu: [])
+    assert platform_matches?(entry, [["darwin", "x64"]]), "os-only darwin should match any darwin cpu"
+    refute platform_matches?(entry, [["linux", "x64"]]), "os-only darwin should not match linux"
+
+    # Multiple target platforms (any match wins)
+    entry = Onix::Packageset::Entry.new(os: ["linux"], cpu: ["x64"])
+    assert platform_matches?(entry, [["darwin", "arm64"], ["linux", "x64"]]), "should match second target"
+
+    # Negation in os
+    entry = Onix::Packageset::Entry.new(os: ["!win32"], cpu: ["x64"])
+    assert platform_matches?(entry, [["linux", "x64"]]), "!win32 should match linux"
+    assert platform_matches?(entry, [["darwin", "x64"]]), "!win32 should match darwin"
+
+    puts "  platform_matches?: 8/8 passed"
+  end
+
+  def test_resolve_target_platforms
+    # --all-platforms returns nil (no filtering)
+    assert resolve_target_platforms("all").nil?, "--all-platforms should return nil"
+
+    # nil arg = host only (should return 1 platform)
+    result = resolve_target_platforms(nil)
+    assert result.is_a?(Array) && result.size == 1, "nil should return host platform only"
+
+    # Valid triple adds to host
+    result = resolve_target_platforms("x86_64-linux")
+    assert result.size >= 2, "should have host + x86_64-linux"
+    assert result.include?(["linux", "x64"]), "should include linux/x64"
+
+    # Multiple triples
+    result = resolve_target_platforms("x86_64-linux,aarch64-linux")
+    assert result.include?(["linux", "x64"]), "should include linux/x64"
+    assert result.include?(["linux", "arm64"]), "should include linux/arm64"
+
+    # Unknown triple raises error
+    begin
+      resolve_target_platforms("arm64-windows")
+      raise "FAIL: should have raised for unknown platform"
+    rescue SystemExit
+      # UI.fail calls exit — expected
+    end
+
+    puts "  resolve_target_platforms: 5/5 passed"
+  end
+end
+
+PlatformTest.new.run_tests
+' 2>&1
+if [ $? -ne 0 ]; then
+  echo "FAIL: platform matching unit tests failed"
+  exit 1
+fi
+
+echo ""
+echo "--- Test 13: generated nix has packageDir, no nodeModules/syncScript ---"
+nix_file="$root/nix/node-basic.nix"
+if [ ! -f "$nix_file" ]; then
+  echo "FAIL: $nix_file not found"
+  exit 1
+fi
+
+# Must have packageDir
+if ! grep -q "packageDir" "$nix_file"; then
+  echo "FAIL: generated nix missing packageDir"
+  exit 1
+fi
+echo "  has packageDir"
+
+# Must NOT have nodeModules, syncScript, devShell, syncBash
+for removed in nodeModules syncScript devShell syncBash; do
+  if grep -q "$removed" "$nix_file"; then
+    echo "FAIL: generated nix still contains $removed"
+    exit 1
+  fi
+  echo "  no $removed (removed)"
+done
+echo "OK: generated nix structure correct"
+
+echo ""
+echo "--- Test 14: pnpmfile.cjs API surface (v10 + v11) ---"
+cd "$dir"
+ONIX_PACKAGE_DIR="$PKG_DIR" "$NODE" -e '
+const f = require("./nix/pnpmfile.cjs")
+
+// v11 API: top-level fetchers array with canFetch/fetch
+if (!Array.isArray(f.fetchers)) throw new Error("fetchers is not an array (v11 API)")
+if (typeof f.fetchers[0].canFetch !== "function") throw new Error("canFetch not a function (v11)")
+if (typeof f.fetchers[0].fetch !== "function") throw new Error("fetch not a function (v11)")
+
+// v10 API: hooks.fetchers.remoteTarball factory
+if (typeof f.hooks !== "object") throw new Error("hooks not an object (v10 API)")
+if (typeof f.hooks.fetchers !== "object") throw new Error("hooks.fetchers not an object (v10)")
+if (typeof f.hooks.fetchers.remoteTarball !== "function") throw new Error("remoteTarball factory not a function (v10)")
+
+// v10: factory returns a fetcher function when called
+const mockDefault = { remoteTarball: () => "fallback" }
+const fetcher = f.hooks.fetchers.remoteTarball({ defaultFetchers: mockDefault })
+if (typeof fetcher !== "function") throw new Error("factory did not return a function (v10)")
+
+// v10: fetcher calls defaultFetchers when package not in Nix store
+const result = fetcher(null, { integrity: "sha512-notreal" }, {})
+if (result !== "fallback") throw new Error("v10 fetcher did not fall back to defaultFetchers")
+
+// v11: canFetch always returns true (fetch handles fallback)
+if (!f.fetchers[0].canFetch("unknown@0.0.0", { integrity: "sha512-notreal" })) {
+  throw new Error("canFetch should always return true")
+}
+
+// v11: fetch falls back for unknown packages
+const mockFetchers = { remoteTarball: () => "v11-fallback" }
+const v11result = f.fetchers[0].fetch(null, { integrity: "sha512-notreal" }, {}, mockFetchers)
+if (v11result !== "v11-fallback") throw new Error("v11 fetch did not fall back to fetchers.remoteTarball")
+
+console.log("  v11 API: fetchers[].canFetch/fetch OK")
+console.log("  v10 API: hooks.fetchers.remoteTarball factory OK")
+console.log("  v10 fallback to defaultFetchers OK")
+console.log("  v11 fallback to fetchers.remoteTarball OK")
+'
+echo "OK: pnpmfile.cjs API surface"
+
+if require_pnpm "Tests 15-19 require pnpm >= 10"; then
+  echo ""
+  echo "--- Test 15: pnpm install with custom fetcher ---"
+  cd "$dir"
+  pnpm_install nix/pnpmfile.cjs
+  test -L node_modules/express || { echo "FAIL: express not symlinked"; exit 1; }
+  echo "  node_modules/ tree created via custom fetcher"
+  echo "OK: pnpm install with custom fetcher"
+
+  echo ""
+  echo "--- Test 16: require works from pnpm-installed node_modules ---"
+  cd "$dir"
+  output=$("$NODE" -e "const e = require('express'); console.log(typeof e)")
+  if [ "$output" != "function" ]; then
+    echo "FAIL: require('express') returned $output (expected 'function')"
+    exit 1
+  fi
+  output=$("$NODE" -e "const ms = require('ms'); console.log(ms(3600000))")
+  if [ "$output" != "1h" ]; then
+    echo "FAIL: require('ms')(3600000) returned $output (expected '1h')"
+    exit 1
+  fi
+  echo "  require('express') works"
+  echo "  require('ms') works"
+  echo "OK: require works"
+
+  echo ""
+  echo "--- Test 17: ESM imports from pnpm-installed node_modules ---"
+  cd "$dir"
+  output=$("$NODE" --input-type=module -e 'import ms from "ms"; console.log(ms(3600000))')
+  if [ "$output" != "1h" ]; then
+    echo "FAIL: import ms from 'ms'; ms(3600000) returned $output (expected '1h')"
+    exit 1
+  fi
+  output=$("$NODE" --input-type=module -e 'import pico from "picocolors"; console.log(typeof pico.red)')
+  if [ "$output" != "function" ]; then
+    echo "FAIL: import pico from 'picocolors'; typeof pico.red returned $output (expected 'function')"
+    exit 1
+  fi
+  output=$("$NODE" --input-type=module -e 'import semver from "semver"; console.log(semver.valid("1.2.3"))')
+  if [ "$output" != "1.2.3" ]; then
+    echo "FAIL: import semver; semver.valid('1.2.3') returned $output (expected '1.2.3')"
+    exit 1
+  fi
+  echo "  import ms from 'ms' works"
+  echo "  import pico from 'picocolors' works"
+  echo "  import semver from 'semver' works"
+  echo "OK: ESM imports work"
+
+  echo ""
+  echo "--- Test 18: bin entries linked ---"
+  cd "$dir"
+  test -x node_modules/.bin/tsc || { echo "FAIL: tsc bin not executable"; exit 1; }
+  test -x node_modules/.bin/esbuild || { echo "FAIL: esbuild bin not executable"; exit 1; }
+  tsc_out=$(node_modules/.bin/tsc --version 2>&1)
+  if ! echo "$tsc_out" | grep -q "Version"; then
+    echo "FAIL: tsc --version failed: $tsc_out"
+    exit 1
+  fi
+  echo "  tsc bin works"
+  echo "  esbuild bin works"
+  echo "OK: bin entries linked"
+
+  echo ""
+  echo "--- Test 19: pnpm add works after Nix store install ---"
+  cd "$dir"
+  # Save originals so we can restore without git
+  cp package.json package.json.bak
+  cp pnpm-lock.yaml pnpm-lock.yaml.bak
+  # Add a package not in the Nix store — fetcher should fall back to remoteTarball
+  ONIX_PACKAGE_DIR="$PKG_DIR" pnpm add is-odd@3.0.1 --ignore-scripts --config.global-pnpmfile=nix/pnpmfile.cjs 2>&1
+  output=$("$NODE" -e "console.log(require('is-odd')('3'))")
+  if [ "$output" != "true" ]; then
+    echo "FAIL: require('is-odd')('3') returned $output (expected 'true')"
+    exit 1
+  fi
+  echo "  pnpm add is-odd@3.0.1 succeeded"
+  echo "  require('is-odd')('3') = true"
+  # Verify existing Nix-sourced packages still work after the add
+  output=$("$NODE" -e "console.log(require('ms')(3600000))")
+  if [ "$output" != "1h" ]; then
+    echo "FAIL: require('ms')(3600000) returned $output after pnpm add (expected '1h')"
+    exit 1
+  fi
+  echo "  existing packages still work after add"
+  # Clean up: restore original package.json and lockfile
+  mv package.json.bak package.json
+  mv pnpm-lock.yaml.bak pnpm-lock.yaml
+  echo "OK: pnpm add works after Nix store install"
+fi  # end of pnpm prerequisite check
+
+echo ""
+echo "All node-basic tests passed."

@@ -66,12 +66,19 @@ module Onix
         end
 
         threads.each(&:join)
-        total_time = UI.format_time(Process.clock_gettime(Process::CLOCK_MONOTONIC) - threads.first.instance_variable_get(:@t0) || 0) rescue ""
         UI.summary("#{passed} passed", failed > 0 ? UI.red("#{failed} failed") : "0 failed")
         exit 1 if failed > 0
       end
 
       private
+
+      def nix_file_for(entry)
+        if entry.installer == "node"
+          File.join(@project.nix_dir, "node", "#{entry.safe_nix_filename}.nix")
+        else
+          File.join(@project.ruby_dir, "#{entry.name}.nix")
+        end
+      end
 
       # ── nix-eval ─────────────────────────────────────────────────
 
@@ -79,8 +86,8 @@ module Onix
         nix_dir = @project.nix_dir
         return [true, "no nix/ dir"] unless Dir.exist?(nix_dir)
 
-        files = Dir.glob(File.join(nix_dir, "**", "*.nix")) +
-                Dir.glob(File.join(@project.overlays_dir, "*.nix"))
+        files = Dir.glob(File.join(nix_dir, "**", "*.nix"))
+        files += Dir.glob(File.join(@project.overlays_dir, "*.nix")) if Dir.exist?(@project.overlays_dir)
         files.uniq!
 
         errors = 0
@@ -103,7 +110,7 @@ module Onix
       end
 
       # ── packageset-complete ──────────────────────────────────────
-      # Every buildable gem in each packageset has a corresponding nix/ruby/<name>.nix
+      # Every buildable package in each packageset has a corresponding nix file
 
       def check_packageset_complete
         packagesets = Dir.glob(File.join(@project.packagesets_dir, "*.jsonl"))
@@ -115,20 +122,19 @@ module Onix
         packagesets.each do |f|
           _meta, entries = Packageset.read(f)
           entries.each do |e|
-            next if e.source == "stdlib" || e.source == "path"
+            next if e.source == "stdlib" || e.source == "path" || e.source == "builtin"
             total += 1
-            nix_file = File.join(@project.ruby_dir, "#{e.name}.nix")
-            unless File.exist?(nix_file)
-              missing << e.name
-            end
+
+            nix_file = nix_file_for(e)
+            missing << e.name unless File.exist?(nix_file)
           end
         end
 
         if missing.any?
           sample = missing.uniq.first(10).join(", ")
-          [false, "#{missing.uniq.size} gems missing from nix/ruby/ — run `onix generate`\n  #{sample}"]
+          [false, "#{missing.uniq.size} packages missing from nix/ — run `onix generate`\n  #{sample}"]
         else
-          [true, "#{total} gems all have nix files"]
+          [true, "#{total} packages all have nix files"]
         end
       end
 

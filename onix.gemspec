@@ -3,10 +3,10 @@ require_relative "lib/onix/version"
 Gem::Specification.new do |s|
   s.name        = "onix"
   s.version     = Onix::VERSION
-  s.summary     = "Convert Ruby Gemfile.lock to hermetic Nix derivations"
-  s.description = "Generates per-gem Nix derivations from a Gemfile.lock, " \
+  s.summary     = "Convert lockfiles to hermetic Nix derivations"
+  s.description = "Generates per-package Nix derivations from Gemfile.lock or pnpm-lock.yaml, " \
                   "with auto-detection of native dependencies, overlay support, " \
-                  "and bundler-compatible BUNDLE_PATH layout."
+                  "bundler-compatible BUNDLE_PATH layout, and pnpm-compatible node_modules."
   s.authors     = ["Tobi Lütke"]
   s.license     = "MIT"
   s.homepage    = "https://github.com/tobi/onix"

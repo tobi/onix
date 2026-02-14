@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+dir="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$dir/../.." && pwd)"  # examples/
+source "$dir/../test-helpers.sh"
+setup_node
+
+echo "--- Test 1: packageDir builds ---"
+build_package_dir "$root/nix/tsdown-starter.nix"
+echo "  packageDir built"
+echo "OK: packageDir builds"
+
+if ! require_pnpm "Tests 2-4 require pnpm >= 10"; then
+  echo ""
+  echo "All tsdown-starter tests passed. (pnpm tests skipped)"
+  exit 0
+fi
+
+echo ""
+echo "--- Test 2: pnpm install with custom fetcher ---"
+cd "$dir"
+pnpm_install "$root/nix/pnpmfile.cjs"
+echo "  node_modules/ tree created via custom fetcher"
+echo "OK: pnpm install with custom fetcher"
+
+echo ""
+echo "--- Test 3: tsdown bundles TypeScript via rolldown ---"
+outdir=$(mktemp -d)
+node_modules/.bin/tsdown "$dir/src/index.ts" --out-dir "$outdir" 2>&1
+if [ ! -f "$outdir/index.mjs" ]; then
+  echo "FAIL: tsdown did not produce output"
+  exit 1
+fi
+result=$("$NODE" -e "import('$outdir/index.mjs').then(m => console.log(m.greet('Nix')))" 2>&1)
+if [ "$result" != "Hello, Nix!" ]; then
+  echo "FAIL: expected 'Hello, Nix!', got '$result'"
+  exit 1
+fi
+echo "  Output: $result"
+echo "OK: TypeScript bundled and executed via Rust-powered rolldown"
+rm -rf "$outdir"
+
+echo ""
+echo "--- Test 4: bin entries linked ---"
+test -x node_modules/.bin/tsdown || { echo "FAIL: tsdown bin not executable"; exit 1; }
+test -x node_modules/.bin/tsc || { echo "FAIL: tsc bin not executable"; exit 1; }
+echo "  tsdown bin works"
+echo "  tsc bin works"
+echo "OK: bin entries linked"
+
+echo ""
+echo "All tsdown-starter tests passed."

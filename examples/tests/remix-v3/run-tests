@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+dir="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$dir/../.." && pwd)"  # examples/
+source "$dir/../test-helpers.sh"
+setup_node
+
+echo "--- Test 1: packageDir builds ---"
+build_package_dir "$root/nix/remix-v3.nix"
+echo "  packageDir built"
+echo "OK: packageDir builds"
+
+if ! require_pnpm "Tests 2-6 require pnpm >= 10"; then
+  echo ""
+  echo "All remix-v3 tests passed. (pnpm tests skipped)"
+  exit 0
+fi
+
+echo ""
+echo "--- Test 2: pnpm install with custom fetcher ---"
+cd "$dir"
+pnpm_install "$root/nix/pnpmfile.cjs"
+echo "  node_modules/ tree created via custom fetcher"
+echo "OK: pnpm install with custom fetcher"
+
+echo ""
+echo "--- Test 3: @remix-run/dom (scoped, experimental version) ---"
+"$NODE" -e '
+  const dom = require("@remix-run/dom");
+  const exports = Object.keys(dom);
+  if (exports.length === 0) throw new Error("no exports");
+  console.log("@remix-run/dom: " + exports.length + " exports");
+  console.log("OK: scoped experimental package loaded");
+'
+
+echo ""
+echo "--- Test 4: @tanstack/query-core ---"
+"$NODE" -e '
+  const qc = require("@tanstack/query-core");
+  if (!qc.QueryClient) throw new Error("missing QueryClient");
+  console.log("@tanstack/query-core: QueryClient present (" + Object.keys(qc).length + " exports)");
+  console.log("OK: tanstack query-core loaded");
+'
+
+echo ""
+echo "--- Test 5: alien-signals (reactive primitives) ---"
+"$NODE" -e '
+  const { signal, computed, effect } = require("alien-signals");
+  const count = signal(0);
+  const doubled = computed(() => count() * 2);
+  if (doubled() !== 0) throw new Error("expected 0");
+  count(5);
+  if (doubled() !== 10) throw new Error("expected 10, got " + doubled());
+  console.log("alien-signals: signal(5) → computed doubled = " + doubled());
+  console.log("OK: reactive primitives work");
+'
+
+echo ""
+echo "--- Test 6: remix-auth-oauth2 ---"
+"$NODE" -e '
+  const { OAuth2Strategy } = require("remix-auth-oauth2");
+  if (!OAuth2Strategy) throw new Error("missing OAuth2Strategy");
+  console.log("remix-auth-oauth2: OAuth2Strategy present");
+  console.log("OK: auth strategy loaded");
+'
+
+echo ""
+echo "All remix-v3 tests passed."
