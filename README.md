@@ -72,8 +72,8 @@ Prefetches SHA256 hashes via `nix-prefetch-url` and `nix-prefetch-git`, then wri
 
 **Node projects:**
 - `nix/node/<name>.nix` — one file per npm package with all versions and hashes
-- `nix/<project>.nix` — per-project package selection, pnpm-style nodeModules, and devShell
-- `nix/build-npm.nix`, `nix/npm-config.nix`
+- `nix/<project>.nix` — per-project package selection and packageDir
+- `nix/build-npm.nix`, `nix/npm-config.nix`, `nix/pnpmfile.cjs`
 
 Ruby and Node packagesets can coexist — `generate` processes both in one pass.
 - `nix/build-gem.nix` — wrapper around nixpkgs `buildRubyGem`
@@ -124,25 +124,25 @@ Sets `BUNDLE_PATH`, `BUNDLE_GEMFILE`, and `GEM_PATH` automatically.
 project.bundlePath   # → /nix/store/...-rails-bundle
 ```
 
-### Node — devShell
+### Node — packageDir + pnpm install
 
 ```nix
 { pkgs ? import <nixpkgs> {}, nodejs ? pkgs.nodejs_22 }:
 let
   project = import ./nix/myapp.nix { inherit pkgs nodejs; };
-in project.devShell {}
+in project.packageDir   # → /nix/store/...-myapp-packages
+                        # symlinks: express@4.21.2 → /nix/store/...-express-4.21.2/
 ```
 
-Sets `NODE_PATH` to the pnpm-compatible `nodeModules`.
+The `packageDir` collects symlinks to all individually-built packages. To get a working `node_modules/`, use pnpm with the custom fetcher:
 
-### Node — nodeModules
-
-```nix
-project.nodeModules   # → /nix/store/...-myapp-node-modules
-                      # contains node_modules/.pnpm/ virtual store
+```bash
+pkg_dir=$(nix-build nix/myapp.nix -A packageDir --no-out-link)
+ONIX_PACKAGE_DIR="$pkg_dir" pnpm install --frozen-lockfile --ignore-scripts \
+  --config.global-pnpmfile=nix/pnpmfile.cjs
 ```
 
-The `nodeModules` output uses the pnpm `.pnpm/` virtual store layout with relative symlinks between dependencies, supporting multiple versions of the same package.
+pnpm reads packages from the Nix store (via the custom fetcher) instead of downloading tarballs, then materializes a standard `node_modules/` with its virtual store layout, dependency symlinks, and bin entries. Requires pnpm >= 9.0.
 
 ## Overlays
 
@@ -197,7 +197,8 @@ my-packages/
     ├── build-gem.nix
     ├── gem-config.nix
     ├── build-npm.nix
-    └── npm-config.nix
+    ├── npm-config.nix
+    └── pnpmfile.cjs   # pnpm custom fetcher (serves packages from Nix store)
 ```
 
 ## Design

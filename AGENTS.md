@@ -23,38 +23,39 @@ pnpm-lock.yaml
 onix import-pnpm      parse lockfile → packagesets/<name>.jsonl (installer:"node")
     ↓
 onix generate         prefetch hashes → nix/node/<name>.nix (per package)
-                                      → nix/<project>.nix (pnpm .pnpm/ layout + devShell)
+                                      → nix/<project>.nix (packageDir)
+                                      → nix/pnpmfile.cjs (custom fetcher)
     ↓
-nix-shell devshell.nix    shellHook syncs node_modules/ → sentinel-gated, near-instant
+nix-build -A packageDir   builds all packages → /nix/store/...-packages/ (symlinks)
+    ↓
+ONIX_PACKAGE_DIR=$pkg_dir pnpm install --frozen-lockfile --config.global-pnpmfile=nix/pnpmfile.cjs
+    → pnpmfile.cjs intercepts fetches, serves files from Nix store
+    → pnpm materializes node_modules/ with virtual store, symlinks, bin entries
 ```
 
 ### Key differences from Ruby
 
 - **Versioned deps.** Node JSONL entries store deps as `{"body-parser":"1.20.3"}` (hash with versions), not `["body-parser"]` (array of names). This preserves the full dependency graph for pnpm layout.
-- **pnpm .pnpm/ layout.** The generated `nix/<project>.nix` uses `pkgs.runCommand` to assemble a pnpm-compatible virtual store with `.pnpm/<name>@<version>/node_modules/` entries. Package contents are copied with `cp -r --reflink=auto` (CoW on APFS/btrfs, regular copy elsewhere). Dependency links between `.pnpm/` entries are relative symlinks.
+- **packageDir, not nodeModules.** The generated `nix/<project>.nix` produces a `packageDir` — a directory of symlinks (`express@4.21.2 → /nix/store/...`) rather than assembling a full `node_modules/` tree. pnpm handles the tree layout via a custom fetcher.
+- **pnpm custom fetcher.** `nix/pnpmfile.cjs` intercepts pnpm's package fetching and serves files directly from the Nix store. It indexes packages by integrity hash (primary) and name@version (fallback), supports scoped packages, and falls back to standard pnpm fetchers for packages not in the Nix store.
 - **Bin auto-detection.** `build-npm.nix` reads `package.json` at build time to discover and link bin entries — no need to specify them in the packageset.
 - **Platform filtering.** Platform-specific packages (e.g. `@esbuild/darwin-arm64`) have `os`/`cpu` constraints in the JSONL. Only host-platform packages are prefetched and built — wrong-platform packages get empty sha256 hashes. Use `--platforms` to include additional targets or `--all-platforms` to disable filtering.
 - **Overlay signature.** Node overlays use `{ pkgs, nodejs, buildPackage, ... }:` instead of `{ pkgs, ruby, buildGem, ... }:`.
 
-### devShell sync + sentinel
+### pnpm custom fetcher
 
-The generated `nix/<project>.nix` includes a `devShell` function whose `shellHook` syncs node_modules to the project directory on shell entry:
+The custom fetcher (`nix/pnpmfile.cjs`) bridges pnpm's headless install with the Nix store:
 
-1. **Sentinel check.** Reads `node_modules/.nix-sentinel` and compares with the `${nodeModules}` store path (unique per derivation). If they match → skip to exports (instant).
-2. **Stale cleanup.** If the sentinel exists but doesn't match (deps changed), `chmod -R u+w && rm -rf node_modules` before re-syncing.
-3. **Sync.** `cp -rP` copies the derivation's node_modules tree. This preserves the internal symlink structure.
-4. **Lockfile copy.** Copies `pnpm-lock.yaml` → `node_modules/.pnpm/lock.yaml` (pnpm's "current lockfile").
-5. **pnpm metadata (optional).** If `pnpm` is on PATH, generates `.modules.yaml` (with runtime `storeDir` from `pnpm store path`) and `.pnpm-workspace-state-v1.json` (with far-future `lastValidatedTimestamp`). This makes `pnpm install` exit immediately with "Already up to date".
-6. **Sentinel write.** Stores the derivation path so next entry is instant.
-7. **NODE_PATH.** Exports `NODE_PATH="$PWD/node_modules"`.
+1. **Module load.** Reads `ONIX_PACKAGE_DIR` env var (fails with actionable error if missing).
+2. **Index building.** Walks `packageDir` symlinks (including scoped `@scope/` directories), resolves each to its Nix store path, reads `.onix-manifest` for integrity hash. Builds two indexes:
+   - `byIntegrity`: `Map<sha512-..., {storePath, pkgName}>` (primary lookup)
+   - `byNameVersion`: `Map<name@version, {storePath, pkgName}>` (fallback)
+3. **canFetch(pkgId, resolution).** Returns `true` if the package exists in either index.
+4. **fetch(cafs, resolution, opts, fetchers).** Builds a `filesMap` (Map<relPath, absPath>) by walking the package's files in the Nix store, skipping `node_modules/` and `.bin/` subdirs. Returns `{filesMap, manifest, requiresBuild: false}`. Falls back to `fetchers.remoteTarball(...)` if not found.
 
-The `devShell` function accepts user `shellHook` which runs after the sync via `'' + shellHook` concatenation. Falls back gracefully without pnpm — sync works, metadata is just skipped.
+pnpm then handles all the heavy lifting: virtual store layout (`.pnpm/`), dependency symlinking, bin linking, and `.modules.yaml` metadata.
 
-### Why `cp -r --reflink=auto` (not `ln -s`)
-
-Node.js ESM module resolution resolves symlinks to their real path before walking up the directory tree to find dependencies. If the package directory is a symlink to the Nix store, Node walks up from `/nix/store/...` and can't find sibling deps in the `.pnpm/` layout. CJS (`require()`) works around this via `NODE_PATH` fallback, but ESM has no such fallback.
-
-`cp -r --reflink=auto` creates real directories at the correct `.pnpm/` path (so Node resolution works) with copy-on-write on APFS/btrfs (near-instant). On other filesystems it falls back to regular copy.
+**Why `requiresBuild: false`?** Nix already compiled native addons (e.g., better-sqlite3's `.node` binary). Skipping pnpm's build step avoids redundant compilation and the `ERR_PNPM_IGNORED_BUILDS` error.
 
 Everything under `nix/` is generated. Never hand-edit — run `onix generate` to regenerate.
 
@@ -277,7 +278,7 @@ Integration tests live in `examples/tests/`. Each project has a `run-tests` scri
 cd examples
 
 # Run one project's tests
-tests/node-basic/run-tests       # 17 tests: CJS, ESM, native, devShell, sentinel, pnpm metadata
+tests/node-basic/run-tests       # 16 tests: packageDir, packages, manifests, platform, pnpm custom fetcher
 tests/tsdown-starter/run-tests   # 5 tests: Rust NAPI, TS bundling, platform bindings
 tests/remix-v3/run-tests         # 6 tests: ESM, scoped packages, reactive primitives
 
@@ -309,19 +310,24 @@ The generated `nix/` files are committed — they must be regenerated and re-com
 
 | Test | What it verifies |
 |------|-----------------|
-| 1-5 | CJS require: pure JS, scoped, transitive deps, express boot, native extension |
-| 6 | Bin entries (tsc, esbuild, semver) |
-| 7 | pnpm layout structure (.pnpm dirs, dep links, top-level symlinks) |
-| 8 | Platform filtering (host-only hashes, esbuild binary executes) |
-| 9-11 | Lockfile version validation, --node-version flag, platform matching unit tests |
-| 12 | devShell sync: creates node_modules, sentinel, lockfile, NODE_PATH, require works |
-| 13 | Sentinel warm start: re-entry skips sync |
-| 14 | pnpm metadata: .modules.yaml, workspace state, `pnpm install` "Already up to date" |
-| 15 | Sentinel miss: stale sentinel triggers rm + re-sync, modules still work |
-| 16 | No-pnpm fallback: sync works, metadata correctly absent |
-| 17 | User shellHook passthrough: custom hook executes after sync |
+| 1 | packageDir builds: symlinks point to Nix store |
+| 2 | Individual package build (express): correct package.json |
+| 3 | Pure JS package (ms): runtime execution |
+| 4 | Native extension (better-sqlite3): compiled .node binary |
+| 5 | .onix-manifest: present in all packages |
+| 6 | .onix-manifest sha512 spot-check: hash and size match |
+| 7 | Bin entries in individual packages (tsc, esbuild, semver) |
+| 8 | Integrity field in generated .nix files |
+| 9 | Platform packages: host-only hashes, os/cpu metadata |
+| 10 | Lockfile version validation (v6 rejected) |
+| 11 | --node-version flag propagation |
+| 12 | Platform matching unit tests |
+| 13 | Generated nix structure: has packageDir, no removed attrs |
+| 14 | pnpm install with custom fetcher: virtual store + symlinks (requires pnpm >= 9.0) |
+| 15 | require works from pnpm-installed node_modules (express, ms) |
+| 16 | Bin entries linked (tsc, esbuild) |
 
-tsdown-starter and remix-v3 additionally verify ESM imports work through the `cp -r --reflink=auto` layout (ESM resolves symlinks, so `ln -s` would break — see "Why `cp -r --reflink=auto`" above).
+Tests 14-16 skip gracefully if pnpm is not installed.
 
 ## Lint suite
 
