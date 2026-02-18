@@ -3,13 +3,35 @@
 let
   safeProject = lib.replaceStrings [ "/" ":" "@" ] [ "_" "_" "_" ] (if project != null then project else "project");
   sourceRoot = if lockfile != null && builtins.pathExists lockfile then builtins.dirOf lockfile else projectRoot;
+  ignoredSourcePrefixes = [ ".git" "node_modules" "nix" "packagesets" ];
+  isIgnoredPath = rel:
+    rel == ".node_modules_id" ||
+    builtins.any (prefix: rel == prefix || lib.hasPrefix "${prefix}/" rel) ignoredSourcePrefixes;
+  sourceFilter = base: path: _type:
+    let
+      abs = toString path;
+      root = toString base;
+      rel =
+        if abs == root
+        then ""
+        else lib.removePrefix (root + "/") abs;
+    in
+    rel == "" || !(isIgnoredPath rel);
+  filteredSourceRoot = lib.cleanSourceWith {
+    src = sourceRoot;
+    filter = sourceFilter sourceRoot;
+  };
+  filteredProjectRoot = lib.cleanSourceWith {
+    src = projectRoot;
+    filter = sourceFilter projectRoot;
+  };
   isScriptless = scriptPolicy == "none";
   installFlags = if isScriptless then [ "--ignore-scripts" ] else [ ];
   workspaceFilters = map (w: "--filter=${w}") pnpmWorkspaces;
   pnpmDeps = pkgs.fetchPnpmDeps {
     pname = "onix-${safeProject}-pnpm-deps";
     version = "0";
-    src = sourceRoot;
+    src = filteredSourceRoot;
     pnpm = pkgs.pnpm;
     fetcherVersion = 3;
     hash = pnpmDepsHash;
@@ -28,7 +50,7 @@ pkgs.stdenv.mkDerivation {
   pname = "onix-${safeProject}-node-modules";
   version = "0";
 
-  src = projectRoot;
+  src = filteredProjectRoot;
 
   nativeBuildInputs = [
     pkgs.nodejs
@@ -103,9 +125,25 @@ pkgs.stdenv.mkDerivation {
     if [ -n "${lib.concatStringsSep " " (map lib.escapeShellArg workspacePaths)}" ]; then
       mkdir -p "$out"
       for rel in ${lib.concatStringsSep " " (map lib.escapeShellArg workspacePaths)}; do
-        if [ -e "$PWD/$rel" ]; then
-          mkdir -p "$out/$(dirname "$rel")"
-          cp -a "$PWD/$rel" "$out/$rel"
+        abs_path="$(cd "$PWD/$rel" 2>/dev/null && pwd)"
+        if [ -z "$abs_path" ]; then
+          echo "Skipping workspace path that does not exist: $rel" >&2
+          continue
+        fi
+        case "$abs_path" in
+          "$PWD" | "$PWD"/*) ;;
+          *)
+            echo "Skipping workspace path outside project root: $rel" >&2
+            continue
+            ;;
+        esac
+        rel_out="$out"
+        if [ "$abs_path" != "$PWD" ]; then
+          rel_out="$out/''${abs_path#$PWD/}"
+        fi
+        if [ -e "$abs_path" ]; then
+          mkdir -p "$(dirname "$rel_out")"
+          cp -a "$abs_path" "$rel_out"
         fi
       done
     fi

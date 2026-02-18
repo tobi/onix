@@ -70,23 +70,52 @@ module Onix
       Dir.mktmpdir do |dir|
         project = Onix::Commands::Build.new
         project.instance_variable_set(:@project, StubProject.new(dir))
+        id = File.join(dir, "store", "x")
 
-        source = File.join(dir, "store", "x", "node_modules")
+        source = File.join(id, "node_modules")
         FileUtils.mkdir_p(source)
         FileUtils.mkdir_p(File.join(source, "foo"))
         File.write(File.join(source, "foo", "marker.txt"), "v1")
 
-        project.send(:hydrate_node_modules, File.join(dir, "store", "x"))
+        project.send(:hydrate_node_modules, id)
         target = File.join(dir, "node_modules")
 
         assert_equal "v1", File.read(File.join(target, "foo", "marker.txt"))
-        assert_equal File.join(dir, "store", "x"), File.read(File.join(dir, ".node_modules_id")).strip
+        assert_equal id, File.read(File.join(dir, ".node_modules_id")).strip
+        assert_equal id, File.read(File.join(target, ".node_modules_id")).strip
 
-        project.send(:hydrate_node_modules, File.join(dir, "store", "x"), skip_if_unchanged: true)
         File.write(File.join(source, "foo", "marker.txt"), "v2")
+        project.send(:hydrate_node_modules, id, skip_if_unchanged: true)
 
-        assert_equal "v2", File.read(File.join(dir, "store", "x", "node_modules", "foo", "marker.txt"))
+        assert_equal "v2", File.read(File.join(id, "node_modules", "foo", "marker.txt"))
         assert_equal "v1", File.read(File.join(target, "foo", "marker.txt"))
+      end
+    end
+
+    def test_hydrate_node_modules_rehydrates_if_target_missing
+      Dir.mktmpdir do |dir|
+        project = Onix::Commands::Build.new
+        project.instance_variable_set(:@project, StubProject.new(dir))
+        id = File.join(dir, "store", "x")
+
+        source = File.join(id, "node_modules")
+        FileUtils.mkdir_p(source)
+        FileUtils.mkdir_p(File.join(source, "foo"))
+        File.write(File.join(source, "foo", "marker.txt"), "v1")
+
+        project.send(:hydrate_node_modules, id)
+        target = File.join(dir, "node_modules")
+
+        assert_equal "v1", File.read(File.join(target, "foo", "marker.txt"))
+        assert_equal id, File.read(File.join(dir, ".node_modules_id")).strip
+        assert_equal id, File.read(File.join(target, ".node_modules_id")).strip
+
+        File.write(File.join(source, "foo", "marker.txt"), "v2")
+        FileUtils.rm_rf(target)
+
+        project.send(:hydrate_node_modules, id, skip_if_unchanged: true)
+        assert_equal "v2", File.read(File.join(target, "foo", "marker.txt"))
+        assert_equal id, File.read(File.join(target, ".node_modules_id")).strip
       end
     end
 

@@ -238,8 +238,14 @@ module Onix
         end
 
         FileUtils.mkdir_p(File.dirname(id_file))
+        target_id_file = File.join(target, ".node_modules_id")
 
-        if skip_if_unchanged && File.exist?(id_file) && File.read(id_file).strip == id
+        if skip_if_unchanged &&
+          File.exist?(id_file) &&
+          File.read(id_file).strip == id &&
+          File.directory?(target) &&
+          File.exist?(target_id_file) &&
+          File.read(target_id_file).strip == id
           UI.info "node_modules unchanged"
           return
         end
@@ -262,6 +268,7 @@ module Onix
 
         FileUtils.chmod_R(0o755, target)
         File.write(id_file, id)
+        File.write(target_id_file, id)
         UI.done "hydrated node_modules from #{store_path}"
       end
 

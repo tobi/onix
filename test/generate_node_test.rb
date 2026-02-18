@@ -455,6 +455,18 @@ class GenerateNodeTest < Minitest::Test
     end
   end
 
+  def test_build_node_modules_copy_is_constrained_to_project_root
+    build_node_modules_nix = File.read(File.join(__dir__, "..", "lib", "onix", "data", "build-node-modules.nix"))
+
+    assert_includes build_node_modules_nix, "cleanSourceWith"
+    assert_includes build_node_modules_nix, "ignoredSourcePrefixes"
+    assert_includes build_node_modules_nix, "node_modules"
+    assert_includes build_node_modules_nix, ".node_modules_id"
+    assert_includes build_node_modules_nix, 'abs_path="$(cd "$PWD/$rel" 2>/dev/null && pwd)"'
+    assert_includes build_node_modules_nix, "case \"$abs_path\" in"
+    assert_includes build_node_modules_nix, "Skipping workspace path outside project root: $rel"
+  end
+
   def test_sort_versions_uses_stable_fallback_for_non_semver_versions
     versions = [
       Onix::Packageset::Entry.new(installer: "node", name: "foo", version: "abc", source: "pnpm"),
