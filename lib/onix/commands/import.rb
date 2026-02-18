@@ -68,7 +68,7 @@ module Onix
           else
             pnpm_lockfile = find_directory_pnpm_lockfile(path)
             ruby_lockfile = File.join(path, "Gemfile.lock")
-            if File.exist?(pnpm_lockfile)
+            if pnpm_lockfile && File.exist?(pnpm_lockfile)
               installer = "pnpm"
               lockfile = pnpm_lockfile
             elsif File.exist?(ruby_lockfile)

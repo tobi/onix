@@ -68,7 +68,7 @@ class PnpmImporterTest < Minitest::Test
 
       assert_equal "pnpm", installer
       assert_equal lockfile, resolved
-      assert_equal dir, project_name
+      assert_equal File.basename(dir), project_name
     end
   end
 
