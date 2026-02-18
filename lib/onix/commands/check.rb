@@ -13,6 +13,7 @@ module Onix
       CHECKS = %i[
         nix_eval
         packageset_complete
+        packageset_metadata
         secrets
       ].freeze
 
@@ -133,6 +134,33 @@ module Onix
           [false, "#{missing.uniq.size} packages missing from generated files — run `onix generate`\n  #{sample}"]
         else
           [true, "#{total} packages all have generated files"]
+        end
+      end
+
+      # ── packageset-metadata ──────────────────────────────────────
+      # Soft warning check for portable lockfile metadata.
+
+      def check_packageset_metadata
+        packagesets = Dir.glob(File.join(@project.packagesets_dir, "*.jsonl"))
+        return [true, "no packagesets"] if packagesets.empty?
+
+        missing = []
+
+        packagesets.each do |f|
+          project = File.basename(f, ".jsonl")
+          meta, _entries = Packageset.read(f)
+          next if meta.nil?
+          next if meta.lockfile_relpath && !meta.lockfile_relpath.empty?
+          next unless meta.lockfile_path && !meta.lockfile_path.empty?
+
+          missing << project
+        end
+
+        if missing.empty?
+          [true, "metadata portable"]
+        else
+          sample = missing.sort.first(10).join(", ")
+          [true, "warning: #{missing.size} packagesets missing lockfile_relpath — run `onix backfill`\n  #{sample}"]
         end
       end
 

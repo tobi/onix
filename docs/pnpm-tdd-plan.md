@@ -58,6 +58,10 @@
   - import persists repo-relative lockfile path when lockfile is inside project root
   - generate prefers `lockfile_relpath` first, then absolute path, then heuristics
   - docs updated and regression coverage added
+- [x] Legacy metadata backfill + portability warning (2026-02-18):
+  - added `onix backfill` to populate `lockfile_path`/`lockfile_relpath` for existing packagesets
+  - `onix check` now includes `packageset-metadata` warning when `lockfile_relpath` is missing
+  - regression coverage added in `test/backfill_test.rb` and `test/check_node_test.rb`
 
 ## Engineering Principles
 

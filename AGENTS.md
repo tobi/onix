@@ -9,6 +9,7 @@ onix import .
 onix generate [--scripts none|allowed]
 onix build
 onix check
+onix backfill
 
 # Node-focused path
 onix import --installer pnpm .

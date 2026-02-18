@@ -87,6 +87,7 @@ Pipes through [nix-output-monitor](https://github.com/maralorn/nix-output-monito
 
 ```bash
 onix check
+onix backfill
 ```
 
 Runs `nix-eval`, `packageset-complete`, and `secrets` checks in parallel.

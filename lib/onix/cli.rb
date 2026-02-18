@@ -8,6 +8,7 @@ module Onix
       "generate" => "Prefetch hashes and generate nix derivations",
       "build"    => "Build all gems via Nix",
       "check"    => "Run checks on built gems",
+      "backfill" => "Backfill packageset metadata fields",
     }.freeze
 
     def self.run(argv)

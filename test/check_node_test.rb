@@ -154,5 +154,67 @@ module Onix
         assert_includes sources, File.join(dir, "packagesets")
       end
     end
+
+    def test_check_packageset_metadata_warns_when_lockfile_relpath_missing
+      Dir.mktmpdir do |dir|
+        FileUtils.mkdir_p(File.join(dir, "packagesets"))
+
+        Onix::Packageset.write(
+          File.join(dir, "packagesets", "workspace.jsonl"),
+          meta: Onix::Packageset::Meta.new(
+            ruby: nil,
+            bundler: nil,
+            platforms: [],
+            lockfile_path: File.join(dir, "pnpm-lock.yaml"),
+          ),
+          entries: [
+            Onix::Packageset::Entry.new(
+              installer: "node",
+              name: "vite",
+              version: "5.0.0",
+              source: "pnpm",
+            ),
+          ],
+        )
+
+        @command.instance_variable_set(:@project, StubProject.new(dir))
+        ok, message = @command.send(:check_packageset_metadata)
+
+        assert ok
+        assert_match(/missing lockfile_relpath/, message)
+        assert_match(/onix backfill/, message)
+      end
+    end
+
+    def test_check_packageset_metadata_passes_with_lockfile_relpath
+      Dir.mktmpdir do |dir|
+        FileUtils.mkdir_p(File.join(dir, "packagesets"))
+
+        Onix::Packageset.write(
+          File.join(dir, "packagesets", "workspace.jsonl"),
+          meta: Onix::Packageset::Meta.new(
+            ruby: nil,
+            bundler: nil,
+            platforms: [],
+            lockfile_path: File.join(dir, "pnpm-lock.yaml"),
+            lockfile_relpath: "pnpm-lock.yaml",
+          ),
+          entries: [
+            Onix::Packageset::Entry.new(
+              installer: "node",
+              name: "vite",
+              version: "5.0.0",
+              source: "pnpm",
+            ),
+          ],
+        )
+
+        @command.instance_variable_set(:@project, StubProject.new(dir))
+        ok, message = @command.send(:check_packageset_metadata)
+
+        assert ok
+        assert_equal "metadata portable", message
+      end
+    end
   end
 end
