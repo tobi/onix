@@ -397,7 +397,7 @@ Scope:
 - Keep private-registry behavior ephemeral and non-persistent.
 
 Tasks:
-- [ ] Tighten script policy surface:
+- [x] Tighten script policy surface:
   - [x] deprecate/remove `--scripts=all`
   - [x] keep `none|allowed` only
   - [x] preserve default `allowed`, fallback `none`
