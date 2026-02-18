@@ -126,7 +126,7 @@ module Onix
         return resolved.first if resolved.length == 1
 
         if resolved.length > 1
-          abort "Multiple pnpm lockfiles found in #{path}; use --installer with explicit file path.\n  #{resolved.map { |file| File.basename(file) }.sort.join(", ")}"
+          abort "Multiple pnpm lockfiles found in #{path}; pass the lockfile path explicitly.\n  #{resolved.map { |file| File.basename(file) }.sort.join(", ")}"
         end
 
         nil
