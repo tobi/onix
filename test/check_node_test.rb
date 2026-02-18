@@ -17,13 +17,15 @@ module Onix
 
   class CheckNodeTest < Minitest::Test
     class StubProject
-      attr_reader :root, :packagesets_dir, :ruby_dir, :node_dir
+      attr_reader :root, :packagesets_dir, :ruby_dir, :node_dir, :nix_dir, :overlays_dir
 
       def initialize(root)
         @root = root
         @packagesets_dir = File.join(root, "packagesets")
         @ruby_dir = File.join(root, "nix", "ruby")
         @node_dir = File.join(root, "nix", "node")
+        @nix_dir = File.join(root, "nix")
+        @overlays_dir = File.join(root, "overlays")
       end
     end
 
@@ -87,6 +89,32 @@ module Onix
         refute ok
         assert_match(/1 packages missing from generated files/, message)
         assert_match(/workspace/, message)
+      end
+    end
+
+    def test_check_nix_eval_includes_nested_node_overlays
+      Dir.mktmpdir do |dir|
+        FileUtils.mkdir_p(File.join(dir, "nix"))
+        FileUtils.mkdir_p(File.join(dir, "overlays", "node"))
+        File.write(File.join(dir, "nix", "foo.nix"), "{}\n")
+        File.write(File.join(dir, "overlays", "node", "vite.nix"), "{}\n")
+
+        @command.instance_variable_set(:@project, StubProject.new(dir))
+        status = Struct.new(:success?) { def success?; true; end }.new
+        parsed = []
+
+        Open3.stub(:capture3, ->(*args) do
+          parsed << args.last
+          ["", "", status]
+        end) do
+          ok, message = @command.send(:check_nix_eval)
+
+          assert ok
+          assert_match(/2 nix files parse OK/, message)
+        end
+
+        assert parsed.any? { |f| f.end_with?("overlays/node/vite.nix") }
+        assert parsed.any? { |f| f.end_with?("nix/foo.nix") }
       end
     end
   end

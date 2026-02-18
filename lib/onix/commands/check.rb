@@ -81,7 +81,7 @@ module Onix
         return [true, "no nix/ dir"] unless Dir.exist?(nix_dir)
 
         files = Dir.glob(File.join(nix_dir, "**", "*.nix")) +
-                Dir.glob(File.join(@project.overlays_dir, "*.nix"))
+                Dir.glob(File.join(@project.overlays_dir, "**", "*.nix"))
         files.uniq!
 
         errors = 0
