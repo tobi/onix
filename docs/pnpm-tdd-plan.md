@@ -53,6 +53,11 @@
 - [x] Deterministic packageset serialization ordering (2026-02-18):
   - `Packageset.write` now sorts by installer/name/version/source/path for stable duplicate-name output
   - regression coverage added in `test/packageset_test.rb`
+- [x] Cross-host lockfile portability (`lockfile_relpath`) (2026-02-18):
+  - `_meta.lockfile_relpath` added alongside `_meta.lockfile_path`
+  - import persists repo-relative lockfile path when lockfile is inside project root
+  - generate prefers `lockfile_relpath` first, then absolute path, then heuristics
+  - docs updated and regression coverage added
 
 ## Engineering Principles
 

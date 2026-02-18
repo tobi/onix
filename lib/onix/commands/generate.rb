@@ -429,8 +429,10 @@ module Onix
       def find_pnpm_lockfile(project_name, meta = nil)
         return nil unless @project
 
+        meta_lockfile_relpath = meta&.lockfile_relpath
         meta_lockfile = meta&.lockfile_path
         candidates = [
+          meta_lockfile_relpath && lockfile_candidate(meta_lockfile_relpath),
           meta_lockfile && lockfile_candidate(meta_lockfile),
           File.join(@project.root, "pnpm-lock.yaml"),
           File.join(@project.root, "#{project_name}/pnpm-lock.yaml"),

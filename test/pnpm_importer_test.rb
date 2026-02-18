@@ -85,6 +85,7 @@ class PnpmImporterTest < Minitest::Test
       assert_equal 4, entries.length
       assert entries.all? { |entry| entry.source == "pnpm" }, entries.map(&:source).uniq.inspect
       assert_equal File.join(dir, "pnpm-lock.yaml"), meta.lockfile_path
+      assert_equal "pnpm-lock.yaml", meta.lockfile_relpath
     end
   end
 

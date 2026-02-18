@@ -15,11 +15,11 @@ class PackagesetTest < Minitest::Test
 
       Onix::Packageset.write(
         path,
-        meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: []),
+        meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: [], lockfile_relpath: "pnpm-lock.yaml"),
         entries: entries,
       )
 
-      _meta, parsed_entries = Onix::Packageset.read(path)
+      parsed_meta, parsed_entries = Onix::Packageset.read(path)
       assert_equal(
         [
           "node/dup/1.0.0/pnpm",
@@ -28,6 +28,7 @@ class PackagesetTest < Minitest::Test
         ],
         parsed_entries.map { |entry| "#{entry.installer}/#{entry.name}/#{entry.version}/#{entry.source}" },
       )
+      assert_equal "pnpm-lock.yaml", parsed_meta.lockfile_relpath
     end
   end
 end
