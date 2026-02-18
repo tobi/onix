@@ -245,7 +245,7 @@ module Onix
         end
 
         if rsync_available?
-          success = system("rsync", "-a", "--delete", "#{source}/", "#{target}/")
+          success = system("rsync", "-a", "--chmod=Du+rwx,Fu+rwX", "--delete", "#{source}/", "#{target}/")
           unless success
             UI.fail "rsync failed while hydrating #{target}"
             exit 1 unless @keep_going
