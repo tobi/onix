@@ -117,5 +117,42 @@ module Onix
         assert parsed.any? { |f| f.end_with?("nix/foo.nix") }
       end
     end
+
+    def test_check_secrets_scans_log_directories
+      Dir.mktmpdir do |dir|
+        FileUtils.mkdir_p(File.join(dir, "log"))
+        FileUtils.mkdir_p(File.join(dir, "packagesets"))
+        bin_dir = File.join(dir, "bin")
+        FileUtils.mkdir_p(bin_dir)
+        gitleaks_bin = File.join(bin_dir, "gitleaks")
+        File.write(gitleaks_bin, "#!/usr/bin/env sh\nexit 0\n")
+        FileUtils.chmod(0o755, gitleaks_bin)
+        old_path = ENV["PATH"]
+        ENV["PATH"] = "#{bin_dir}:#{old_path}"
+
+        @command.instance_variable_set(:@project, StubProject.new(dir))
+        status = Struct.new(:success?) { def success?; true; end }.new
+        args = []
+
+        Open3.stub(:capture2e, lambda do |*capture_args|
+          args << capture_args
+          report_index = capture_args.index("--report-path")
+          report_path = report_index && capture_args[report_index + 1]
+          File.write(report_path, "[]") if report_path
+          ["", "", status]
+        end) do
+          ok, message = @command.send(:check_secrets)
+
+          assert ok
+          assert_equal "clean", message
+        end
+
+        ENV["PATH"] = old_path
+
+        sources = args.map { |call| call[call.index("--source") + 1] if call.include?("--source") }.compact
+        assert_includes sources, File.join(dir, "log")
+        assert_includes sources, File.join(dir, "packagesets")
+      end
+    end
   end
 end

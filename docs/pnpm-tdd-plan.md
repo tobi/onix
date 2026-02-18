@@ -415,9 +415,9 @@ Tasks:
   - node completeness and render-validity checks
   - node secret-surface checks over `packagesets/**`, `nix/**`, and logs
 - [ ] Add integration tests:
-  - script policy behavior (`none` vs `allowed`) without `all`
-  - overlay application path for one fixture package
-  - no-op second hydration assertion with stable sentinel
+  - [x] script policy behavior (`none` vs `allowed`) without `all` (`test/generate_node_test.rb`)
+  - [x] overlay application path for one fixture package (`test/generate_node_test.rb`)
+  - [x] no-op second hydration assertion with stable sentinel (`test/build_node_test.rb`)
 
 Acceptance:
 - Node builds for known script-heavy/native packages are handled by generated Nix + overlay contract, not broad lifecycle-script enablement.

@@ -144,10 +144,10 @@ module Onix
           return [true, "skipped — install gitleaks"]
         end
 
-        scan_dirs = %w[overlays nix packagesets].filter_map do |d|
+        scan_dirs = %w[overlays nix packagesets log logs].map do |d|
           dir = File.join(@project.root, d)
           Dir.exist?(dir) ? dir : nil
-        end
+        end.compact
         return [true, "no directories to scan"] if scan_dirs.empty?
 
         report = File.join(Dir.tmpdir, "gitleaks-#{$$}.json")
