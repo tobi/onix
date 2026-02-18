@@ -571,6 +571,97 @@ class GenerateNodeTest < Minitest::Test
     end
   end
 
+  def test_generate_infers_node_build_config_for_known_packages
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+
+      entries = [
+        Onix::Packageset::Entry.new(
+          installer: "node",
+          name: "node-sass",
+          version: "10.0.0",
+          source: "pnpm",
+          deps: ["chalk"],
+        ),
+      ]
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "workspace.jsonl"),
+        meta: Onix::Packageset::Meta.new(
+          ruby: nil,
+          bundler: nil,
+          platforms: [],
+        ),
+        entries: entries,
+      )
+
+      Dir.chdir(dir) do
+        @command.run([])
+      end
+
+      project_nix = File.read(File.join(dir, "nix", "workspace.nix"))
+      assert_includes project_nix, "buildConfig = {"
+      assert_includes project_nix, "deps = [ pkgs.python3 ];"
+    end
+  end
+
+  def test_generated_node_build_config_merges_with_node_overlay
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+      overlays_dir = File.join(dir, "overlays", "node")
+      FileUtils.mkdir_p(overlays_dir)
+
+      entries = [
+        Onix::Packageset::Entry.new(
+          installer: "node",
+          name: "grpc",
+          version: "1.24.0",
+          source: "pnpm",
+          deps: ["chalk"],
+        ),
+      ]
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "workspace.jsonl"),
+        meta: Onix::Packageset::Meta.new(
+          ruby: nil,
+          bundler: nil,
+          platforms: [],
+        ),
+        entries: entries,
+      )
+
+      File.write(
+        File.join(overlays_dir, "grpc.nix"),
+        <<~NIX
+          { pkgs }:
+          {
+            deps = [ pkgs.gzip ];
+            preInstall = "echo ONIX_NODE_OVERLAY_GRPC=1";
+          }
+        NIX
+      )
+
+      Dir.chdir(dir) do
+        @command.run([])
+      end
+
+      project_nix = File.read(File.join(dir, "nix", "workspace.nix"))
+      assert_includes project_nix, "buildConfig = {"
+      assert_includes project_nix, "pkgs.python3"
+      assert_includes project_nix, %(pkgs."pkg-config")
+      assert_includes project_nix, "ONIX_NODE_INFERRED_GRPC_BUILD=1"
+
+      build_node_modules = File.read(File.join(dir, "nix", "build-node-modules.nix"))
+      assert_includes build_node_modules, "nodeConfigFromBuild = base: overrides:"
+      assert_includes build_node_modules, "inferredNodeConfigs"
+      assert_includes build_node_modules, "nodeConfigPairs"
+      assert_includes build_node_modules, "override = nodeConfig.${name} or {}"
+      assert_includes build_node_modules, "if inferred == {} then override else"
+    end
+  end
+
+
   def test_build_node_modules_copy_is_constrained_to_project_root
     build_node_modules_nix = File.read(File.join(__dir__, "..", "lib", "onix", "data", "build-node-modules.nix"))
 

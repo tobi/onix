@@ -10,6 +10,7 @@ require "pathname"
 require "scint/credentials"
 require_relative "../packageset"
 require_relative "../pnpm/credentials"
+require_relative "../pnpm/node_inference"
 
 module Onix
   module Commands
@@ -552,6 +553,7 @@ module Onix
           nix << "      deps = [ #{(e.deps || []).map { |dep| nix_str(dep) }.join(" ")} ];\n"
           nix << "      groups = [ #{(e.groups || ['default']).map { |group| nix_str(group) }.join(" ")} ];\n"
           nix << "      path = #{nix_str e.path};\n" if e.path
+          render_node_build_config(nix, node_inferred_config(e))
           nix << "    };\n"
         end
         nix << "  };\n"
@@ -618,6 +620,46 @@ module Onix
           FileUtils.cp(File.join(data_dir, f), File.join(dir, f))
         end
         UI.wrote "nix/build-gem.nix, nix/build-node-modules.nix, nix/gem-config.nix, nix/node-config.nix"
+      end
+
+      def render_node_build_config(nix, config)
+        return if config.nil? || config.empty?
+
+        nix << "      buildConfig = {\n"
+        if (deps = config[:deps])
+          nix << "        deps = [ #{deps.map { |name| nix_pkg_ref(name) }.join(" ")} ];\n"
+        end
+
+        if (pre_install = config[:pre_install])
+          nix << "        preInstall = ''\n"
+          nix << "          #{pre_install}\n"
+          nix << "        '';\n"
+        end
+
+        if (pre_pnpm_install = config[:pre_pnpm_install])
+          nix << "        prePnpmInstall = ''\n"
+          nix << "          #{pre_pnpm_install}\n"
+          nix << "        '';\n"
+        end
+
+        if (flags = config[:pnpm_install_flags])
+          nix << "        pnpmInstallFlags = [ #{flags.map { |f| nix_str(f) }.join(" ")} ];\n"
+        end
+
+        nix << "      };\n"
+      end
+
+      def nix_pkg_ref(name)
+        safe = name.to_s
+        return "pkgs.#{safe}" if safe.match?(/\A[a-zA-Z_][a-zA-Z0-9_]*\z/)
+        %{pkgs."#{safe}"}
+      end
+
+      def node_inferred_config(entry)
+        config = Pnpm::NodeInference.config_for(entry)
+        return nil if config.nil? || config.empty?
+
+        config
       end
 
       def nix_key(name)

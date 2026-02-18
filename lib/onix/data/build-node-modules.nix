@@ -19,11 +19,58 @@ let
     rel == "" || !(isIgnoredPath rel);
   nodePackagesValues = builtins.attrValues nodePackages;
   nodePackageNames = lib.unique (builtins.map (pkg: pkg.name) nodePackagesValues);
-  nodeConfigs = builtins.map (name: nodeConfig.${name} or {}) nodePackageNames;
-  nodeOverlayDeps = lib.unique (lib.concatMap (cfg: cfg.deps or [ ]) nodeConfigs);
-  nodePreInstall = lib.concatStringsSep "\n" (lib.concatMap (cfg: lib.optionals (cfg ? preInstall) [ cfg.preInstall ]) nodeConfigs);
-  nodePrePnpmInstall = lib.concatStringsSep "\n" (lib.concatMap (cfg: lib.optionals (cfg ? prePnpmInstall) [ cfg.prePnpmInstall ]) nodeConfigs);
-  nodePnpmInstallFlags = lib.unique (lib.concatMap (cfg: cfg.pnpmInstallFlags or [ ]) nodeConfigs);
+  nodeConfigFromBuild = base: overrides:
+    let
+      merge_lists = name:
+        lib.unique ((base.${name} or [ ]) ++ (overrides.${name} or [ ]));
+      merge_scripts = name:
+        let
+          base_script = base.${name} or "";
+          override_script = overrides.${name} or "";
+          scripts = [ base_script override_script ];
+        in
+        lib.concatStringsSep "\n" (lib.filter (s: s != "") scripts);
+    in
+    {
+      deps = merge_lists "deps";
+      preInstall = merge_scripts "preInstall";
+      prePnpmInstall = merge_scripts "prePnpmInstall";
+      pnpmInstallFlags = merge_lists "pnpmInstallFlags";
+    };
+  inferredNodeConfigs = builtins.foldl'
+    (acc: pkg:
+      if !(pkg ? buildConfig) then acc else
+      let
+        existing = if acc ? "${pkg.name}" then acc.${pkg.name} else {};
+        merged = nodeConfigFromBuild existing pkg.buildConfig;
+      in
+      acc // {
+        "${pkg.name}" = merged;
+      }
+    )
+    {}
+    nodePackagesValues;
+  nodeConfigPairs = map
+    (name:
+      let
+        inferred = inferredNodeConfigs.${name} or {};
+        override = nodeConfig.${name} or {};
+        merged = if inferred == {} then override else nodeConfigFromBuild inferred override;
+      in
+      { inherit name; value = merged; }
+    )
+    nodePackageNames;
+  nodeConfigs = builtins.listToAttrs nodeConfigPairs;
+  nodeOverlayDeps = lib.unique (lib.concatMap (cfg: cfg.deps or [ ]) (builtins.attrValues nodeConfigs));
+  nodePreInstall = lib.concatStringsSep "\n" (lib.concatMap
+    (cfg: lib.optionals (cfg ? preInstall) [ cfg.preInstall ])
+    (builtins.attrValues nodeConfigs));
+  nodePrePnpmInstall = lib.concatStringsSep "\n" (lib.concatMap
+    (cfg: lib.optionals (cfg ? prePnpmInstall) [ cfg.prePnpmInstall ])
+    (builtins.attrValues nodeConfigs));
+  nodePnpmInstallFlags = lib.unique (lib.concatMap
+    (cfg: cfg.pnpmInstallFlags or [ ])
+    (builtins.attrValues nodeConfigs));
   filteredSourceRoot = lib.cleanSourceWith {
     src = sourceRoot;
     filter = sourceFilter sourceRoot;
