@@ -414,7 +414,7 @@ Tasks:
 - [x] Add node hardening checks in `onix check`:
   - node completeness and render-validity checks
   - node secret-surface checks over `packagesets/**`, `nix/**`, and logs
-- [ ] Add integration tests:
+- [x] Add integration tests:
 - [x] script policy behavior (`none` vs `allowed`) without `all` (`test/generate_node_test.rb`)
 - [x] legacy metadata `script_policy: "all"` is rejected with actionable error (`SystemExit`) (`test/generate_node_test.rb`)
 - [x] overlay application path for one fixture package (`test/generate_node_test.rb`)
@@ -427,10 +427,10 @@ Acceptance:
 - Private-registry credentials remain absent from persisted artifacts.
 
 Phase 6 Exit Checklist:
-- [ ] Separation of concerns verified.
-- [ ] KISS constraints respected.
-- [ ] DRY opportunities justified or intentionally deferred.
-- [ ] Systems flow and secret-surface checks passed.
+- [x] Separation of concerns verified.
+- [x] KISS constraints respected.
+- [x] DRY opportunities justified or intentionally deferred.
+- [x] Systems flow and secret-surface checks passed.
 
 ## Definition of Done
 
