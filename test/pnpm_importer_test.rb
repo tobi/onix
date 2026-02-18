@@ -45,6 +45,33 @@ class PnpmImporterTest < Minitest::Test
     end
   end
 
+  def test_detects_nonstandard_pnpm_lockfile_automatically
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "custom.pnpm-lock.yaml"), "lockfileVersion: '9.0'\n")
+      File.write(File.join(dir, "package.json"), "{}\n")
+
+      lockfile, project_name, installer = @command.send(:resolve_lockfile, dir, nil, nil)
+
+      assert_equal "pnpm", installer
+      assert_equal File.join(dir, "custom.pnpm-lock.yaml"), lockfile
+      assert_equal File.basename(dir), project_name
+    end
+  end
+
+  def test_resolve_lockfile_accepts_custom_pnpm_lockfile_path
+    Dir.mktmpdir do |dir|
+      lockfile = File.join(dir, "custom.pnpm-lock.yaml")
+      File.write(lockfile, "lockfileVersion: '9.0'\n")
+      File.write(File.join(dir, "package.json"), "{}\n")
+
+      resolved, project_name, installer = @command.send(:resolve_lockfile, lockfile, nil, nil)
+
+      assert_equal "pnpm", installer
+      assert_equal lockfile, resolved
+      assert_equal dir, project_name
+    end
+  end
+
   def test_rejects_pnpm_workspace_with_multiple_importers_without_root
     Dir.mktmpdir do |dir|
       File.write(File.join(dir, "pnpm-lock.yaml"), File.read(fixture_path("pnpm", "workspace", "pnpm-lock.yaml")))
@@ -64,6 +91,18 @@ class PnpmImporterTest < Minitest::Test
 
       assert_raises(SystemExit) do
         @command.send(:resolve_lockfile, dir, nil, "ruby")
+      end
+    end
+  end
+
+  def test_rejects_multiple_directory_pnpm_lockfiles
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "alpha.pnpm-lock.yaml"), "lockfileVersion: '9.0'\n")
+      File.write(File.join(dir, "beta.pnpm-lock.yaml"), "lockfileVersion: '9.0'\n")
+      File.write(File.join(dir, "package.json"), "{}\n")
+
+      assert_raises(SystemExit) do
+        @command.send(:resolve_lockfile, dir, nil, nil)
       end
     end
   end

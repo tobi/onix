@@ -60,13 +60,13 @@ module Onix
         if File.directory?(path)
           case installer
           when "pnpm"
-            lockfile = File.join(path, "pnpm-lock.yaml")
-            abort "No pnpm-lock.yaml in #{path}" unless File.exist?(lockfile)
+            lockfile = find_directory_pnpm_lockfile(path)
+            abort "No pnpm lockfile found in #{path}" unless lockfile
           when "ruby"
             lockfile = File.join(path, "Gemfile.lock")
             abort "No Gemfile.lock in #{path}" unless File.exist?(lockfile)
           else
-            pnpm_lockfile = File.join(path, "pnpm-lock.yaml")
+            pnpm_lockfile = find_directory_pnpm_lockfile(path)
             ruby_lockfile = File.join(path, "Gemfile.lock")
             if File.exist?(pnpm_lockfile)
               installer = "pnpm"
@@ -75,11 +75,12 @@ module Onix
               installer = "ruby"
               lockfile = ruby_lockfile
             else
-              abort "No Gemfile.lock or pnpm-lock.yaml in #{path}"
+              abort "No Gemfile.lock or pnpm lockfile in #{path}"
             end
           end
         else
-          case File.basename(path)
+          filename = File.basename(path)
+          case filename
           when "Gemfile"
             lockfile = "#{path}.lock"
             abort "No Gemfile.lock found next to #{path}" unless File.exist?(lockfile)
@@ -87,15 +88,15 @@ module Onix
           when "Gemfile.lock"
             lockfile = path
             installer = "ruby" unless installer
-          when "pnpm-lock.yaml", "pnpm-lock.yml"
-            lockfile = path
-            installer = "pnpm" unless installer
           else
-            if File.exist?(path)
+            if filename.match?(%r{\A.+\.pnpm-lock\.ya?ml\z})
+              lockfile = path
+              installer = "pnpm" unless installer
+            elsif File.exist?(path)
               abort "Unknown lockfile type: #{arg}"
+            else
+              abort "Not found: #{arg}"
             end
-
-            abort "Not found: #{arg}"
           end
 
           if installer_override
@@ -111,6 +112,24 @@ module Onix
 
         project = name_override || File.basename(File.dirname(lockfile))
         [lockfile, project, installer]
+      end
+
+      def find_directory_pnpm_lockfile(path)
+        candidates = [
+          File.join(path, "pnpm-lock.yaml"),
+          File.join(path, "pnpm-lock.yml"),
+        ] +
+          Dir.glob(File.join(path, "*.pnpm-lock.yaml")) +
+          Dir.glob(File.join(path, "*.pnpm-lock.yml"))
+        resolved = candidates.uniq.select { |candidate| File.file?(candidate) }
+
+        return resolved.first if resolved.length == 1
+
+        if resolved.length > 1
+          abort "Multiple pnpm lockfiles found in #{path}; use --installer with explicit file path.\n  #{resolved.map { |file| File.basename(file) }.sort.join(", ")}"
+        end
+
+        nil
       end
 
       def import_pnpm(lockfile, project_name)
