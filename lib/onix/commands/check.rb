@@ -4,6 +4,7 @@ require "etc"
 require "json"
 require "open3"
 require "tmpdir"
+require "set"
 require_relative "../packageset"
 
 module Onix
@@ -109,24 +110,26 @@ module Onix
         packagesets = Dir.glob(File.join(@project.packagesets_dir, "*.jsonl"))
         return [true, "no packagesets"] if packagesets.empty?
 
-        missing = []
+        missing = Set.new
         total = 0
 
         packagesets.each do |f|
+          project = File.basename(f, ".jsonl")
           _meta, entries = Packageset.read(f)
           entries.each do |e|
             next if e.source == "stdlib" || e.source == "path"
             total += 1
             base_dir = e.installer == "node" ? @project.node_dir : @project.ruby_dir
-            nix_file = File.join(base_dir, "#{e.name}.nix")
+            filename = e.installer == "node" ? project : e.name
+            nix_file = File.join(base_dir, "#{filename}.nix")
             unless File.exist?(nix_file)
-              missing << e.name
+              missing << filename
             end
           end
         end
 
         if missing.any?
-          sample = missing.uniq.first(10).join(", ")
+          sample = missing.to_a.sort.first(10).join(", ")
           [false, "#{missing.uniq.size} packages missing from generated files — run `onix generate`\n  #{sample}"]
         else
           [true, "#{total} packages all have generated files"]

@@ -411,7 +411,7 @@ Tasks:
   - infer known build deps/flags from lock/package metadata where deterministic
   - emit inferred requirements directly in generated Nix when possible
   - reserve overlays for non-inferable cases
-- [ ] Add node hardening checks in `onix check`:
+- [x] Add node hardening checks in `onix check`:
   - node completeness and render-validity checks
   - node secret-surface checks over `packagesets/**`, `nix/**`, and logs
 - [ ] Add integration tests:
