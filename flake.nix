@@ -21,6 +21,7 @@
         [
           ruby
           pkgs.bundler
+          pkgs.rake
           pkgs.git
           pkgs.nix-prefetch-git
           pkgs.nodejs
@@ -75,6 +76,8 @@
             shellHook = ''
               # Keep dependencies local during development.
               export BUNDLE_PATH="$PWD/.bundle"
+              export GEM_HOME="$BUNDLE_PATH"
+              export GEM_PATH="$(ruby -e 'print Gem.path.reject { |p| p.start_with?(ENV["HOME"]) }.join(":")')"
             '';
           };
         }
