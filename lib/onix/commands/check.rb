@@ -36,6 +36,7 @@ module Onix
         end
 
         UI.header "Check"
+        start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
         passed = 0
         failed = 0
@@ -68,8 +69,12 @@ module Onix
         end
 
         threads.each(&:join)
-        total_time = UI.format_time(Process.clock_gettime(Process::CLOCK_MONOTONIC) - threads.first.instance_variable_get(:@t0) || 0) rescue ""
-        UI.summary("#{passed} passed", failed > 0 ? UI.red("#{failed} failed") : "0 failed")
+        total_time = UI.format_time(Process.clock_gettime(Process::CLOCK_MONOTONIC) - start)
+        UI.summary(
+          "#{passed} passed",
+          failed > 0 ? UI.red("#{failed} failed") : "0 failed",
+          "time #{UI.dim(total_time)}"
+        )
         exit 1 if failed > 0
       end
 
@@ -121,7 +126,7 @@ module Onix
             next if e.source == "stdlib" || e.source == "path"
             total += 1
             base_dir = e.installer == "node" ? @project.node_dir : @project.ruby_dir
-            filename = e.installer == "node" ? project : e.name
+            filename = e.name
             nix_file = File.join(base_dir, "#{filename}.nix")
             unless File.exist?(nix_file)
               missing << filename
@@ -138,7 +143,7 @@ module Onix
       end
 
       # ── packageset-metadata ──────────────────────────────────────
-      # Soft warning check for portable lockfile metadata.
+      # Soft warning check for lockfile metadata presence.
 
       def check_packageset_metadata
         packagesets = Dir.glob(File.join(@project.packagesets_dir, "*.jsonl"))
@@ -150,17 +155,16 @@ module Onix
           project = File.basename(f, ".jsonl")
           meta, _entries = Packageset.read(f)
           next if meta.nil?
-          next if meta.lockfile_relpath && !meta.lockfile_relpath.empty?
-          next unless meta.lockfile_path && !meta.lockfile_path.empty?
+          next if meta.lockfile_path && !meta.lockfile_path.empty?
 
           missing << project
         end
 
         if missing.empty?
-          [true, "metadata portable"]
+          [true, "metadata complete"]
         else
           sample = missing.sort.first(10).join(", ")
-          [true, "warning: #{missing.size} packagesets missing lockfile_relpath — run `onix backfill`\n  #{sample}"]
+          [true, "warning: #{missing.size} packagesets missing lockfile_path — run `onix backfill`\n  #{sample}"]
         end
       end
 

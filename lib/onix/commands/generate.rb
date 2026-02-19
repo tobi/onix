@@ -27,12 +27,15 @@ module Onix
     class Generate
       def run(argv)
         @project = Project.new
-        jobs = (ENV["JOBS"] || "20").to_i
+        jobs = parse_jobs(ENV["JOBS"] || "20", source: "JOBS")
         @script_policy_override = nil
 
         while argv.first&.start_with?("-")
           case argv.shift
-          when "-j", "--jobs" then jobs = argv.shift.to_i
+          when "-j", "--jobs"
+            value = argv.shift
+            abort "Missing --jobs value" if value.nil?
+            jobs = parse_jobs(value, source: "--jobs")
           when "--scripts"
             value = argv.shift
             abort "Invalid --scripts value #{value}" unless %w[none allowed].include?(value)
@@ -222,6 +225,16 @@ module Onix
 
         total_packages = all_entries.size
         UI.done "#{total_packages} packages, #{projects.size} projects"
+      end
+
+      def parse_jobs(raw, source:)
+        value = raw.to_s.strip
+        abort "Invalid #{source} value #{value.inspect}. Expected a positive integer." unless value.match?(/\A\d+\z/)
+
+        parsed = value.to_i
+        abort "Invalid #{source} value #{value.inspect}. Expected a positive integer." if parsed <= 0
+
+        parsed
       end
 
       private
@@ -429,10 +442,8 @@ module Onix
       def find_pnpm_lockfile(project_name, meta = nil)
         return nil unless @project
 
-        meta_lockfile_relpath = meta&.lockfile_relpath
         meta_lockfile = meta&.lockfile_path
         candidates = [
-          meta_lockfile_relpath && lockfile_candidate(meta_lockfile_relpath),
           meta_lockfile && lockfile_candidate(meta_lockfile),
           File.join(@project.root, "pnpm-lock.yaml"),
           File.join(@project.root, "#{project_name}/pnpm-lock.yaml"),
@@ -697,7 +708,8 @@ module Onix
 
       def nix_path(path)
         return "null" if path.nil?
-        return path if path =~ %r{\A(/|\.{1,2}/)}
+        path = path.to_s
+        return path if path.start_with?("/", "./", "../")
         nix_str(path)
       end
 

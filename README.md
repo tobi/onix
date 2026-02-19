@@ -70,11 +70,21 @@ Prefetches hashes for Ruby deps via `nix-prefetch-url`/`nix-prefetch-git`, then 
 onix build                    # build all projects
 onix build myapp              # build all gems for one project
 onix build myapp nokogiri     # build a single gem
-onix build myapp node          # build root node_modules for the project
+onix build myapp node         # build node_modules derivation for the project
 onix build -k                 # keep going past failures
 ```
 
-For node projects, `onix build` also hydrates `./node_modules` using `rsync --delete`. A fast-path sentinel is stored in `.node_modules_id`.
+`onix build` does not mutate workspace checkouts. It only builds Nix derivations.
+
+Hydrate explicitly when you want a mutable `node_modules` in a target workspace:
+
+```bash
+onix hydrate myapp /path/to/workspace
+# or default to lockfile directory from metadata:
+onix hydrate myapp
+```
+
+Hydration stores a fast-path marker at `TARGET/.onix_node_modules_id`.
 
 Pipes through [nix-output-monitor](https://github.com/maralorn/nix-output-monitor) when available. On failure, tells you exactly what to do:
 
@@ -100,26 +110,27 @@ Use this as a concrete phase-1 validation path:
 export ONIX_PILOT_PATH=/Users/vsumner/src/github.com/vitejs/vite
 cd "$ONIX_PILOT_PATH"
 
-# one-time setup
+# one-time setup (from the index repo)
 onix import .
 onix generate
-onix build vite
+onix build vite node
+onix hydrate vite "$ONIX_PILOT_PATH"
 ```
 
 Hydration repeatability check:
 
 ```bash
-rm -rf node_modules .node_modules_id
-time onix build vite
+rm -rf node_modules .onix_node_modules_id
+time onix hydrate vite "$ONIX_PILOT_PATH"
 
 # second pass should be a fast no-op when derived path is unchanged
-time onix build vite
+time onix hydrate vite "$ONIX_PILOT_PATH"
 ```
 
 Expected:
 
 - `node_modules` exists in workspace with `node_modules/.pnpm` populated.
-- `.node_modules_id` contains the source store path.
+- `.onix_node_modules_id` in the target workspace contains the source store path.
 - second run should emit `node_modules unchanged` and avoid re-copying files.
 
 Use the helper script (creates markdown-friendly timing output):
@@ -142,7 +153,7 @@ scripts/pilot-pnpm-onix.sh "$ONIX_PILOT_PATH"
 - import/generate/build,
 - first hydration timing,
 - second no-op hydration timing,
-- `.node_modules_id` delta check,
+- `.onix_node_modules_id` delta check,
 - minimal secret-surface scan.
 
 ## Using built packages

@@ -91,15 +91,14 @@ module Onix
         FileUtils.mkdir_p(File.join(source, "foo"))
         File.write(File.join(source, "foo", "marker.txt"), "v1")
 
-        project.send(:hydrate_node_modules, id)
+        project.send(:hydrate_node_modules, id, target_root: dir)
         target = File.join(dir, "node_modules")
 
         assert_equal "v1", File.read(File.join(target, "foo", "marker.txt"))
-        assert_equal id, File.read(File.join(dir, ".node_modules_id")).strip
-        assert_equal id, File.read(File.join(target, ".node_modules_id")).strip
+        assert_equal id, File.read(File.join(dir, ".onix_node_modules_id")).strip
 
         File.write(File.join(source, "foo", "marker.txt"), "v2")
-        project.send(:hydrate_node_modules, id, skip_if_unchanged: true)
+        project.send(:hydrate_node_modules, id, target_root: dir, skip_if_unchanged: true)
 
         assert_equal "v2", File.read(File.join(id, "node_modules", "foo", "marker.txt"))
         assert_equal "v1", File.read(File.join(target, "foo", "marker.txt"))
@@ -117,23 +116,22 @@ module Onix
         FileUtils.mkdir_p(File.join(source, "foo"))
         File.write(File.join(source, "foo", "marker.txt"), "v1")
 
-        project.send(:hydrate_node_modules, id)
+        project.send(:hydrate_node_modules, id, target_root: dir)
         target = File.join(dir, "node_modules")
 
         assert_equal "v1", File.read(File.join(target, "foo", "marker.txt"))
-        assert_equal id, File.read(File.join(dir, ".node_modules_id")).strip
-        assert_equal id, File.read(File.join(target, ".node_modules_id")).strip
+        assert_equal id, File.read(File.join(dir, ".onix_node_modules_id")).strip
 
         File.write(File.join(source, "foo", "marker.txt"), "v2")
         FileUtils.rm_rf(target)
 
-        project.send(:hydrate_node_modules, id, skip_if_unchanged: true)
+        project.send(:hydrate_node_modules, id, target_root: dir, skip_if_unchanged: true)
         assert_equal "v2", File.read(File.join(target, "foo", "marker.txt"))
-        assert_equal id, File.read(File.join(target, ".node_modules_id")).strip
+        assert_equal id, File.read(File.join(dir, ".onix_node_modules_id")).strip
       end
     end
 
-    def test_build_project_uses_node_modules_target_for_node_projects
+    def test_build_project_builds_node_modules_without_hydration_for_node_projects
       Dir.mktmpdir do |dir|
         project_path = File.join(dir, "packagesets")
         FileUtils.mkdir_p(project_path)
@@ -162,7 +160,7 @@ module Onix
         assert_equal 2, command.commands.size
         assert_equal ["nix-build", "--no-out-link", File.join(dir, "nix", "workspace.nix"), "-A", "bundlePath"], command.commands[0]
         assert_equal ["nix-build", "--no-out-link", File.join(dir, "nix", "workspace.nix"), "-A", "nodeModules"], command.commands[1]
-        assert_equal [["/nix/store/fake-node", { skip_if_unchanged: true }]], command.hydrations
+        assert_equal [], command.hydrations
       end
     end
 
@@ -229,7 +227,7 @@ module Onix
       end
     end
 
-    def test_build_node_modules_uses_returned_path_and_skip_when_unchanged
+    def test_build_node_modules_returns_store_path_without_hydration
       Dir.mktmpdir do |dir|
         project_file = File.join(dir, "nix")
         FileUtils.mkdir_p(project_file)
@@ -241,20 +239,12 @@ module Onix
         root = command.store_root
         command.create_source_marker("v1")
 
-        command.send(:build_node_modules, "workspace")
-        source = File.join(command.store_root, "node_modules")
-        target = File.join(dir, "node_modules")
+        result = command.send(:build_node_modules, "workspace")
 
-        assert_equal "v1", File.read(File.join(target, "foo", "marker.txt"))
-        assert_equal root, File.read(File.join(dir, ".node_modules_id")).strip
-        assert_equal root, File.read(File.join(target, ".node_modules_id")).strip
-
-        File.write(File.join(source, "foo", "marker.txt"), "v2")
-        command.send(:build_node_modules, "workspace", skip_if_unchanged: true)
-
-        assert_equal 2, command.run_calls
-        assert_equal "v1", File.read(File.join(target, "foo", "marker.txt"))
-        assert_equal root, File.read(File.join(target, ".node_modules_id")).strip
+        assert_equal root, result
+        assert_equal 1, command.run_calls
+        refute Dir.exist?(File.join(dir, "node_modules"))
+        refute File.exist?(File.join(dir, ".onix_node_modules_id"))
       end
     end
 
@@ -343,6 +333,13 @@ module Onix
         refute_includes direct[:command], "--no-out-link"
         assert direct[:return_paths]
       end
+    end
+
+    def test_shellescape_escapes_special_chars_without_corrupting_output
+      command = Onix::Commands::Build.new
+
+      assert_equal "a\\ b", command.send(:shellescape, "a b")
+      assert_equal "a\\$b", command.send(:shellescape, "a$b")
     end
 
     def test_sanitize_output_line_masks_registry_and_bearer_tokens

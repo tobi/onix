@@ -12,7 +12,7 @@ packagesets/<project>.jsonl
 
 **Line 1: metadata**
 ```json
-{"_meta":true,"ruby":"3.4.8","bundler":"2.6.5","platforms":["arm64-darwin","ruby"],"package_manager":"pnpm@10.0.0","script_policy":"none","lockfile_path":"/abs/path/to/pnpm-lock.yaml","lockfile_relpath":"pnpm-lock.yaml"}
+{"_meta":true,"ruby":"3.4.8","bundler":"2.6.5","platforms":["arm64-darwin","ruby"],"package_manager":"pnpm@10.0.0","script_policy":"none","lockfile_path":"/abs/path/to/pnpm-lock.yaml"}
 ```
 
 **Line 2+: one entry per package**
@@ -92,7 +92,6 @@ generation — Ruby already provides them.
 | `package_manager` | no | e.g. `pnpm@10.0.0` from `package.json` |
 | `script_policy` | no | One of `none` (default) or `allowed` (workspace allowlist present / explicit `--scripts allowed`) |
 | `lockfile_path` | no | Absolute lockfile path captured at import; used by `generate` to avoid lockfile discovery drift |
-| `lockfile_relpath` | no | Repo-relative lockfile path captured at import; preferred by `generate` for cross-host portability |
 
 ### Node-specific notes
 

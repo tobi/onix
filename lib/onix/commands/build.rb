@@ -2,7 +2,9 @@
 
 require "fileutils"
 require "tmpdir"
+require "shellwords"
 require_relative "../packageset"
+require_relative "../project"
 require_relative "../pnpm/credentials"
 
 module Onix
@@ -24,7 +26,7 @@ module Onix
             $stderr.puts "  onix build                  # build all projects"
             $stderr.puts "  onix build myapp            # build all gems for myapp"
             $stderr.puts "  onix build myapp rack       # build one gem from myapp"
-            $stderr.puts "  onix build myapp node       # build node_modules for myapp"
+            $stderr.puts "  onix build myapp node       # build node_modules derivation for myapp"
             $stderr.puts "  -k, --keep-going            continue past failures"
             exit 0
           end
@@ -34,6 +36,14 @@ module Onix
         when 0 then build_all
         when 1 then build_project(argv[0])
         when 2 then build_gem(argv[0], argv[1])
+        else
+          UI.fail "Invalid arguments: #{argv.join(" ")}"
+          $stderr.puts "Usage: onix build [options] [project] [gem]"
+          $stderr.puts "  onix build                  # build all projects"
+          $stderr.puts "  onix build myapp            # build all gems for myapp"
+          $stderr.puts "  onix build myapp rack       # build one gem from myapp"
+          $stderr.puts "  onix build myapp node       # build node_modules derivation for myapp"
+          exit 1
         end
       end
 
@@ -41,7 +51,7 @@ module Onix
 
       def build_gem(project, gem_name)
         if node_modules_target?(gem_name)
-          build_node_modules(project, skip_if_unchanged: false)
+          build_node_modules(project)
           return
         end
 
@@ -60,7 +70,7 @@ module Onix
         run_nix(cmd)
 
         if project_has_node?(project)
-          build_node_modules(project, skip_if_unchanged: true)
+          build_node_modules(project)
         end
       end
 
@@ -84,20 +94,17 @@ module Onix
           run_nix(cmd)
 
           if project_has_node?(name)
-            build_node_modules(name, skip_if_unchanged: true)
+            build_node_modules(name)
           end
         end
       end
 
-      def build_node_modules(project, skip_if_unchanged: true)
+      def build_node_modules(project)
         nix_file = project_nix(project)
         cmd = ["nix-build", "--no-out-link", nix_file, "-A", "nodeModules"]
         cmd << "--keep-going" if @keep_going
         node_env = pnpm_build_env
-        node_store_path = run_nix(cmd, return_paths: true, env: node_env)
-        return if node_store_path.nil? || node_store_path.empty?
-
-        hydrate_node_modules(node_store_path, skip_if_unchanged: skip_if_unchanged)
+        run_nix(cmd, return_paths: true, env: node_env)
       end
 
       def project_nix(name)
@@ -139,8 +146,8 @@ module Onix
       def run_nix_with_nom(cmd, t0, env)
         # nom reads nix's stderr (build progress). stdout (store paths) goes to terminal.
         # --no-idle-warning suppresses "nom hasn't detected any input" when everything is cached.
-        shell = cmd.map { |a| shellescape(a) }.join(" ") + " 2> >(nom 2>/dev/null)"
-        env_prefix = env.empty? ? nil : env.map { |k, v| "#{k}=#{shellescape(v)}" }.join(" ")
+        shell = cmd.map { |a| Shellwords.escape(a) }.join(" ") + " 2> >(nom 2>/dev/null)"
+        env_prefix = env.empty? ? nil : env.map { |k, v| "#{k}=#{Shellwords.escape(v.to_s)}" }.join(" ")
         shell = [env_prefix, shell].compact.join(" ")
         $stderr.puts
         success = system("bash", "-c", shell)
@@ -229,11 +236,12 @@ module Onix
         entries.any? { |e| e.installer == "node" }
       end
 
-      def hydrate_node_modules(store_path, skip_if_unchanged: false)
+      def hydrate_node_modules(store_path, target_root:, skip_if_unchanged: false)
+        target_root = File.expand_path(target_root)
         source = File.join(store_path, "node_modules")
         id = node_modules_id(store_path)
-        target = File.join(@project.root, "node_modules")
-        id_file = File.join(@project.root, ".node_modules_id")
+        target = File.join(target_root, "node_modules")
+        id_file = File.join(target_root, ".onix_node_modules_id")
 
         unless Dir.exist?(source)
           UI.fail "node_modules derivation missing node_modules output at #{source}"
@@ -242,14 +250,11 @@ module Onix
         end
 
         FileUtils.mkdir_p(File.dirname(id_file))
-        target_id_file = File.join(target, ".node_modules_id")
 
         if skip_if_unchanged &&
           File.exist?(id_file) &&
           File.read(id_file).strip == id &&
-          File.directory?(target) &&
-          File.exist?(target_id_file) &&
-          File.read(target_id_file).strip == id
+          File.directory?(target)
           UI.info "node_modules unchanged"
           return
         end
@@ -272,14 +277,24 @@ module Onix
 
         FileUtils.chmod_R(0o755, target)
         File.write(id_file, id)
-        File.write(target_id_file, id)
-        UI.done "hydrated node_modules from #{store_path}"
+        UI.done "hydrated node_modules to #{target_root} from #{store_path}"
       end
 
       def node_modules_id(store_path)
         marker = File.join(store_path, ".node_modules_id")
         return File.read(marker).strip if File.exist?(marker)
         store_path
+      end
+
+      def lockfile_dir_for_project(project)
+        path = File.join(@project.packagesets_dir, "#{project}.jsonl")
+        return nil unless File.exist?(path)
+
+        meta, = Packageset.read(path)
+        return nil if meta.nil?
+        return nil if meta.lockfile_path.nil? || meta.lockfile_path.empty?
+
+        File.dirname(File.expand_path(meta.lockfile_path))
       end
 
       def rsync_available?
@@ -336,8 +351,7 @@ module Onix
       end
 
       def shellescape(s)
-        return "''" if s.empty?
-        s.gsub(/([^A-Za-z0-9_\-.,:\/\@\n])/, '\\\\1')
+        Shellwords.escape(s.to_s)
       end
 
       def drv_to_gem_name(drv)

@@ -283,47 +283,6 @@ class GenerateNodeTest < Minitest::Test
     end
   end
 
-  def test_generate_prefers_meta_lockfile_relpath_for_cross_host_paths
-    Dir.mktmpdir do |dir|
-      packagesets_dir = File.join(dir, "packagesets")
-      FileUtils.mkdir_p(packagesets_dir)
-
-      lockfile_dir = File.join(dir, "locks")
-      FileUtils.mkdir_p(lockfile_dir)
-      lockfile_relpath = "locks/custom.pnpm-lock.yaml"
-      File.write(File.join(dir, lockfile_relpath), "{\n}\n")
-
-      entries = [
-        Onix::Packageset::Entry.new(
-          installer: "node",
-          name: "pnpm-lock",
-          version: "1.0.0",
-          source: "pnpm",
-          deps: ["glob"],
-        ),
-      ]
-
-      Onix::Packageset.write(
-        File.join(packagesets_dir, "workspace.jsonl"),
-        meta: Onix::Packageset::Meta.new(
-          ruby: nil,
-          bundler: nil,
-          platforms: [],
-          lockfile_path: "/Users/vsumner/src/github.com/vitejs/vite/pnpm-lock.yaml",
-          lockfile_relpath: lockfile_relpath,
-        ),
-        entries: entries,
-      )
-
-      Dir.chdir(dir) do
-        @command.run([])
-      end
-
-      project_contents = File.read(File.join(dir, "nix", "workspace.nix"))
-      assert_includes project_contents, "lockfile = ../locks/custom.pnpm-lock.yaml;"
-    end
-  end
-
   def test_generate_projects_include_pnpm_deps_hash
     Dir.mktmpdir do |dir|
       packagesets_dir = File.join(dir, "packagesets")
@@ -659,6 +618,8 @@ class GenerateNodeTest < Minitest::Test
       assert_includes build_nix, "nodeOverlayDeps"
       assert_includes build_nix, "nodePreInstall"
       assert_includes build_nix, "nodePnpmInstallFlags"
+      assert_includes build_nix, "preInstall = nodePreInstall;"
+      assert_includes build_nix, "prePnpmInstall = nodePrePnpmInstall;"
     end
   end
 

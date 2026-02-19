@@ -3,6 +3,10 @@
 let
   safeProject = lib.replaceStrings [ "/" ":" "@" ] [ "_" "_" "_" ] (if project != null then project else "project");
   sourceRoot = if lockfile != null && builtins.pathExists lockfile then builtins.dirOf lockfile else projectRoot;
+  lockfileBaseName =
+    if lockfile != null && builtins.pathExists lockfile
+    then builtins.baseNameOf (toString lockfile)
+    else "pnpm-lock.yaml";
   ignoredSourcePrefixes = [ ".git" "node_modules" "nix" "packagesets" ];
   isIgnoredPath = rel:
     rel == ".node_modules_id" ||
@@ -75,10 +79,26 @@ let
     src = sourceRoot;
     filter = sourceFilter sourceRoot;
   };
+  normalizedSourceRoot =
+    if lockfile != null && builtins.pathExists lockfile && lockfileBaseName != "pnpm-lock.yaml"
+    then pkgs.runCommand "onix-${safeProject}-source-root" { } ''
+      cp -R ${filteredSourceRoot}/. "$out/"
+      chmod -R +w "$out"
+      cp ${lockfile} "$out/pnpm-lock.yaml"
+    ''
+    else filteredSourceRoot;
   filteredProjectRoot = lib.cleanSourceWith {
     src = projectRoot;
     filter = sourceFilter projectRoot;
   };
+  normalizedProjectRoot =
+    if lockfile != null && builtins.pathExists lockfile && lockfileBaseName != "pnpm-lock.yaml"
+    then pkgs.runCommand "onix-${safeProject}-project-root" { } ''
+      cp -R ${filteredProjectRoot}/. "$out/"
+      chmod -R +w "$out"
+      cp ${lockfile} "$out/pnpm-lock.yaml"
+    ''
+    else filteredProjectRoot;
   isScriptless = scriptPolicy == "none";
   baseInstallFlags = if isScriptless then [ "--ignore-scripts" ] else [ ];
   installFlags = lib.unique (baseInstallFlags ++ nodePnpmInstallFlags);
@@ -86,7 +106,7 @@ let
   pnpmDeps = pkgs.fetchPnpmDeps {
     pname = "onix-${safeProject}-pnpm-deps";
     version = "0";
-    src = filteredSourceRoot;
+    src = normalizedSourceRoot;
     pnpm = pkgs.pnpm;
     fetcherVersion = 3;
     hash = pnpmDepsHash;
@@ -105,16 +125,18 @@ pkgs.stdenv.mkDerivation {
   pname = "onix-${safeProject}-node-modules";
   version = "0";
 
-  src = filteredProjectRoot;
+  src = normalizedProjectRoot;
 
   nativeBuildInputs = [
     pkgs.nodejs
     pkgs.pnpm
     pkgs.zstd
-  ] ++ nodeOverlayDeps;
+  ] ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [ pkgs.patchelf ] ++ nodeOverlayDeps;
 
   pnpmDeps = pnpmDeps;
   dontBuild = true;
+  preInstall = nodePreInstall;
+  prePnpmInstall = nodePrePnpmInstall;
 
   installPhase = ''
     runHook preInstall
@@ -150,6 +172,11 @@ pkgs.stdenv.mkDerivation {
     if [ -f package.json ]; then
       node -e 'const fs = require("fs"); const p = JSON.parse(fs.readFileSync("package.json", "utf8")); delete p.packageManager; fs.writeFileSync("package.json", JSON.stringify(p, null, 2) + "\n");'
     fi
+    ${lib.optionalString (lockfile != null && builtins.pathExists lockfile) ''
+      if [ "${lockfileBaseName}" != "pnpm-lock.yaml" ]; then
+        cp "${toString lockfile}" pnpm-lock.yaml
+      fi
+    ''}
 
     if [ -f "$pnpmDeps/pnpm-store.tar.zst" ]; then
       tar --zstd -xf "$pnpmDeps/pnpm-store.tar.zst" -C "$STORE_PATH"

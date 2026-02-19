@@ -2,8 +2,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-PROJECT_DIR="${1:-${ONIX_PILOT_PATH:-/Users/vsumner/src/github.com/vitejs/vite}}"
+ONIX_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+DEFAULT_PROJECT_DIR="${ONIX_PILOT_PATH:-$(pwd)}"
+PROJECT_DIR="${1:-$DEFAULT_PROJECT_DIR}"
 PROJECT_NAME="${2:-$(basename "$PROJECT_DIR")}"
 REPORT_FILE="${ONIX_PILOT_REPORT:-${PROJECT_DIR}/.onix-pilot-report.md}"
 declare -a ONIX_CMD=()
@@ -22,9 +23,9 @@ require_ruby_for_onix() {
   if [ "$major" -lt 3 ] || { [ "$major" -eq 3 ] && [ "$minor" -lt 1 ]; }; then
     log "onix CLI execution requires Ruby >= 3.1, but current ruby is $version."
     log "Run from the onix dev shell, for example:"
-    log "  cd /Users/vsumner/src/github.com/tobi/onix"
+    log "  cd \"$ONIX_ROOT\""
     log "  nix --extra-experimental-features nix-command --extra-experimental-features flakes develop \\"
-    log "    --command scripts/pilot-pnpm-onix.sh /Users/vsumner/src/github.com/vitejs/vite"
+    log "    --command scripts/pilot-pnpm-onix.sh <project-dir>"
     exit 1
   fi
 }
@@ -37,8 +38,10 @@ run_step() {
   log "### $name"
   local start end elapsed
   start=$(date +%s)
-  "$@"
-  local status=$?
+  local status=0
+  if ! "$@"; then
+    status=$?
+  fi
   end=$(date +%s)
   elapsed=$((end - start))
   log "  duration: ${elapsed}s (exit ${status})"
@@ -87,7 +90,7 @@ resolve_onix_cmd() {
 }
 
 node_id() {
-  local p="$PROJECT_DIR/.node_modules_id"
+  local p="$PROJECT_DIR/.onix_node_modules_id"
   if [ -f "$p" ]; then
     cat "$p"
   else
@@ -123,13 +126,14 @@ run_step "Readiness: git status capture" bash -lc "git -C \"$PROJECT_DIR\" statu
 run_step "Import" run_onix_project import .
 run_step "Generate" run_onix_project generate
 
-run_step "Pre-clean" bash -lc "cd \"$PROJECT_DIR\" && rm -rf node_modules .node_modules_id"
+run_step "Pre-clean" bash -lc "cd \"$PROJECT_DIR\" && rm -rf node_modules .onix_node_modules_id .node_modules_id"
 ID_BEFORE="$(node_id)"
-log "- prior .node_modules_id: $ID_BEFORE"
+log "- prior .onix_node_modules_id: $ID_BEFORE"
 
-run_step "Build + hydrate (first run)" run_onix_project build "$PROJECT_NAME"
+run_step "Build node derivation (first run)" run_onix_project build "$PROJECT_NAME" node
+run_step "Hydrate node_modules (first run)" run_onix_project hydrate "$PROJECT_NAME" "$PROJECT_DIR"
 ID_AFTER_FIRST="$(node_id)"
-log "- post-first-run .node_modules_id: $ID_AFTER_FIRST"
+log "- post-first-run .onix_node_modules_id: $ID_AFTER_FIRST"
 
 if [ ! -d "$PROJECT_DIR/node_modules" ]; then
   log "node_modules not present after first run"
@@ -141,9 +145,10 @@ if [ ! -d "$PROJECT_DIR/node_modules/.pnpm" ]; then
   exit 1
 fi
 
-run_step "No-op build + hydrate (second run)" run_onix_project build "$PROJECT_NAME"
+run_step "Build node derivation (second run)" run_onix_project build "$PROJECT_NAME" node
+run_step "Hydrate node_modules (second run)" run_onix_project hydrate "$PROJECT_NAME" "$PROJECT_DIR"
 ID_AFTER_SECOND="$(node_id)"
-log "- post-second-run .node_modules_id: $ID_AFTER_SECOND"
+log "- post-second-run .onix_node_modules_id: $ID_AFTER_SECOND"
 
 if [ "$ID_AFTER_FIRST" = "$ID_AFTER_SECOND" ]; then
   log "- node_modules id unchanged: no-op path hit"

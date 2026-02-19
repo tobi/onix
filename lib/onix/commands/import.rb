@@ -157,7 +157,6 @@ module Onix
           package_manager: package_manager,
           script_policy: script_policy,
           lockfile_path: File.expand_path(lockfile),
-          lockfile_relpath: lockfile_relpath(lockfile),
         )
 
         FileUtils.mkdir_p(@project.packagesets_dir)
@@ -362,7 +361,6 @@ module Onix
           bundler: lockdata.bundler_version,
           platforms: lockdata.platforms,
           lockfile_path: File.expand_path(lockfile),
-          lockfile_relpath: lockfile_relpath(lockfile),
         )
 
         FileUtils.mkdir_p(@project.packagesets_dir)
@@ -415,7 +413,7 @@ module Onix
 
           # Find all gemspecs and map gem names to directories
           gemspec_map = {}
-          glob = repo[:glob] || "{,*,*/*}.gemspec"
+          glob = repo[:glob] || File.join("**", "*.gemspec")
           Dir.glob(File.join(clone_dir, glob)).each do |path|
             begin
               content = File.read(path)
@@ -439,21 +437,6 @@ module Onix
         subdirs
       end
 
-      def lockfile_relpath(lockfile)
-        absolute = File.expand_path(lockfile)
-        root =
-          if @project.respond_to?(:root)
-            File.expand_path(@project.root)
-          elsif @project.respond_to?(:packagesets_dir)
-            File.expand_path("..", @project.packagesets_dir)
-          else
-            return nil
-          end
-        prefix = root.end_with?("/") ? root : "#{root}/"
-        return nil unless absolute.start_with?(prefix)
-
-        absolute.delete_prefix(prefix)
-      end
     end
   end
 end

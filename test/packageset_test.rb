@@ -15,7 +15,7 @@ class PackagesetTest < Minitest::Test
 
       Onix::Packageset.write(
         path,
-        meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: [], lockfile_relpath: "pnpm-lock.yaml"),
+        meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: []),
         entries: entries,
       )
 
@@ -28,7 +28,7 @@ class PackagesetTest < Minitest::Test
         ],
         parsed_entries.map { |entry| "#{entry.installer}/#{entry.name}/#{entry.version}/#{entry.source}" },
       )
-      assert_equal "pnpm-lock.yaml", parsed_meta.lockfile_relpath
+      assert_nil parsed_meta.lockfile_path
     end
   end
 end

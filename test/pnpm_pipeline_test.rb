@@ -59,7 +59,7 @@ module Onix
       end
     end
 
-    def test_import_generate_build_hydrates_node_modules_with_sentinel_fast_path
+    def test_import_generate_build_then_hydrate_uses_sentinel_fast_path
       Dir.mktmpdir do |dir|
         project = File.join(dir, "workspace")
         FileUtils.mkdir_p(project)
@@ -82,14 +82,15 @@ module Onix
         command = StubBuildNodeProject.new
         command.instance_variable_set(:@project, Onix::Project.new(dir))
         command.send(:build_project, "workspace")
+        command.send(:hydrate_node_modules, command.node_modules_root, target_root: dir, skip_if_unchanged: true)
 
         command.create_node_marker("v2")
         command.send(:build_project, "workspace")
+        command.send(:hydrate_node_modules, command.node_modules_root, target_root: dir, skip_if_unchanged: true)
 
         target = File.join(dir, "node_modules")
         assert_equal "v1", File.read(File.join(target, "vite", "marker.txt"))
-        assert_equal command.node_modules_root, File.read(File.join(dir, ".node_modules_id")).strip
-        assert_equal command.node_modules_root, File.read(File.join(target, ".node_modules_id")).strip
+        assert_equal command.node_modules_root, File.read(File.join(dir, ".onix_node_modules_id")).strip
         assert_equal 2, command.run_calls.select { |k, _| k.include?("nodeModules") }.values.sum
         assert_equal 2, command.run_calls.select { |k, _| k.include?("bundlePath") }.values.sum
       end

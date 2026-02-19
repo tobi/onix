@@ -131,10 +131,12 @@ pkgs.stdenv.mkDerivation {
     pkgs.nodejs
     pkgs.pnpm
     pkgs.zstd
-  ] ++ nodeOverlayDeps;
+  ] ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [ pkgs.patchelf ] ++ nodeOverlayDeps;
 
   pnpmDeps = pnpmDeps;
   dontBuild = true;
+  preInstall = nodePreInstall;
+  prePnpmInstall = nodePrePnpmInstall;
 
   installPhase = ''
     runHook preInstall

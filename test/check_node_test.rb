@@ -53,7 +53,7 @@ module Onix
           entries: entries
         )
 
-        File.write(File.join(dir, "nix", "node", "workspace.nix"), "{}\n")
+        File.write(File.join(dir, "nix", "node", "vite.nix"), "{}\n")
 
         @command.instance_variable_set(:@project, StubProject.new(dir))
         ok, message = @command.send(:check_packageset_complete)
@@ -88,7 +88,7 @@ module Onix
 
         refute ok
         assert_match(/1 packages missing from generated files/, message)
-        assert_match(/workspace/, message)
+        assert_match(/vite/, message)
       end
     end
 
@@ -155,7 +155,7 @@ module Onix
       end
     end
 
-    def test_check_packageset_metadata_warns_when_lockfile_relpath_missing
+    def test_check_packageset_metadata_warns_when_lockfile_path_missing
       Dir.mktmpdir do |dir|
         FileUtils.mkdir_p(File.join(dir, "packagesets"))
 
@@ -165,7 +165,6 @@ module Onix
             ruby: nil,
             bundler: nil,
             platforms: [],
-            lockfile_path: File.join(dir, "pnpm-lock.yaml"),
           ),
           entries: [
             Onix::Packageset::Entry.new(
@@ -181,12 +180,12 @@ module Onix
         ok, message = @command.send(:check_packageset_metadata)
 
         assert ok
-        assert_match(/missing lockfile_relpath/, message)
+        assert_match(/missing lockfile_path/, message)
         assert_match(/onix backfill/, message)
       end
     end
 
-    def test_check_packageset_metadata_passes_with_lockfile_relpath
+    def test_check_packageset_metadata_passes_with_lockfile_path
       Dir.mktmpdir do |dir|
         FileUtils.mkdir_p(File.join(dir, "packagesets"))
 
@@ -197,7 +196,6 @@ module Onix
             bundler: nil,
             platforms: [],
             lockfile_path: File.join(dir, "pnpm-lock.yaml"),
-            lockfile_relpath: "pnpm-lock.yaml",
           ),
           entries: [
             Onix::Packageset::Entry.new(
@@ -213,7 +211,38 @@ module Onix
         ok, message = @command.send(:check_packageset_metadata)
 
         assert ok
-        assert_equal "metadata portable", message
+        assert_equal "metadata complete", message
+      end
+    end
+
+    def test_check_packageset_metadata_treats_external_lockfile_path_as_complete
+      Dir.mktmpdir do |dir|
+        FileUtils.mkdir_p(File.join(dir, "packagesets"))
+
+        Onix::Packageset.write(
+          File.join(dir, "packagesets", "workspace.jsonl"),
+          meta: Onix::Packageset::Meta.new(
+            ruby: nil,
+            bundler: nil,
+            platforms: [],
+            lockfile_path: "/tmp/external/pnpm-lock.yaml",
+          ),
+          entries: [
+            Onix::Packageset::Entry.new(
+              installer: "node",
+              name: "vite",
+              version: "5.0.0",
+              source: "pnpm",
+            ),
+          ],
+        )
+
+        @command.instance_variable_set(:@project, StubProject.new(dir))
+        ok, message = @command.send(:check_packageset_metadata)
+
+        assert ok
+        assert_equal "metadata complete", message
+        refute_match(/onix backfill/, message)
       end
     end
   end

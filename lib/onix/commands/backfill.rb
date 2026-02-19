@@ -12,7 +12,7 @@ module Onix
           case argv.shift
           when "--help", "-h"
             $stderr.puts "Usage: onix backfill"
-            $stderr.puts "Backfills packageset metadata (lockfile_path, lockfile_relpath)."
+            $stderr.puts "Backfills packageset metadata (lockfile_path)."
             exit 0
           end
         end
@@ -34,17 +34,14 @@ module Onix
           next if meta.nil?
 
           lockfile = resolve_lockfile(project_name, meta, entries)
-          lockfile_relpath = lockfile && path_within_project_root(lockfile)
-
           desired_lockfile_path = lockfile || meta.lockfile_path
-          desired_lockfile_relpath = lockfile_relpath || meta.lockfile_relpath
 
-          if desired_lockfile_path.nil? && desired_lockfile_relpath.nil?
+          if desired_lockfile_path.nil?
             unresolved += 1
             next
           end
 
-          if meta.lockfile_path == desired_lockfile_path && meta.lockfile_relpath == desired_lockfile_relpath
+          if meta.lockfile_path == desired_lockfile_path
             unchanged += 1
             next
           end
@@ -56,7 +53,6 @@ module Onix
             package_manager: meta.package_manager,
             script_policy: meta.script_policy,
             lockfile_path: desired_lockfile_path,
-            lockfile_relpath: desired_lockfile_relpath,
           )
 
           Packageset.write(path, meta: next_meta, entries: entries)
@@ -72,7 +68,6 @@ module Onix
 
       def resolve_lockfile(project_name, meta, entries)
         candidates = []
-        candidates << lockfile_candidate(meta.lockfile_relpath) if present?(meta.lockfile_relpath)
         candidates << lockfile_candidate(meta.lockfile_path) if present?(meta.lockfile_path)
 
         if entries.any? { |e| e.installer == "node" }
@@ -95,17 +90,6 @@ module Onix
         return expanded if path.to_s.start_with?("/")
 
         File.expand_path(path.to_s, @project.root)
-      end
-
-      def path_within_project_root(path)
-        absolute = File.expand_path(path)
-        root = File.expand_path(@project.root)
-        absolute = File.realpath(absolute) if File.exist?(absolute)
-        root = File.realpath(root) if File.exist?(root)
-        prefix = root.end_with?("/") ? root : "#{root}/"
-        return nil unless absolute.start_with?(prefix)
-
-        absolute.delete_prefix(prefix)
       end
 
       def present?(value)
