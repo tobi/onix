@@ -1,6 +1,9 @@
 # examples
 
-Nix-packaged Ruby gems, managed by [onix](https://github.com/tobi/onix).
+Nix-packaged dependency examples managed by [onix](https://github.com/tobi/onix).
+
+- Ruby examples: this document.
+- Node scenario matrix: [`examples/node/README.md`](./node/README.md).
 
 ## Quick start
 
@@ -14,6 +17,7 @@ onix build project               # build all gems via nix
 
 ```
 examples/
+├── node/           # Node scenario matrix + fixture projects
 ├── packagesets/     # Hermetic JSONL packagesets (one per project)
 ├── overlays/        # Hand-written build overrides
 └── nix/             # ⚠ Generated — never edit by hand

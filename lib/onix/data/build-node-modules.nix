@@ -251,12 +251,6 @@ pkgs.stdenv.mkDerivation {
     if [ -f package.json ]; then
       node -e 'const fs = require("fs"); const p = JSON.parse(fs.readFileSync("package.json", "utf8")); delete p.packageManager; fs.writeFileSync("package.json", JSON.stringify(p, null, 2) + "\n");'
     fi
-    ${lib.optionalString (lockfile != null && builtins.pathExists lockfile) ''
-      if [ "${lockfileBaseName}" != "pnpm-lock.yaml" ]; then
-        cp "${toString lockfile}" pnpm-lock.yaml
-      fi
-    ''}
-
     if [ -f "$pnpmDeps/pnpm-store.tar.zst" ]; then
       tar --zstd -xf "$pnpmDeps/pnpm-store.tar.zst" -C "$STORE_PATH"
     else

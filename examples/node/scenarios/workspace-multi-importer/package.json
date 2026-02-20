@@ -1,0 +1,9 @@
+{
+  "name": "onix-node-workspace-multi-importer",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -11,6 +11,9 @@
   pnpmWorkspaces ? [ ],
   workspacePaths ? [ ],
   nodeConfig ? { },
+  globalDepsKey ? null,
+  nodeVersionMajor ? null,
+  pnpmVersionMajor ? null,
 }:
 
 let
@@ -59,12 +62,21 @@ let
           ];
         in
         lib.concatStringsSep "\n" (lib.filter (s: s != "") scripts);
+      merge_phase =
+        name:
+        let
+          base_phase = base.${name} or "";
+          override_phase = overrides.${name} or "";
+        in
+        if override_phase != "" then override_phase else base_phase;
     in
     {
       deps = merge_lists "deps";
-      preInstall = merge_scripts "preInstall";
-      prePnpmInstall = merge_scripts "prePnpmInstall";
-      pnpmInstallFlags = merge_lists "pnpmInstallFlags";
+      preBuild = merge_scripts "preBuild";
+      postBuild = merge_scripts "postBuild";
+      postInstall = merge_scripts "postInstall";
+      installFlags = merge_lists "installFlags";
+      buildPhase = merge_phase "buildPhase";
     };
   inferredNodeConfigs = builtins.foldl' (
     acc: pkg:
@@ -96,19 +108,44 @@ let
   nodeOverlayDeps = lib.unique (
     lib.concatMap (cfg: cfg.deps or [ ]) (builtins.attrValues nodeConfigs)
   );
-  nodePreInstall = lib.concatStringsSep "\n" (
-    lib.concatMap (cfg: lib.optionals (cfg ? preInstall) [ cfg.preInstall ]) (
+  nodePreBuild = lib.concatStringsSep "\n" (
+    lib.concatMap (cfg: lib.optionals (cfg ? preBuild) [ cfg.preBuild ]) (
       builtins.attrValues nodeConfigs
     )
   );
-  nodePrePnpmInstall = lib.concatStringsSep "\n" (
-    lib.concatMap (cfg: lib.optionals (cfg ? prePnpmInstall) [ cfg.prePnpmInstall ]) (
+  nodePostBuild = lib.concatStringsSep "\n" (
+    lib.concatMap (cfg: lib.optionals (cfg ? postBuild) [ cfg.postBuild ]) (
       builtins.attrValues nodeConfigs
     )
   );
-  nodePnpmInstallFlags = lib.unique (
-    lib.concatMap (cfg: cfg.pnpmInstallFlags or [ ]) (builtins.attrValues nodeConfigs)
+  nodePostInstall = lib.concatStringsSep "\n" (
+    lib.concatMap (cfg: lib.optionals (cfg ? postInstall) [ cfg.postInstall ]) (
+      builtins.attrValues nodeConfigs
+    )
   );
+  nodeInstallFlags = lib.unique (
+    lib.concatMap (cfg: cfg.installFlags or [ ]) (builtins.attrValues nodeConfigs)
+  );
+  nodeBuildPhases = lib.unique (
+    lib.filter (s: s != "") (map (cfg: cfg.buildPhase or "") (builtins.attrValues nodeConfigs))
+  );
+  customBuildPhase = if nodeBuildPhases == [ ] then null else builtins.head nodeBuildPhases;
+  nodeMajor = if nodeVersionMajor == null then 0 else nodeVersionMajor;
+  pnpmMajor = if pnpmVersionMajor == null then 0 else pnpmVersionMajor;
+  computedGlobalKey =
+    if globalDepsKey != null then
+      globalDepsKey
+    else
+      "lock=${pnpmDepsHash};pnpm=${toString pnpmMajor};node=${toString nodeMajor}";
+  overlayDigest = builtins.hashString "sha256" (builtins.toJSON nodeConfigs);
+  workspaceDigest = builtins.hashString "sha256" (builtins.toJSON workspacePaths);
+  artifactIdentity = lib.concatStringsSep ";" [
+    computedGlobalKey
+    "system=${pkgs.stdenv.hostPlatform.system}"
+    "script=${scriptPolicy}"
+    "overlay=${overlayDigest}"
+    "workspace=${workspaceDigest}"
+  ];
   filteredSourceRoot = lib.cleanSourceWith {
     src = sourceRoot;
     filter = sourceFilter sourceRoot;
@@ -137,10 +174,10 @@ let
       filteredProjectRoot;
   isScriptless = scriptPolicy == "none";
   baseInstallFlags = if isScriptless then [ "--ignore-scripts" ] else [ ];
-  installFlags = lib.unique (baseInstallFlags ++ nodePnpmInstallFlags);
+  installFlags = lib.unique (baseInstallFlags ++ nodeInstallFlags);
   workspaceFilters = map (w: "--filter=${w}") pnpmWorkspaces;
   pnpmDeps = pkgs.fetchPnpmDeps {
-    pname = "onix-${safeProject}-pnpm-deps";
+    pname = "onix-pnpm-deps-node${toString nodeMajor}-pnpm${toString pnpmMajor}";
     version = "0";
     src = normalizedSourceRoot;
     pnpm = pkgs.pnpm;
@@ -151,14 +188,15 @@ let
       pnpm config set side-effects-cache false
       pnpm config set update-notifier false
     ''
-    + nodePrePnpmInstall
-    + nodePreInstall;
+    + nodePreBuild
+    + nodePostBuild;
     pnpmInstallFlags = [ "--force" ];
     pnpmWorkspaces = pnpmWorkspaces;
   };
 
 in
 assert pnpmDepsHash != "";
+assert builtins.length nodeBuildPhases <= 1;
 pkgs.stdenv.mkDerivation {
   pname = "onix-${safeProject}-node-modules";
   version = "0";
@@ -175,11 +213,12 @@ pkgs.stdenv.mkDerivation {
 
   pnpmDeps = pnpmDeps;
   dontBuild = true;
-  preInstall = nodePreInstall;
-  prePnpmInstall = nodePrePnpmInstall;
+  preBuild = nodePreBuild;
+  postBuild = nodePostBuild;
+  postInstall = nodePostInstall;
 
   installPhase = ''
-    runHook preInstall
+    runHook preBuild
 
     export HOME="$TMPDIR/pnpm-home"
     export NPM_CONFIG_USERCONFIG="$TMPDIR/onix-npmrc"
@@ -212,12 +251,6 @@ pkgs.stdenv.mkDerivation {
     if [ -f package.json ]; then
       node -e 'const fs = require("fs"); const p = JSON.parse(fs.readFileSync("package.json", "utf8")); delete p.packageManager; fs.writeFileSync("package.json", JSON.stringify(p, null, 2) + "\n");'
     fi
-    ${lib.optionalString (lockfile != null && builtins.pathExists lockfile) ''
-      if [ "${lockfileBaseName}" != "pnpm-lock.yaml" ]; then
-        cp "${toString lockfile}" pnpm-lock.yaml
-      fi
-    ''}
-
     if [ -f "$pnpmDeps/pnpm-store.tar.zst" ]; then
       tar --zstd -xf "$pnpmDeps/pnpm-store.tar.zst" -C "$STORE_PATH"
     else
@@ -231,19 +264,25 @@ pkgs.stdenv.mkDerivation {
     pnpm config set update-notifier false
     pnpm config set manage-package-manager-versions false
 
-    runHook prePnpmInstall
-
-    # Install from the pre-fetched dependency graph.
-    # Keep script execution policy aligned with importer policy:
-    #   none => ignore all lifecycle scripts
-    #   allowed => run lifecycle scripts (pnpm will honor workspace allowlists when set)
-    if [ -n "$NIX_NPM_REGISTRY" ]; then
-      pnpm install --force --registry="$NIX_NPM_REGISTRY" ${lib.concatStringsSep " " installFlags} ${lib.concatStringsSep " " workspaceFilters}
-    else
-      pnpm install --force ${lib.concatStringsSep " " installFlags} ${lib.concatStringsSep " " workspaceFilters}
-    fi
+    ${
+      if customBuildPhase == null then
+        ''
+          # Install from the pre-fetched dependency graph.
+          # Keep script execution policy aligned with importer policy:
+          #   none => ignore all lifecycle scripts
+          #   allowed => run lifecycle scripts (pnpm will honor workspace allowlists when set)
+          if [ -n "$NIX_NPM_REGISTRY" ]; then
+            pnpm install --force --registry="$NIX_NPM_REGISTRY" ${lib.concatStringsSep " " installFlags} ${lib.concatStringsSep " " workspaceFilters}
+          else
+            pnpm install --force ${lib.concatStringsSep " " installFlags} ${lib.concatStringsSep " " workspaceFilters}
+          fi
+        ''
+      else
+        customBuildPhase
+    }
 
     patchShebangs node_modules/{*,.*}
+    runHook postBuild
     if [ -n "${lib.concatStringsSep " " (map lib.escapeShellArg workspacePaths)}" ]; then
       mkdir -p "$out"
       for rel in ${lib.concatStringsSep " " (map lib.escapeShellArg workspacePaths)}; do
@@ -272,7 +311,7 @@ pkgs.stdenv.mkDerivation {
 
     mkdir -p "$out/node_modules"
     cp -a node_modules/. "$out/node_modules/"
-    echo "${pnpmDepsHash}/${project}/${scriptPolicy}" > "$out/.node_modules_id"
+    echo "${artifactIdentity}" > "$out/.node_modules_id"
 
     runHook postInstall
   '';

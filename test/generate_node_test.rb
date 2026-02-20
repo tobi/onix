@@ -136,6 +136,43 @@ class GenerateNodeTest < Minitest::Test
     end
   end
 
+  def test_generate_includes_workspace_paths_from_importers
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "workspace.jsonl"),
+        meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: []),
+        entries: [
+          Onix::Packageset::Entry.new(
+            installer: "node",
+            name: "react",
+            version: "18.3.1",
+            source: "pnpm",
+            importer: "bar",
+            deps: [],
+          ),
+          Onix::Packageset::Entry.new(
+            installer: "node",
+            name: "is-positive",
+            version: "3.1.0",
+            source: "pnpm",
+            importer: "foo",
+            deps: [],
+          ),
+        ]
+      )
+
+      Dir.chdir(dir) do
+        @command.run([])
+      end
+
+      project_contents = File.read(File.join(dir, "nix", "workspace.nix"))
+      assert_includes project_contents, 'workspacePaths = [ "bar" "foo" ];'
+    end
+  end
+
   def test_sort_versions_keeps_non_semver_in_input_order
     entries = [
       Onix::Packageset::Entry.new(installer: "node", name: "pkg", version: "file:../b", source: "file"),
@@ -667,6 +704,9 @@ class GenerateNodeTest < Minitest::Test
     assert_includes node_config_nix, "preInstall"
     assert_includes node_config_nix, "prePnpmInstall"
     assert_includes node_config_nix, "pnpmInstallFlags"
+    assert_includes node_config_nix, "if detectedOld != [ ] then"
+    refute_includes node_config_nix, "_ ="
+    refute_includes node_config_nix, "__ ="
   end
 
   def test_generate_infers_node_build_config_for_known_packages
@@ -872,7 +912,7 @@ class GenerateNodeTest < Minitest::Test
     assert_includes build_node_modules_nix, "normalizedSourceRoot"
     assert_includes build_node_modules_nix, 'builtins.baseNameOf (toString lockfile)'
     assert_includes build_node_modules_nix, 'cp ${lockfile} "$out/pnpm-lock.yaml"'
-    assert_includes build_node_modules_nix, 'cp "${toString lockfile}" pnpm-lock.yaml'
+    refute_includes build_node_modules_nix, 'cp "${toString lockfile}" pnpm-lock.yaml'
     assert_includes build_node_modules_nix, "src = normalizedSourceRoot;"
     assert_includes build_node_modules_nix, "onix-pnpm-deps-node${toString nodeMajor}-pnpm${toString pnpmMajor}"
     refute_includes build_node_modules_nix, "onix-${safeProject}-pnpm-deps"

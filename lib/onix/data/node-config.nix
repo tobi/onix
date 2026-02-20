@@ -45,24 +45,19 @@ let
           throw "Node overlay ${name}.nix must return a list or attrset.";
       detectedOld = lib.filter (key: builtins.elem key configKeys) oldKeys;
       unknownKeys = lib.filter (key: !(builtins.elem key allowedKeys)) configKeys;
-      _ =
-        if detectedOld != [ ] then
-          throw ''
-            Node overlay ${name}.nix uses deprecated key(s): ${lib.concatStringsSep ", " detectedOld}
-            Use the clean-break contract: deps, preBuild, postBuild, buildPhase, postInstall, installFlags
-          ''
-        else
-          null;
-      __ =
-        if unknownKeys != [ ] then
-          throw "Node overlay ${name}.nix has unsupported key(s): ${lib.concatStringsSep ", " unknownKeys}"
-        else
-          null;
     in
-    {
-      inherit name;
-      value = config;
-    };
+    if detectedOld != [ ] then
+      throw ''
+        Node overlay ${name}.nix uses deprecated key(s): ${lib.concatStringsSep ", " detectedOld}
+        Use the clean-break contract: deps, preBuild, postBuild, buildPhase, postInstall, installFlags
+      ''
+    else if unknownKeys != [ ] then
+      throw "Node overlay ${name}.nix has unsupported key(s): ${lib.concatStringsSep ", " unknownKeys}"
+    else
+      {
+        inherit name;
+        value = config;
+      };
 
 in
 builtins.listToAttrs (map loadOverlay (builtins.attrNames nixFiles))
