@@ -147,6 +147,41 @@ class PnpmImporterTest < Minitest::Test
     end
   end
 
+  def test_import_rejects_non_exact_engines_pnpm_constraint
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "pnpm-lock.yaml"), File.read(fixture_path("pnpm", "simple", "pnpm-lock.yaml")))
+      File.write(
+        File.join(dir, "package.json"),
+        '{ "packageManager": "pnpm@9.0.0", "engines": { "pnpm": ">=9" } }'
+      )
+
+      @command.instance_variable_set(:@project, stub_project(dir))
+
+      error = assert_raises(ArgumentError) do
+        @command.send(:import_pnpm, File.join(dir, "pnpm-lock.yaml"), "simple")
+      end
+      assert_includes error.message, "must pin an exact version"
+    end
+  end
+
+  def test_import_rejects_mismatched_package_manager_and_engines_pnpm
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "pnpm-lock.yaml"), File.read(fixture_path("pnpm", "simple", "pnpm-lock.yaml")))
+      File.write(
+        File.join(dir, "package.json"),
+        '{ "packageManager": "pnpm@10.28.0", "engines": { "pnpm": "9.6.0" } }'
+      )
+
+      @command.instance_variable_set(:@project, stub_project(dir))
+
+      error = assert_raises(ArgumentError) do
+        @command.send(:import_pnpm, File.join(dir, "pnpm-lock.yaml"), "simple")
+      end
+      assert_includes error.message, "engines.pnpm"
+      assert_includes error.message, "packageManager"
+    end
+  end
+
   def test_import_resolves_peer_variant_snapshots
     Dir.mktmpdir do |dir|
       File.write(File.join(dir, "pnpm-lock.yaml"), File.read(fixture_path("pnpm", "peers", "pnpm-lock.yaml")))
@@ -209,6 +244,37 @@ class PnpmImporterTest < Minitest::Test
       assert_equal "allowed", meta.script_policy
       assert_equal "pnpm@10.0.0", meta.package_manager
       assert_equal 10, meta.pnpm_version_major
+    end
+  end
+
+  def test_import_uses_lockfile_major_when_package_manager_is_not_set
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "pnpm-lock.yaml"), File.read(fixture_path("pnpm", "simple", "pnpm-lock.yaml")))
+      File.write(File.join(dir, "package.json"), '{ "name": "simple" }')
+
+      @command.instance_variable_set(:@project, stub_project(dir))
+      @command.send(:import_pnpm, File.join(dir, "pnpm-lock.yaml"), "simple")
+
+      packageset = File.join(dir, "packagesets", "simple.jsonl")
+      meta, = Onix::Packageset.read(packageset)
+      assert_equal 9, meta.pnpm_version_major
+    end
+  end
+
+  def test_import_prefers_exact_engines_pnpm_major_for_metadata
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "pnpm-lock.yaml"), File.read(fixture_path("pnpm", "simple", "pnpm-lock.yaml")))
+      File.write(
+        File.join(dir, "package.json"),
+        '{ "packageManager": "pnpm@9.6.0", "engines": { "pnpm": "9.6.0" } }'
+      )
+
+      @command.instance_variable_set(:@project, stub_project(dir))
+      @command.send(:import_pnpm, File.join(dir, "pnpm-lock.yaml"), "simple")
+
+      packageset = File.join(dir, "packagesets", "simple.jsonl")
+      meta, = Onix::Packageset.read(packageset)
+      assert_equal 9, meta.pnpm_version_major
     end
   end
 

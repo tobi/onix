@@ -26,18 +26,38 @@ module Onix
         package_manager.match(/@(\d+)/)&.[](1)&.to_i
       end
 
-      def node_version_major
-        package_json = File.join(@root, "package.json")
-        return nil unless File.exist?(package_json)
+      def package_manager_version
+        parse_package_manager_version(package_manager)
+      end
 
-        engines = JSON.parse(File.read(package_json))["engines"]
+      def pnpm_engine
+        engines = package_json_engines
+        return nil unless engines.is_a?(Hash)
+
+        value = engines["pnpm"]
+        return nil if value.nil?
+
+        raw = value.to_s.strip
+        raw.empty? ? nil : raw
+      end
+
+      def pnpm_engine_exact_version
+        value = pnpm_engine
+        return nil if value.nil?
+        return value if exact_version?(value)
+
+        nil
+      end
+
+      def pnpm_version_major(lockfile_version = nil)
+        parse_major(pnpm_engine_exact_version) || package_manager_major || parse_major(lockfile_version)
+      end
+
+      def node_version_major
+        engines = package_json_engines
         return nil unless engines.is_a?(Hash)
 
         parse_major(engines["node"])
-      rescue JSON::ParserError
-        nil
-      rescue StandardError
-        nil
       end
 
       def script_policy
@@ -49,28 +69,32 @@ module Onix
       end
 
       def enforce_manager_compatible_with(lockfile_version)
-        return if package_manager_major.nil?
+        if pnpm_engine && pnpm_engine_exact_version.nil?
+          raise ArgumentError,
+                "engines.pnpm must pin an exact version (for example 9.6.0); got #{pnpm_engine.inspect}"
+        end
+
+        if pnpm_engine_exact_version && package_manager_version && pnpm_engine_exact_version != package_manager_version
+          raise ArgumentError,
+                "engines.pnpm #{pnpm_engine_exact_version} must match packageManager pnpm@#{package_manager_version}"
+        end
+
+        pnpm_major = pnpm_version_major(lockfile_version)
+        return if pnpm_major.nil?
 
         lockfile_major = parse_major(lockfile_version)
         return if lockfile_major.nil?
-        return if package_manager_major >= lockfile_major
+        return if pnpm_major >= lockfile_major
 
         raise ArgumentError,
-              "packageManager #{package_manager} is older than pnpm lockfileVersion #{lockfile_version} " \
+              "pnpm major #{pnpm_major} is older than pnpm lockfileVersion #{lockfile_version} " \
               "(requires major >= #{lockfile_major})"
       end
 
       private
 
       def detect_package_manager
-        package_json = File.join(@root, "package.json")
-        return nil unless File.exist?(package_json)
-
-        JSON.parse(File.read(package_json))["packageManager"]
-      rescue JSON::ParserError
-        nil
-      rescue StandardError
-        nil
+        package_json_data["packageManager"]
       end
 
       def scripts_configured?
@@ -99,9 +123,46 @@ module Onix
         raw.match?(/pnpm@\d+/i) ? raw : nil
       end
 
+      def parse_package_manager_version(value)
+        return nil if value.nil?
+        raw = value.to_s.strip
+        match = raw.match(/\Apnpm@v?(\d+\.\d+\.\d+(?:-[0-9A-Za-z\-.]+)?)(?:\+.*)?\z/i)
+        return nil unless match
+
+        match[1]
+      end
+
+      def exact_version?(value)
+        value.to_s.match?(/\A\d+\.\d+\.\d+(?:-[0-9A-Za-z\-.]+)?\z/)
+      end
+
       def parse_major(value)
         match = value.to_s.match(/(\d+)/)
         match ? match[1].to_i : nil
+      end
+
+      def package_json_engines
+        data = package_json_data
+        engines = data["engines"]
+        engines.is_a?(Hash) ? engines : nil
+      rescue StandardError
+        nil
+      end
+
+      def package_json_data
+        return @package_json_data if defined?(@package_json_data)
+
+        package_json = File.join(@root, "package.json")
+        @package_json_data =
+          if File.exist?(package_json)
+            JSON.parse(File.read(package_json))
+          else
+            {}
+          end
+      rescue JSON::ParserError
+        @package_json_data = {}
+      rescue StandardError
+        @package_json_data = {}
       end
     end
   end

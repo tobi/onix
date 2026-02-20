@@ -633,7 +633,12 @@ class GenerateNodeTest < Minitest::Test
 
       build_nix = File.read(File.join(dir, "nix", "build-node-modules.nix"))
       assert_includes build_nix, "pnpm config set manage-package-manager-versions false"
+      assert_includes build_nix, "pnpm config set engine-strict true"
+      assert_includes build_nix, "pnpm = pnpmPackage;"
+      assert_includes build_nix, "pkgs.pnpm_9 or pkgs.pnpm"
       refute_includes build_nix, "--offline"
+      refute_includes build_nix, "delete p.packageManager"
+      refute_includes build_nix, "delete p.engines.pnpm"
       assert_includes build_nix, "pnpm install --force"
 
       project_nix = File.read(File.join(dir, "nix", "vite.nix"))
@@ -894,6 +899,9 @@ class GenerateNodeTest < Minitest::Test
     assert_includes output, "NODE_EXTRA_CA_CERTS"
     assert_includes output, "NPM_CONFIG_CAFILE"
     assert_includes output, "ONIX_NPM_TOKEN_LINES"
+    refute_includes output, "${pkgs.nodejs}/bin/node -e"
+    refute_includes output, "delete p.packageManager"
+    refute_includes output, "delete p.engines.pnpm"
   end
 
   def test_prefetch_pnpm_deps_expr_normalizes_nonstandard_lockfile_name
@@ -903,7 +911,26 @@ class GenerateNodeTest < Minitest::Test
     assert_includes expr, "lockfilePath = /tmp/workspace.pnpm-lock.yaml;"
     assert_includes expr, 'builtins.baseNameOf lockfilePath == "pnpm-lock.yaml"'
     assert_includes expr, 'cp ${lockfilePath} "$out/pnpm-lock.yaml"'
+    assert_includes expr, "pnpm config set manage-package-manager-versions false"
+    assert_includes expr, "pnpm config set engine-strict true"
     assert_includes expr, "src = prefetchSrc;"
+    assert_includes expr, "pnpm = pnpmPackage;"
+    assert_includes expr, "pnpmMajor = null;"
+  end
+
+  def test_prefetch_pnpm_deps_expr_uses_major_specific_pnpm_package
+    command = Onix::Commands::Generate.new
+    meta = Onix::Packageset::Meta.new(
+      ruby: nil,
+      bundler: nil,
+      platforms: [],
+      pnpm_version_major: 9,
+    )
+    expr = command.send(:prefetch_pnpm_deps_expr, "/tmp/pnpm-lock.yaml", meta)
+
+    assert_includes expr, "pnpmMajor = 9;"
+    assert_includes expr, "else if pnpmMajor == 9 then pkgs.pnpm_9 or pkgs.pnpm"
+    assert_includes expr, "pnpm = pnpmPackage;"
   end
 
   def test_build_node_modules_template_normalizes_nonstandard_lockfile_name
@@ -917,6 +944,12 @@ class GenerateNodeTest < Minitest::Test
     assert_includes build_node_modules_nix, "onix-pnpm-deps-node${toString nodeMajor}-pnpm${toString pnpmMajor}"
     refute_includes build_node_modules_nix, "onix-${safeProject}-pnpm-deps"
     assert_includes build_node_modules_nix, "artifactIdentity"
+    assert_includes build_node_modules_nix, "pnpmPackage ="
+    assert_includes build_node_modules_nix, "pkgs.pnpm_9 or pkgs.pnpm"
+    assert_includes build_node_modules_nix, "pnpm = pnpmPackage;"
+    assert_includes build_node_modules_nix, "pnpm config set engine-strict true"
+    refute_includes build_node_modules_nix, "pnpm config set engine-strict false"
+    refute_includes build_node_modules_nix, "delete p.packageManager"
   end
 end
 end

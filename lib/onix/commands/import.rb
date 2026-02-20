@@ -197,7 +197,7 @@ module Onix
           script_policy: script_policy,
           lockfile_path: File.expand_path(lockfile),
           node_version_major: project_config.node_version_major,
-          pnpm_version_major: project_config.package_manager_major,
+          pnpm_version_major: project_config.pnpm_version_major(lockdata.lockfile_version),
         )
 
         FileUtils.mkdir_p(@project.packagesets_dir)

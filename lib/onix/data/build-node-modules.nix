@@ -132,6 +132,17 @@ let
   customBuildPhase = if nodeBuildPhases == [ ] then null else builtins.head nodeBuildPhases;
   nodeMajor = if nodeVersionMajor == null then 0 else nodeVersionMajor;
   pnpmMajor = if pnpmVersionMajor == null then 0 else pnpmVersionMajor;
+  pnpmPackage =
+    if pnpmMajor == 0 then
+      pkgs.pnpm
+    else if pnpmMajor == 8 then
+      pkgs.pnpm_8 or pkgs.pnpm
+    else if pnpmMajor == 9 then
+      pkgs.pnpm_9 or pkgs.pnpm
+    else if pnpmMajor == 10 then
+      pkgs.pnpm_10 or pkgs.pnpm
+    else
+      throw "Unsupported pnpm major ${toString pnpmMajor}; supported majors: 8, 9, 10";
   computedGlobalKey =
     if globalDepsKey != null then
       globalDepsKey
@@ -180,13 +191,15 @@ let
     pname = "onix-pnpm-deps-node${toString nodeMajor}-pnpm${toString pnpmMajor}";
     version = "0";
     src = normalizedSourceRoot;
-    pnpm = pkgs.pnpm;
+    pnpm = pnpmPackage;
     fetcherVersion = 3;
     hash = pnpmDepsHash;
     prePnpmInstall = ''
       pnpm config set package-import-method clone-or-copy
       pnpm config set side-effects-cache false
       pnpm config set update-notifier false
+      pnpm config set manage-package-manager-versions false
+      pnpm config set engine-strict true
     ''
     + nodePreBuild
     + nodePostBuild;
@@ -205,7 +218,7 @@ pkgs.stdenv.mkDerivation {
 
   nativeBuildInputs = [
     pkgs.nodejs
-    pkgs.pnpm
+    pnpmPackage
     pkgs.zstd
   ]
   ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [ pkgs.patchelf ]
@@ -247,10 +260,6 @@ pkgs.stdenv.mkDerivation {
       printf '%s\n' "$ONIX_NPM_TOKEN_LINES" >> "$NPM_CONFIG_USERCONFIG"
     fi
 
-    # Keep pnpm packageManager checks from failing builds for lockfiles that pin another pnpm minor.
-    if [ -f package.json ]; then
-      node -e 'const fs = require("fs"); const p = JSON.parse(fs.readFileSync("package.json", "utf8")); delete p.packageManager; fs.writeFileSync("package.json", JSON.stringify(p, null, 2) + "\n");'
-    fi
     if [ -f "$pnpmDeps/pnpm-store.tar.zst" ]; then
       tar --zstd -xf "$pnpmDeps/pnpm-store.tar.zst" -C "$STORE_PATH"
     else
@@ -263,6 +272,7 @@ pkgs.stdenv.mkDerivation {
     pnpm config set side-effects-cache false
     pnpm config set update-notifier false
     pnpm config set manage-package-manager-versions false
+    pnpm config set engine-strict true
 
     ${
       if customBuildPhase == null then

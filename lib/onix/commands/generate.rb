@@ -357,7 +357,7 @@ module Onix
           "--impure",
           "--no-out-link",
           "--expr",
-          prefetch_pnpm_deps_expr(lockfile),
+          prefetch_pnpm_deps_expr(lockfile, meta),
         )
 
         hash = extract_pnpm_fetch_hash(out + err)
@@ -381,10 +381,11 @@ module Onix
         {}
       end
 
-      def prefetch_pnpm_deps_expr(lockfile)
+      def prefetch_pnpm_deps_expr(lockfile, meta = nil)
         lockfile_path = File.expand_path(lockfile)
         lockfile_dir = File.expand_path(File.dirname(lockfile_path))
         project_name = File.basename(lockfile_dir)
+        pnpm_major = meta&.pnpm_version_major
         <<~NIX
           let
             pkgs = import <nixpkgs> {};
@@ -398,12 +399,19 @@ module Onix
                 chmod -R +w "$out"
                 cp ${lockfilePath} "$out/pnpm-lock.yaml"
               '';
+            pnpmMajor = #{nix_value(pnpm_major)};
+            pnpmPackage =
+              if pnpmMajor == null then pkgs.pnpm
+              else if pnpmMajor == 8 then pkgs.pnpm_8 or pkgs.pnpm
+              else if pnpmMajor == 9 then pkgs.pnpm_9 or pkgs.pnpm
+              else if pnpmMajor == 10 then pkgs.pnpm_10 or pkgs.pnpm
+              else throw "Unsupported pnpm major ${toString pnpmMajor}; supported majors: 8, 9, 10";
           in
           pkgs.fetchPnpmDeps {
             pname = #{nix_str("onix-#{project_name}-pnpm-deps")};
             version = "0";
             src = prefetchSrc;
-            pnpm = pkgs.pnpm;
+            pnpm = pnpmPackage;
             fetcherVersion = 3;
             hash = pkgs.lib.fakeHash;
             prePnpmInstall = ''
@@ -411,6 +419,8 @@ module Onix
               pnpm config set package-import-method clone-or-copy
               pnpm config set side-effects-cache false
               pnpm config set update-notifier false
+              pnpm config set manage-package-manager-versions false
+              pnpm config set engine-strict true
             '';
             pnpmInstallFlags = [ ];
             pnpmWorkspaces = [ ];
@@ -537,7 +547,7 @@ module Onix
         buildable = entries.reject { |e| e.source == "stdlib" || e.source == "path" }
         nodes = entries.select { |e| e.installer == "node" }
         ruby_nodes = buildable.reject { |e| e.installer == "node" }
-        importer_paths = nodes.filter_map(&:importer).flat_map do |importers|
+        importer_paths = nodes.map(&:importer).compact.flat_map do |importers|
           importers.split(",").map(&:strip).reject { |name| name.empty? || name == "." }
         end
         workspace_paths = (nodes.select { |e| e.path }.map(&:path) + importer_paths).uniq.sort
