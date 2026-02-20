@@ -137,14 +137,53 @@ module Onix
         project_config = Pnpm::ProjectConfig.new(File.dirname(lockfile))
         project_config.enforce_manager_compatible_with(lockdata.lockfile_version)
         script_policy = project_config.script_policy
-        importer = root_pnpm_importer(lockdata)
         package_manager = project_config.package_manager
 
         entries_by_key = {}
+        work = []
+        seen = Set.new
 
-        add_node_imports(entries_by_key, importer.dependencies, ["default"], lockdata)
-        add_node_imports(entries_by_key, importer.dev_dependencies, ["development"], lockdata)
-        add_node_imports(entries_by_key, importer.optional_dependencies, ["optional"], lockdata)
+        lockdata.importers.each do |importer_name, importer|
+          enqueue_node_imports(work, importer_name, importer.dependencies, ["default"])
+          enqueue_node_imports(work, importer_name, importer.dev_dependencies, ["development"])
+          enqueue_node_imports(work, importer_name, importer.optional_dependencies, ["optional"])
+        end
+
+        until work.empty?
+          item = work.shift
+          name = item.fetch(:name)
+          version = item.fetch(:version)
+          importer_name = item.fetch(:importer)
+          groups = item.fetch(:groups)
+          visit_key = "#{importer_name}/#{name}/#{version}/#{groups.sort.join(",")}"
+          next if seen.include?(visit_key)
+          seen << visit_key
+
+          entry = build_node_entry(name, version, groups, lockdata, importer_name)
+          key = "#{entry.name}/#{entry.version}"
+
+          if entries_by_key.key?(key)
+            existing = entries_by_key[key]
+            existing.groups = (existing.groups + entry.groups).uniq
+            existing.deps = (existing.deps + entry.deps).uniq
+            existing.importer = merge_importers(existing.importer, entry.importer)
+          else
+            entries_by_key[key] = entry
+          end
+
+          next unless entry.source == "pnpm"
+
+          snapshot = lockdata.snapshot_for(name, version)
+          package_deps = snapshot && snapshot.dependencies ? snapshot.dependencies : {}
+          package_deps.each do |dep_name, dep_version|
+            work << {
+              importer: importer_name,
+              name: dep_name,
+              version: dep_version.to_s,
+              groups: groups,
+            }
+          end
+        end
 
         entries = entries_by_key.values
 
@@ -157,6 +196,8 @@ module Onix
           package_manager: package_manager,
           script_policy: script_policy,
           lockfile_path: File.expand_path(lockfile),
+          node_version_major: project_config.node_version_major,
+          pnpm_version_major: project_config.package_manager_major,
         )
 
         FileUtils.mkdir_p(@project.packagesets_dir)
@@ -167,38 +208,19 @@ module Onix
         UI.done "#{entries.size} packages"
       end
 
-      def root_pnpm_importer(lockdata)
-        importer = lockdata.importers["."]
-
-        if importer
-          return importer
-        end
-
-        if lockdata.importers.length == 1
-          return lockdata.importers.values.first
-        end
-
-        abort "Root-only import requires importer '.' in pnpm-lock.yaml; found #{lockdata.importers.keys.sort.join(", ")}"
-      end
-
-      def add_node_imports(target, deps, groups, lockdata)
+      def enqueue_node_imports(queue, importer_name, deps, groups)
         deps.each do |name, dep|
-          entry = build_node_entry(name, dep, groups, lockdata)
-          key = "#{entry.name}/#{entry.version}"
-
-          if target.key?(key)
-            existing = target[key]
-            existing.groups = (existing.groups + entry.groups).uniq
-            existing.deps = (existing.deps + entry.deps).uniq
-            next
-          end
-
-          target[key] = entry
+          queue << {
+            importer: importer_name,
+            name: name,
+            version: dep.version.to_s,
+            groups: groups,
+          }
         end
       end
 
-      def build_node_entry(name, dep, groups, lockdata)
-        dep_version = dep.version.to_s
+      def build_node_entry(name, dep_version, groups, lockdata, importer_name)
+        dep_version = dep_version.to_s
 
         if dep_version.start_with?("link:")
           return Packageset::Entry.new(
@@ -206,6 +228,7 @@ module Onix
             name: name,
             version: dep_version,
             source: "link",
+            importer: importer_name,
             path: dep_version.sub("link:", ""),
             deps: [],
             groups: groups,
@@ -218,6 +241,7 @@ module Onix
             name: name,
             version: dep_version,
             source: "file",
+            importer: importer_name,
             path: dep_version.sub("file:", ""),
             deps: [],
             groups: groups,
@@ -225,16 +249,35 @@ module Onix
         end
 
         snapshot = lockdata.snapshot_for(name, dep_version)
+        package = lockdata.package_for(name, dep_version)
         package_deps = snapshot && snapshot.dependencies ? snapshot.dependencies : {}
+        resolution = package&.resolution
+        integrity = resolution.is_a?(Hash) ? resolution["integrity"] : nil
 
         Packageset::Entry.new(
           installer: "node",
           name: name,
           version: dep_version,
           source: "pnpm",
+          importer: importer_name,
+          integrity: integrity,
+          resolution: resolution,
+          os: package&.os || [],
+          cpu: package&.cpu || [],
+          libc: package&.libc || [],
+          engines: package&.engines || {},
           deps: package_deps.keys,
           groups: groups,
         )
+      end
+
+      def merge_importers(current, incoming)
+        list = []
+        list.concat(current.to_s.split(",")) if current
+        list << incoming.to_s
+        list = list.map(&:strip).reject(&:empty?).uniq.sort
+        return nil if list.empty?
+        list.join(",")
       end
 
       def import_ruby(lockfile, project_name)

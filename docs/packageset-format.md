@@ -12,13 +12,13 @@ packagesets/<project>.jsonl
 
 **Line 1: metadata**
 ```json
-{"_meta":true,"ruby":"3.4.8","bundler":"2.6.5","platforms":["arm64-darwin","ruby"],"package_manager":"pnpm@10.0.0","script_policy":"none","lockfile_path":"/abs/path/to/pnpm-lock.yaml"}
+{"_meta":true,"ruby":"3.4.8","bundler":"2.6.5","platforms":["arm64-darwin","ruby"],"package_manager":"pnpm@10.0.0","script_policy":"none","lockfile_path":"/abs/path/to/pnpm-lock.yaml","node_version_major":22,"pnpm_version_major":10}
 ```
 
 **Line 2+: one entry per package**
 ```json
 {"installer":"ruby","name":"rack","version":"3.1.12","source":"rubygems","remote":"https://rubygems.org","deps":["webrick"]}
-{"installer":"node","name":"rimraf","version":"2.7.1","source":"pnpm","deps":["glob"]}
+{"installer":"node","name":"rimraf","version":"2.7.1","source":"pnpm","importer":".","integrity":"sha512-...","resolution":{"integrity":"sha512-..."},"engines":{"node":">=0.10.0"},"deps":["glob"]}
 ```
 
 ## Source types
@@ -85,6 +85,13 @@ generation — Ruby already provides them.
 | `path` | no | Used for `link:` / `file:` dependencies |
 | `source` | no | One of `pnpm`, `link`, `file` |
 | `version` | yes | Raw value from lockfile, including peer suffixes when present (e.g. `1.0.0(peer@2.0.0)`) |
+| `importer` | no | Importer(s) that introduced this dependency |
+| `integrity` | no | Integrity hash extracted from lockfile resolution |
+| `resolution` | no | Raw lockfile resolution metadata |
+| `os` | no | Platform OS constraints from lockfile |
+| `cpu` | no | CPU constraints from lockfile |
+| `libc` | no | libc constraints from lockfile |
+| `engines` | no | Engine constraints (for example `node`) |
 `_meta` can also include:
 
 | Field | Required | Description |
@@ -92,6 +99,8 @@ generation — Ruby already provides them.
 | `package_manager` | no | e.g. `pnpm@10.0.0` from `package.json` |
 | `script_policy` | no | One of `none` (default) or `allowed` (workspace allowlist present / explicit `--scripts allowed`) |
 | `lockfile_path` | no | Absolute lockfile path captured at import; used by `generate` to avoid lockfile discovery drift |
+| `node_version_major` | no | Node major used for dependency identity and build metadata |
+| `pnpm_version_major` | no | pnpm major used for dependency identity and build metadata |
 
 ### Node-specific notes
 

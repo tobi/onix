@@ -3,7 +3,28 @@
   "4.0.18(@types/node@22.19.10)" = {
     version = "4.0.18(@types/node@22.19.10)";
     source = "pnpm";
-    deps = [ "@vitest/expect" "@vitest/mocker" "@vitest/pretty-format" "@vitest/runner" "@vitest/snapshot" "@vitest/spy" "@vitest/utils" "es-module-lexer" "expect-type" "magic-string" "obug" "pathe" "picomatch" "std-env" "tinybench" "tinyexec" "tinyglobby" "tinyrainbow" "vite" "why-is-node-running" ];
+    deps = [
+      "@vitest/expect"
+      "@vitest/mocker"
+      "@vitest/pretty-format"
+      "@vitest/runner"
+      "@vitest/snapshot"
+      "@vitest/spy"
+      "@vitest/utils"
+      "es-module-lexer"
+      "expect-type"
+      "magic-string"
+      "obug"
+      "pathe"
+      "picomatch"
+      "std-env"
+      "tinybench"
+      "tinyexec"
+      "tinyglobby"
+      "tinyrainbow"
+      "vite"
+      "why-is-node-running"
+    ];
     groups = [ "development" ];
   };
 }

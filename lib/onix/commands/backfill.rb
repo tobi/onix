@@ -53,6 +53,8 @@ module Onix
             package_manager: meta.package_manager,
             script_policy: meta.script_policy,
             lockfile_path: desired_lockfile_path,
+            node_version_major: meta.node_version_major,
+            pnpm_version_major: meta.pnpm_version_major,
           )
 
           Packageset.write(path, meta: next_meta, entries: entries)

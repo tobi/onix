@@ -3,7 +3,7 @@
   "link:packages/vite" = {
     version = "link:packages/vite";
     source = "link";
-    deps = [  ];
+    deps = [ ];
     groups = [ "development" ];
     path = "packages/vite";
   };

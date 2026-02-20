@@ -405,7 +405,7 @@ module Onix
             src = prefetchSrc;
             pnpm = pkgs.pnpm;
             fetcherVersion = 3;
-            hash = "";
+            hash = pkgs.lib.fakeHash;
             prePnpmInstall = ''
               #{pnpm_prefetch_npmrc_expr}
               pnpm config set package-import-method clone-or-copy
@@ -583,17 +583,15 @@ module Onix
         end
         nix << "  };\n"
         nix << "\n"
+        nix << "  nodeSpec = name: version:\n"
+        nix << "    let\n"
+        nix << "      versions = import (./node + \"/\${name}.nix\");\n"
+        nix << "    in versions.\${version};\n"
         nix << "  nodePackages = {\n"
         nodes.sort_by { |e| "#{e.name}/#{e.version}" }.each do |e|
           key = "#{e.name}/#{e.version}"
-          nix << "    #{nix_key(key)} = {\n"
+          nix << "    #{nix_key(key)} = (nodeSpec #{nix_str e.name} #{nix_str e.version}) // {\n"
           nix << "      name = #{nix_str e.name};\n"
-          nix << "      version = #{nix_str e.version};\n"
-          nix << "      source = #{nix_str e.source};\n"
-          nix << "      deps = [ #{(e.deps || []).map { |dep| nix_str(dep) }.join(" ")} ];\n"
-          nix << "      groups = [ #{(e.groups || ['default']).map { |group| nix_str(group) }.join(" ")} ];\n"
-          nix << "      path = #{nix_str e.path};\n" if e.path
-          render_node_build_config(nix, node_inferred_config(e))
           nix << "    };\n"
         end
         nix << "  };\n"
@@ -608,6 +606,9 @@ module Onix
           nix << "    packageManager = #{nix_value(meta.package_manager)};\n"
           nix << "    scriptPolicy = #{nix_str(resolve_node_script_policy(meta))};\n"
           nix << "    pnpmDepsHash = #{nix_str(pnpm_deps_hash)};\n"
+          nix << "    globalDepsKey = #{nix_str(node_global_deps_key(meta, pnpm_deps_hash))};\n"
+          nix << "    nodeVersionMajor = #{nix_value(meta.node_version_major)};\n"
+          nix << "    pnpmVersionMajor = #{nix_value(meta.pnpm_version_major)};\n"
           nix << "    workspacePaths = [ #{workspace_paths.map { |path| nix_str(path) }.join(" ")} ];\n" unless workspace_paths.empty?
           nix << "  };\n"
         end
@@ -640,11 +641,24 @@ module Onix
 
         sort_versions(entries).each do |e|
           nix << "  #{nix_str e.version} = {\n"
+          nix << "    name = #{nix_str e.name};\n"
           nix << "    version = #{nix_str e.version};\n"
           nix << "    source = #{nix_str e.source};\n"
+          nix << "    importer = #{nix_str e.importer};\n" if e.importer
+          nix << "    integrity = #{nix_str e.integrity};\n" if e.integrity
+          if e.resolution
+            nix << "    resolution = #{nix_attrset(e.resolution, 4)};\n"
+          end
+          nix << "    os = [ #{(e.os || []).map { |dep| nix_str(dep) }.join(" ")} ];\n" if e.os && !e.os.empty?
+          nix << "    cpu = [ #{(e.cpu || []).map { |dep| nix_str(dep) }.join(" ")} ];\n" if e.cpu && !e.cpu.empty?
+          nix << "    libc = [ #{(e.libc || []).map { |dep| nix_str(dep) }.join(" ")} ];\n" if e.libc && !e.libc.empty?
+          if e.engines && !e.engines.empty?
+            nix << "    engines = #{nix_attrset(e.engines, 4)};\n"
+          end
           nix << "    deps = [ #{(e.deps || []).map { |dep| nix_str(dep) }.join(" ")} ];\n"
           nix << "    groups = [ #{(e.groups || ['default']).map { |group| nix_str(group) }.join(" ")} ];\n"
           nix << "    path = #{nix_str e.path};\n" if e.path
+          render_node_build_config(nix, node_inferred_config(e), indent: "    ")
           nix << "  };\n"
         end
 
@@ -662,31 +676,32 @@ module Onix
         UI.wrote "nix/build-gem.nix, nix/build-node-modules.nix, nix/gem-config.nix, nix/node-config.nix"
       end
 
-      def render_node_build_config(nix, config)
+      def render_node_build_config(nix, config, indent: "      ")
         return if config.nil? || config.empty?
 
-        nix << "      buildConfig = {\n"
+        nix << "#{indent}buildConfig = {\n"
+        inner = "#{indent}  "
         if (deps = config[:deps])
-          nix << "        deps = [ #{deps.map { |name| nix_pkg_ref(name) }.join(" ")} ];\n"
+          nix << "#{inner}deps = [ #{deps.map { |name| nix_pkg_ref(name) }.join(" ")} ];\n"
         end
 
         if (pre_install = config[:pre_install])
-          nix << "        preInstall = ''\n"
-          nix << "          #{pre_install}\n"
-          nix << "        '';\n"
+          nix << "#{inner}preBuild = ''\n"
+          nix << "#{inner}  #{pre_install}\n"
+          nix << "#{inner}'';\n"
         end
 
         if (pre_pnpm_install = config[:pre_pnpm_install])
-          nix << "        prePnpmInstall = ''\n"
-          nix << "          #{pre_pnpm_install}\n"
-          nix << "        '';\n"
+          nix << "#{inner}postBuild = ''\n"
+          nix << "#{inner}  #{pre_pnpm_install}\n"
+          nix << "#{inner}'';\n"
         end
 
         if (flags = config[:pnpm_install_flags])
-          nix << "        pnpmInstallFlags = [ #{flags.map { |f| nix_str(f) }.join(" ")} ];\n"
+          nix << "#{inner}installFlags = [ #{flags.map { |f| nix_str(f) }.join(" ")} ];\n"
         end
 
-        nix << "      };\n"
+        nix << "#{indent}};\n"
       end
 
       def nix_pkg_ref(name)
@@ -702,6 +717,12 @@ module Onix
         config
       end
 
+      def node_global_deps_key(meta, pnpm_deps_hash)
+        pnpm_major = meta&.pnpm_version_major || 0
+        node_major = meta&.node_version_major || 0
+        "lock=#{pnpm_deps_hash};pnpm=#{pnpm_major};node=#{node_major}"
+      end
+
       def nix_key(name)
         name =~ /^[a-zA-Z_][a-zA-Z0-9_]*$/ ? name : "\"#{name}\""
       end
@@ -714,11 +735,42 @@ module Onix
       end
 
       def nix_value(value)
-        value.nil? ? "null" : nix_str(value)
+        return "null" if value.nil?
+        return value.to_s if value.is_a?(Numeric)
+        return "true" if value == true
+        return "false" if value == false
+
+        nix_str(value)
       end
 
       def nix_str(s)
         "\"#{s}\""
+      end
+
+      def nix_attrset(hash, indent)
+        return "{}" if hash.nil? || hash.empty?
+
+        space = " " * indent
+        attrs = hash.sort_by { |key, _| key.to_s }.map do |key, value|
+          "#{space}#{nix_key(key.to_s)} = #{nix_attr_value(value, indent)};"
+        end
+        "{\n#{attrs.join("\n")}\n#{' ' * (indent - 2)}}"
+      end
+
+      def nix_attr_value(value, indent)
+        case value
+        when String then nix_str(value)
+        when Numeric then value.to_s
+        when TrueClass then "true"
+        when FalseClass then "false"
+        when NilClass then "null"
+        when Array
+          "[ #{value.map { |item| nix_attr_value(item, indent + 2) }.join(" ")} ]"
+        when Hash
+          nix_attrset(value, indent + 2)
+        else
+          nix_str(value.to_s)
+        end
       end
 
       def resolve_node_script_policy(meta)

@@ -3,7 +3,16 @@
   "3.0.0(eslint@9.39.2(jiti@2.6.1)(ms@2.1.3))" = {
     version = "3.0.0(eslint@9.39.2(jiti@2.6.1)(ms@2.1.3))";
     source = "pnpm";
-    deps = [ "@eslint-community/eslint-utils" "@eslint-community/regexpp" "comment-parser" "eslint" "jsdoc-type-pratt-parser" "refa" "regexp-ast-analysis" "scslre" ];
+    deps = [
+      "@eslint-community/eslint-utils"
+      "@eslint-community/regexpp"
+      "comment-parser"
+      "eslint"
+      "jsdoc-type-pratt-parser"
+      "refa"
+      "regexp-ast-analysis"
+      "scslre"
+    ];
     groups = [ "development" ];
   };
 }

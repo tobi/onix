@@ -9,11 +9,22 @@
     };
   };
 
-  outputs = { self, nixpkgs, scint }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      scint,
+    }:
     let
-      supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      supportedSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-      shellToolset = system:
+      shellToolset =
+        system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
           ruby = pkgs.ruby;
@@ -27,10 +38,12 @@
           pkgs.nodejs
           pkgs.pnpm
           pkgs.rsync
+          pkgs.nixfmt
         ];
     in
     {
-      packages = forAllSystems (system:
+      packages = forAllSystems (
+        system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
           ruby = pkgs.ruby;
@@ -54,18 +67,21 @@
               mkdir -p $out/bin
               makeWrapper ${ruby}/bin/ruby $out/bin/onix \
                 --prefix RUBYLIB : "$out/lib" \
-                --prefix PATH : "${pkgs.lib.makeBinPath [
-                  ruby
-                  pkgs.git
-                  pkgs.nix-prefetch-git
-                ]}" \
+                --prefix PATH : "${
+                  pkgs.lib.makeBinPath [
+                    ruby
+                    pkgs.git
+                    pkgs.nix-prefetch-git
+                  ]
+                }" \
                 --add-flags "$out/exe/onix"
             '';
           };
         }
       );
 
-      devShells = forAllSystems (system:
+      devShells = forAllSystems (
+        system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
         in

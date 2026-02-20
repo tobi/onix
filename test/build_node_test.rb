@@ -131,6 +131,33 @@ module Onix
       end
     end
 
+    def test_hydrate_node_modules_rehydrates_when_identity_marker_changes
+      Dir.mktmpdir do |dir|
+        project = Onix::Commands::Build.new
+        project.instance_variable_set(:@project, StubProject.new(dir))
+        id = File.join(dir, "store", "x")
+
+        source = File.join(id, "node_modules")
+        FileUtils.mkdir_p(source)
+        FileUtils.mkdir_p(File.join(source, "foo"))
+        File.write(File.join(source, "foo", "marker.txt"), "v1")
+        File.write(File.join(id, ".node_modules_id"), "identity-v1")
+
+        project.send(:hydrate_node_modules, id, target_root: dir)
+        target = File.join(dir, "node_modules")
+
+        assert_equal "v1", File.read(File.join(target, "foo", "marker.txt"))
+        assert_equal "identity-v1", File.read(File.join(dir, ".onix_node_modules_id")).strip
+
+        File.write(File.join(source, "foo", "marker.txt"), "version-two")
+        File.write(File.join(id, ".node_modules_id"), "identity-v2")
+
+        project.send(:hydrate_node_modules, id, target_root: dir, skip_if_unchanged: true)
+        assert_equal "version-two", File.read(File.join(target, "foo", "marker.txt"))
+        assert_equal "identity-v2", File.read(File.join(dir, ".onix_node_modules_id")).strip
+      end
+    end
+
     def test_build_project_builds_node_modules_without_hydration_for_node_projects
       Dir.mktmpdir do |dir|
         project_path = File.join(dir, "packagesets")

@@ -12,22 +12,24 @@
 let
   inherit (pkgs) lib;
 
-  overlayFiles = if builtins.pathExists overlayDir
-    then builtins.readDir overlayDir
-    else {};
+  overlayFiles = if builtins.pathExists overlayDir then builtins.readDir overlayDir else { };
 
-  nixFiles = lib.filterAttrs (name: type:
-    type == "regular" && lib.hasSuffix ".nix" name && !(lib.hasPrefix "_" name)
+  nixFiles = lib.filterAttrs (
+    name: type: type == "regular" && lib.hasSuffix ".nix" name && !(lib.hasPrefix "_" name)
   ) overlayFiles;
 
-  loadOverlay = filename:
+  loadOverlay =
+    filename:
     let
       name = lib.removeSuffix ".nix" filename;
       fn = import (overlayDir + "/${filename}");
       raw = fn { inherit pkgs; };
       config = if builtins.isList raw then { deps = raw; } else raw;
     in
-    { inherit name; value = config; };
+    {
+      inherit name;
+      value = config;
+    };
 
 in
 builtins.listToAttrs (map loadOverlay (builtins.attrNames nixFiles))

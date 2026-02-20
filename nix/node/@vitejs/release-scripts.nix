@@ -3,7 +3,16 @@
   "1.6.0(conventional-commits-filter@5.0.0)" = {
     version = "1.6.0(conventional-commits-filter@5.0.0)";
     source = "pnpm";
-    deps = [ "conventional-changelog" "conventional-changelog-conventionalcommits" "execa" "mri" "picocolors" "prompts" "publint" "semver" ];
+    deps = [
+      "conventional-changelog"
+      "conventional-changelog-conventionalcommits"
+      "execa"
+      "mri"
+      "picocolors"
+      "prompts"
+      "publint"
+      "semver"
+    ];
     groups = [ "development" ];
   };
 }

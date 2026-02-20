@@ -1,13 +1,31 @@
-{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
+{
+  pkgs ? import <nixpkgs> { },
+  ruby ? pkgs.ruby_3_4,
+}:
 let
   project = import ../../nix/spree.nix { inherit pkgs ruby; };
-in project.devShell {
+in
+project.devShell {
   name = "spree-devshell";
   buildInputs = with pkgs; [
-    sqlite vips imagemagick libyaml openssl zlib pkg-config libffi git
+    sqlite
+    vips
+    imagemagick
+    libyaml
+    openssl
+    zlib
+    pkg-config
+    libffi
+    git
   ];
   shellHook = ''
-    export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [ pkgs.vips pkgs.imagemagick pkgs.libffi ]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    export LD_LIBRARY_PATH="${
+      pkgs.lib.makeLibraryPath [
+        pkgs.vips
+        pkgs.imagemagick
+        pkgs.libffi
+      ]
+    }''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
     rm -rf tmp/cache/bootsnap 2>/dev/null
   '';
 }

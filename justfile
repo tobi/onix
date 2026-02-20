@@ -69,6 +69,14 @@ hydrate project target="":
 check checks="":
   if [ -z "{{checks}}" ]; then just _onix check; else just _onix check {{checks}}; fi
 
+fmt-nix:
+  files="$(git ls-files '*.nix')"; \
+  if [ -n "$files" ]; then nixfmt $files; fi
+
+fmt-check:
+  files="$(git ls-files '*.nix')"; \
+  if [ -n "$files" ]; then nixfmt --check $files; fi
+
 test *paths:
   ruby -Ilib -Itest -e 'Dir["test/**/*_test.rb"].sort.each { |f| load f }'
 
@@ -83,6 +91,11 @@ check-secrets:
 
 check-metadata:
   just _onix check packageset-metadata
+
+qa:
+  just fmt-check
+  just check
+  just test
 
 # --- Helpers ----------------------------------------------------------------
 [group: 'workflow']

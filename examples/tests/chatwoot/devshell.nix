@@ -1,15 +1,34 @@
-{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
+{
+  pkgs ? import <nixpkgs> { },
+  ruby ? pkgs.ruby_3_4,
+}:
 let
   project = import ../../nix/chatwoot.nix { inherit pkgs ruby; };
-in project.devShell {
+in
+project.devShell {
   name = "chatwoot-devshell";
   buildInputs = with pkgs; [
     (postgresql.withPackages (ps: [ ps.pgvector ]))
-    redis nodejs_22 yarn
-    vips imagemagick libyaml openssl zlib pkg-config libffi git
+    redis
+    nodejs_22
+    yarn
+    vips
+    imagemagick
+    libyaml
+    openssl
+    zlib
+    pkg-config
+    libffi
+    git
   ];
   shellHook = ''
-    export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [ pkgs.vips pkgs.imagemagick pkgs.libffi ]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    export LD_LIBRARY_PATH="${
+      pkgs.lib.makeLibraryPath [
+        pkgs.vips
+        pkgs.imagemagick
+        pkgs.libffi
+      ]
+    }''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
     export PGDATA="$TMPDIR/pg"
     export PGHOST="$TMPDIR/pg"

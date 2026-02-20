@@ -31,6 +31,13 @@ module Onix
       :name,          # gem name
       :version,       # version string
       :source,        # "rubygems" | "git" | "path" | "stdlib"
+      :importer,      # node importer name(s), comma-separated
+      :integrity,     # node integrity string from lockfile resolution
+      :resolution,    # node resolution metadata
+      :os,            # node os constraints from lockfile
+      :cpu,           # node cpu constraints from lockfile
+      :libc,          # node libc constraints from lockfile
+      :engines,       # node engines constraints from lockfile
       :platform,      # "ruby" (source) or "arm64-darwin" etc. (prebuilt-only, e.g. sorbet-static)
       :remote,        # gem server URL (rubygems only)
       :uri,           # git clone URL (git only)
@@ -49,6 +56,13 @@ module Onix
     ) do
       def to_jsonl
         h = { installer: installer, name: name, version: version, source: source }
+        h[:importer] = importer if importer && !importer.empty?
+        h[:integrity] = integrity if integrity && !integrity.empty?
+        h[:resolution] = resolution if resolution
+        h[:os] = os if os && !os.empty?
+        h[:cpu] = cpu if cpu && !cpu.empty?
+        h[:libc] = libc if libc && !libc.empty?
+        h[:engines] = engines if engines && !engines.empty?
         h[:platform] = platform if platform && platform != "ruby"
         h[:remote] = remote if remote
         h[:uri] = uri if uri
@@ -67,7 +81,17 @@ module Onix
       end
     end
 
-    Meta = Struct.new(:ruby, :bundler, :platforms, :package_manager, :script_policy, :lockfile_path, keyword_init: true) do
+    Meta = Struct.new(
+      :ruby,
+      :bundler,
+      :platforms,
+      :package_manager,
+      :script_policy,
+      :lockfile_path,
+      :node_version_major,
+      :pnpm_version_major,
+      keyword_init: true
+    ) do
       def to_jsonl
         JSON.generate(
           _meta: true,
@@ -77,6 +101,8 @@ module Onix
           package_manager: package_manager,
           script_policy: script_policy,
           lockfile_path: lockfile_path,
+          node_version_major: node_version_major,
+          pnpm_version_major: pnpm_version_major,
         )
       end
     end
@@ -110,6 +136,8 @@ module Onix
             package_manager: data[:package_manager],
             script_policy: data[:script_policy],
             lockfile_path: data[:lockfile_path],
+            node_version_major: data[:node_version_major],
+            pnpm_version_major: data[:pnpm_version_major],
           )
         else
           entries << Entry.new(
@@ -117,6 +145,13 @@ module Onix
             name: data[:name],
             version: data[:version],
             source: data[:source],
+            importer: data[:importer],
+            integrity: data[:integrity],
+            resolution: normalize_hash_keys(data[:resolution]),
+            os: data[:os],
+            cpu: data[:cpu],
+            libc: data[:libc],
+            engines: normalize_hash_keys(data[:engines]),
             platform: data[:platform],
             remote: data[:remote],
             uri: data[:uri],
@@ -136,6 +171,14 @@ module Onix
       end
 
       [meta, entries]
+    end
+
+    def self.normalize_hash_keys(hash)
+      return nil unless hash.is_a?(Hash)
+
+      hash.each_with_object({}) do |(key, value), out|
+        out[key.to_s] = value
+      end
     end
   end
 end

@@ -26,6 +26,20 @@ module Onix
         package_manager.match(/@(\d+)/)&.[](1)&.to_i
       end
 
+      def node_version_major
+        package_json = File.join(@root, "package.json")
+        return nil unless File.exist?(package_json)
+
+        engines = JSON.parse(File.read(package_json))["engines"]
+        return nil unless engines.is_a?(Hash)
+
+        parse_major(engines["node"])
+      rescue JSON::ParserError
+        nil
+      rescue StandardError
+        nil
+      end
+
       def script_policy
         if scripts_configured?
           "allowed"
@@ -86,7 +100,8 @@ module Onix
       end
 
       def parse_major(value)
-        value.to_s.to_i
+        match = value.to_s.match(/(\d+)/)
+        match ? match[1].to_i : nil
       end
     end
   end

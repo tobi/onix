@@ -1,37 +1,62 @@
-{ pkgs, lib, nodePackages, project, lockfile, projectRoot, scriptPolicy ? "none", packageManager ? null, pnpmDepsHash ? "", pnpmWorkspaces ? [ ], workspacePaths ? [ ], nodeConfig ? {} }:
+{
+  pkgs,
+  lib,
+  nodePackages,
+  project,
+  lockfile,
+  projectRoot,
+  scriptPolicy ? "none",
+  packageManager ? null,
+  pnpmDepsHash ? "",
+  pnpmWorkspaces ? [ ],
+  workspacePaths ? [ ],
+  nodeConfig ? { },
+}:
 
 let
-  safeProject = lib.replaceStrings [ "/" ":" "@" ] [ "_" "_" "_" ] (if project != null then project else "project");
-  sourceRoot = if lockfile != null && builtins.pathExists lockfile then builtins.dirOf lockfile else projectRoot;
+  safeProject = lib.replaceStrings [ "/" ":" "@" ] [ "_" "_" "_" ] (
+    if project != null then project else "project"
+  );
+  sourceRoot =
+    if lockfile != null && builtins.pathExists lockfile then builtins.dirOf lockfile else projectRoot;
   lockfileBaseName =
-    if lockfile != null && builtins.pathExists lockfile
-    then builtins.baseNameOf (toString lockfile)
-    else "pnpm-lock.yaml";
-  ignoredSourcePrefixes = [ ".git" "node_modules" "nix" "packagesets" ];
-  isIgnoredPath = rel:
-    rel == ".node_modules_id" ||
-    builtins.any (prefix: rel == prefix || lib.hasPrefix "${prefix}/" rel) ignoredSourcePrefixes;
-  sourceFilter = base: path: _type:
+    if lockfile != null && builtins.pathExists lockfile then
+      builtins.baseNameOf (toString lockfile)
+    else
+      "pnpm-lock.yaml";
+  ignoredSourcePrefixes = [
+    ".git"
+    "node_modules"
+    "nix"
+    "packagesets"
+  ];
+  isIgnoredPath =
+    rel:
+    rel == ".node_modules_id"
+    || builtins.any (prefix: rel == prefix || lib.hasPrefix "${prefix}/" rel) ignoredSourcePrefixes;
+  sourceFilter =
+    base: path: _type:
     let
       abs = toString path;
       root = toString base;
-      rel =
-        if abs == root
-        then ""
-        else lib.removePrefix (root + "/") abs;
+      rel = if abs == root then "" else lib.removePrefix (root + "/") abs;
     in
     rel == "" || !(isIgnoredPath rel);
   nodePackagesValues = builtins.attrValues nodePackages;
   nodePackageNames = lib.unique (builtins.map (pkg: pkg.name) nodePackagesValues);
-  nodeConfigFromBuild = base: overrides:
+  nodeConfigFromBuild =
+    base: overrides:
     let
-      merge_lists = name:
-        lib.unique ((base.${name} or [ ]) ++ (overrides.${name} or [ ]));
-      merge_scripts = name:
+      merge_lists = name: lib.unique ((base.${name} or [ ]) ++ (overrides.${name} or [ ]));
+      merge_scripts =
+        name:
         let
           base_script = base.${name} or "";
           override_script = overrides.${name} or "";
-          scripts = [ base_script override_script ];
+          scripts = [
+            base_script
+            override_script
+          ];
         in
         lib.concatStringsSep "\n" (lib.filter (s: s != "") scripts);
     in
@@ -41,64 +66,75 @@ let
       prePnpmInstall = merge_scripts "prePnpmInstall";
       pnpmInstallFlags = merge_lists "pnpmInstallFlags";
     };
-  inferredNodeConfigs = builtins.foldl'
-    (acc: pkg:
-      if !(pkg ? buildConfig) then acc else
+  inferredNodeConfigs = builtins.foldl' (
+    acc: pkg:
+    if !(pkg ? buildConfig) then
+      acc
+    else
       let
-        existing = if acc ? "${pkg.name}" then acc.${pkg.name} else {};
+        existing = if acc ? "${pkg.name}" then acc.${pkg.name} else { };
         merged = nodeConfigFromBuild existing pkg.buildConfig;
       in
-      acc // {
+      acc
+      // {
         "${pkg.name}" = merged;
       }
-    )
-    {}
-    nodePackagesValues;
-  nodeConfigPairs = map
-    (name:
-      let
-        inferred = inferredNodeConfigs.${name} or {};
-        override = nodeConfig.${name} or {};
-        merged = if inferred == {} then override else nodeConfigFromBuild inferred override;
-      in
-      { inherit name; value = merged; }
-    )
-    nodePackageNames;
+  ) { } nodePackagesValues;
+  nodeConfigPairs = map (
+    name:
+    let
+      inferred = inferredNodeConfigs.${name} or { };
+      override = nodeConfig.${name} or { };
+      merged = if inferred == { } then override else nodeConfigFromBuild inferred override;
+    in
+    {
+      inherit name;
+      value = merged;
+    }
+  ) nodePackageNames;
   nodeConfigs = builtins.listToAttrs nodeConfigPairs;
-  nodeOverlayDeps = lib.unique (lib.concatMap (cfg: cfg.deps or [ ]) (builtins.attrValues nodeConfigs));
-  nodePreInstall = lib.concatStringsSep "\n" (lib.concatMap
-    (cfg: lib.optionals (cfg ? preInstall) [ cfg.preInstall ])
-    (builtins.attrValues nodeConfigs));
-  nodePrePnpmInstall = lib.concatStringsSep "\n" (lib.concatMap
-    (cfg: lib.optionals (cfg ? prePnpmInstall) [ cfg.prePnpmInstall ])
-    (builtins.attrValues nodeConfigs));
-  nodePnpmInstallFlags = lib.unique (lib.concatMap
-    (cfg: cfg.pnpmInstallFlags or [ ])
-    (builtins.attrValues nodeConfigs));
+  nodeOverlayDeps = lib.unique (
+    lib.concatMap (cfg: cfg.deps or [ ]) (builtins.attrValues nodeConfigs)
+  );
+  nodePreInstall = lib.concatStringsSep "\n" (
+    lib.concatMap (cfg: lib.optionals (cfg ? preInstall) [ cfg.preInstall ]) (
+      builtins.attrValues nodeConfigs
+    )
+  );
+  nodePrePnpmInstall = lib.concatStringsSep "\n" (
+    lib.concatMap (cfg: lib.optionals (cfg ? prePnpmInstall) [ cfg.prePnpmInstall ]) (
+      builtins.attrValues nodeConfigs
+    )
+  );
+  nodePnpmInstallFlags = lib.unique (
+    lib.concatMap (cfg: cfg.pnpmInstallFlags or [ ]) (builtins.attrValues nodeConfigs)
+  );
   filteredSourceRoot = lib.cleanSourceWith {
     src = sourceRoot;
     filter = sourceFilter sourceRoot;
   };
   normalizedSourceRoot =
-    if lockfile != null && builtins.pathExists lockfile && lockfileBaseName != "pnpm-lock.yaml"
-    then pkgs.runCommand "onix-${safeProject}-source-root" { } ''
-      cp -R ${filteredSourceRoot}/. "$out/"
-      chmod -R +w "$out"
-      cp ${lockfile} "$out/pnpm-lock.yaml"
-    ''
-    else filteredSourceRoot;
+    if lockfile != null && builtins.pathExists lockfile && lockfileBaseName != "pnpm-lock.yaml" then
+      pkgs.runCommand "onix-${safeProject}-source-root" { } ''
+        cp -R ${filteredSourceRoot}/. "$out/"
+        chmod -R +w "$out"
+        cp ${lockfile} "$out/pnpm-lock.yaml"
+      ''
+    else
+      filteredSourceRoot;
   filteredProjectRoot = lib.cleanSourceWith {
     src = projectRoot;
     filter = sourceFilter projectRoot;
   };
   normalizedProjectRoot =
-    if lockfile != null && builtins.pathExists lockfile && lockfileBaseName != "pnpm-lock.yaml"
-    then pkgs.runCommand "onix-${safeProject}-project-root" { } ''
-      cp -R ${filteredProjectRoot}/. "$out/"
-      chmod -R +w "$out"
-      cp ${lockfile} "$out/pnpm-lock.yaml"
-    ''
-    else filteredProjectRoot;
+    if lockfile != null && builtins.pathExists lockfile && lockfileBaseName != "pnpm-lock.yaml" then
+      pkgs.runCommand "onix-${safeProject}-project-root" { } ''
+        cp -R ${filteredProjectRoot}/. "$out/"
+        chmod -R +w "$out"
+        cp ${lockfile} "$out/pnpm-lock.yaml"
+      ''
+    else
+      filteredProjectRoot;
   isScriptless = scriptPolicy == "none";
   baseInstallFlags = if isScriptless then [ "--ignore-scripts" ] else [ ];
   installFlags = lib.unique (baseInstallFlags ++ nodePnpmInstallFlags);
@@ -114,7 +150,9 @@ let
       pnpm config set package-import-method clone-or-copy
       pnpm config set side-effects-cache false
       pnpm config set update-notifier false
-    '' + nodePrePnpmInstall + nodePreInstall;
+    ''
+    + nodePrePnpmInstall
+    + nodePreInstall;
     pnpmInstallFlags = [ "--force" ];
     pnpmWorkspaces = pnpmWorkspaces;
   };
@@ -131,7 +169,9 @@ pkgs.stdenv.mkDerivation {
     pkgs.nodejs
     pkgs.pnpm
     pkgs.zstd
-  ] ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [ pkgs.patchelf ] ++ nodeOverlayDeps;
+  ]
+  ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [ pkgs.patchelf ]
+  ++ nodeOverlayDeps;
 
   pnpmDeps = pnpmDeps;
   dontBuild = true;

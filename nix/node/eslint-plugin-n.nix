@@ -3,7 +3,18 @@
   "17.23.2(eslint@9.39.2(jiti@2.6.1)(ms@2.1.3))(typescript@5.9.3)" = {
     version = "17.23.2(eslint@9.39.2(jiti@2.6.1)(ms@2.1.3))(typescript@5.9.3)";
     source = "pnpm";
-    deps = [ "@eslint-community/eslint-utils" "enhanced-resolve" "eslint" "eslint-plugin-es-x" "get-tsconfig" "globals" "globrex" "ignore" "semver" "ts-declaration-location" ];
+    deps = [
+      "@eslint-community/eslint-utils"
+      "enhanced-resolve"
+      "eslint"
+      "eslint-plugin-es-x"
+      "get-tsconfig"
+      "globals"
+      "globrex"
+      "ignore"
+      "semver"
+      "ts-declaration-location"
+    ];
     groups = [ "development" ];
   };
 }

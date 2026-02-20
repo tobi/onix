@@ -7,7 +7,19 @@ module Onix
     class Lockfile
       Dependency = Struct.new(:name, :specifier, :version, :type, keyword_init: true)
 
-      Package = Struct.new(:key, :resolution, :dependencies, :optional, :dev, :has_bin, :engines, keyword_init: true)
+      Package = Struct.new(
+        :key,
+        :resolution,
+        :dependencies,
+        :optional,
+        :dev,
+        :has_bin,
+        :engines,
+        :os,
+        :cpu,
+        :libc,
+        keyword_init: true
+      )
       Snapshot = Struct.new(:key, :dependencies, :optional, :dev, keyword_init: true)
       Importer = Struct.new(:name, :dependencies, :dev_dependencies, :optional_dependencies, keyword_init: true)
 
@@ -61,6 +73,17 @@ module Onix
         parts.uniq
       end
 
+      def package_for(name, dep_version)
+        return nil if dep_version.nil?
+
+        canonical_snapshot_keys(name.to_s, dep_version.to_s).each do |key|
+          package = packages[key]
+          return package if package
+        end
+
+        nil
+      end
+
       private
 
       def parse_importers(importers_data)
@@ -89,6 +112,9 @@ module Onix
             dev: truthy?(data["dev"] || data[:dev]),
             has_bin: truthy?(data["hasBin"] || data[:hasBin]),
             engines: normalize_engines(data["engines"] || data[:engines]),
+            os: normalize_array(data["os"] || data[:os]),
+            cpu: normalize_array(data["cpu"] || data[:cpu]),
+            libc: normalize_array(data["libc"] || data[:libc]),
           )
           result[key] = parsed
         end
@@ -145,6 +171,12 @@ module Onix
 
       def normalize_version(version)
         version.to_s
+      end
+
+      def normalize_array(values)
+        return [] if values.nil?
+
+        Array(values).map(&:to_s)
       end
 
       def normalize_keys(hash)

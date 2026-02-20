@@ -166,6 +166,34 @@ Extension compilation is handled automatically by `gem install`.
 
 ---
 
+## Node overlay contract (clean-break)
+
+Node overlays live at `overlays/node/<package>.nix` and are loaded by
+`nix/node-config.nix`.
+
+Each overlay is a function `{ pkgs }:` returning either:
+
+| Return type | Meaning |
+|-------------|---------|
+| `[ pkg1 pkg2 ... ]` | Extra build deps (`deps`) |
+| `{ deps = [...]; ... }` | Attrset with deps and optional hooks |
+
+**Canonical attrset fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `deps` | list | Extra native build inputs |
+| `preBuild` | string | Shell commands before node install/build |
+| `postBuild` | string | Shell commands after install/build |
+| `buildPhase` | string | Optional custom build/install script |
+| `postInstall` | string | Shell commands at end of install phase |
+| `installFlags` | list | Extra flags appended to `pnpm install` |
+
+Legacy keys are rejected with actionable errors:
+`preInstall`, `prePnpmInstall`, `pnpmInstallFlags`.
+
+---
+
 ## Key principles
 
 1. **Always link against system libraries from nixpkgs.** Never use vendored

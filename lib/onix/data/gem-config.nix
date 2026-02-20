@@ -5,25 +5,33 @@
 #
 # Returns: { gemName = { deps, extconfFlags, preBuild, ... }; ... }
 
-{ pkgs, ruby, overlayDir, rubyDir ? null, buildGemFn ? null }:
+{
+  pkgs,
+  ruby,
+  overlayDir,
+  rubyDir ? null,
+  buildGemFn ? null,
+}:
 
 let
   inherit (pkgs) lib;
 
-  overlayFiles = if builtins.pathExists overlayDir
-    then builtins.readDir overlayDir
-    else {};
+  overlayFiles = if builtins.pathExists overlayDir then builtins.readDir overlayDir else { };
 
-  nixFiles = lib.filterAttrs (name: type:
-    type == "regular" && lib.hasSuffix ".nix" name && !(lib.hasPrefix "_" name)
+  nixFiles = lib.filterAttrs (
+    name: type: type == "regular" && lib.hasSuffix ".nix" name && !(lib.hasPrefix "_" name)
   ) overlayFiles;
 
   # Helper: build a gem by name (latest version from rubyDir)
-  buildGem = name:
-    if buildGemFn != null then buildGemFn name
-    else throw "buildGem not available — pass buildGemFn to gem-config.nix";
+  buildGem =
+    name:
+    if buildGemFn != null then
+      buildGemFn name
+    else
+      throw "buildGem not available — pass buildGemFn to gem-config.nix";
 
-  loadOverlay = filename:
+  loadOverlay =
+    filename:
     let
       name = lib.removeSuffix ".nix" filename;
       fn = import (overlayDir + "/${filename}");
@@ -33,7 +41,10 @@ let
       # Normalize: list → { deps = list; }, attrset → pass through
       config = if builtins.isList raw then { deps = raw; } else raw;
     in
-    { inherit name; value = config; };
+    {
+      inherit name;
+      value = config;
+    };
 
 in
 builtins.listToAttrs (map loadOverlay (builtins.attrNames nixFiles))

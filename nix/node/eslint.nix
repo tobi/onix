@@ -3,7 +3,42 @@
   "9.39.2(jiti@2.6.1)(ms@2.1.3)" = {
     version = "9.39.2(jiti@2.6.1)(ms@2.1.3)";
     source = "pnpm";
-    deps = [ "@eslint-community/eslint-utils" "@eslint-community/regexpp" "@eslint/config-array" "@eslint/config-helpers" "@eslint/core" "@eslint/eslintrc" "@eslint/js" "@eslint/plugin-kit" "@humanfs/node" "@humanwhocodes/module-importer" "@humanwhocodes/retry" "@types/estree" "ajv" "chalk" "cross-spawn" "debug" "escape-string-regexp" "eslint-scope" "eslint-visitor-keys" "espree" "esquery" "esutils" "fast-deep-equal" "file-entry-cache" "find-up" "glob-parent" "ignore" "imurmurhash" "is-glob" "json-stable-stringify-without-jsonify" "lodash.merge" "minimatch" "natural-compare" "optionator" ];
+    deps = [
+      "@eslint-community/eslint-utils"
+      "@eslint-community/regexpp"
+      "@eslint/config-array"
+      "@eslint/config-helpers"
+      "@eslint/core"
+      "@eslint/eslintrc"
+      "@eslint/js"
+      "@eslint/plugin-kit"
+      "@humanfs/node"
+      "@humanwhocodes/module-importer"
+      "@humanwhocodes/retry"
+      "@types/estree"
+      "ajv"
+      "chalk"
+      "cross-spawn"
+      "debug"
+      "escape-string-regexp"
+      "eslint-scope"
+      "eslint-visitor-keys"
+      "espree"
+      "esquery"
+      "esutils"
+      "fast-deep-equal"
+      "file-entry-cache"
+      "find-up"
+      "glob-parent"
+      "ignore"
+      "imurmurhash"
+      "is-glob"
+      "json-stable-stringify-without-jsonify"
+      "lodash.merge"
+      "minimatch"
+      "natural-compare"
+      "optionator"
+    ];
     groups = [ "development" ];
   };
 }

@@ -3,7 +3,15 @@
   "16.2.7" = {
     version = "16.2.7";
     source = "pnpm";
-    deps = [ "commander" "listr2" "micromatch" "nano-spawn" "pidtree" "string-argv" "yaml" ];
+    deps = [
+      "commander"
+      "listr2"
+      "micromatch"
+      "nano-spawn"
+      "pidtree"
+      "string-argv"
+      "yaml"
+    ];
     groups = [ "development" ];
   };
 }

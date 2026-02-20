@@ -17,6 +17,17 @@ Bundler solves dependency resolution but not hermetic builds. Nix solves hermeti
 - **One derivation per package family.** Ruby gems and node_modules builds are individually cacheable and content-addressed.
 - **Build once, cache forever.** Same lockfile + same nixpkgs = same store paths. CI and dev share the cache.
 
+## Architectural intent
+
+onix is designed around two layers:
+
+- **Global artifact layer (Nix store).** Build lockfile-resolved dependencies into immutable `/nix/store/...` outputs that can be shared across projects and CI.
+- **Project composition layer.** Compose those artifacts into project-scoped outputs (`bundlePath` for Ruby, `nodeModules` for Node) without re-resolving dependencies.
+
+onix is not a package registry. The lockfile remains the source of truth, and onix translates it into reproducible Nix artifacts.
+
+Ruby already follows this model as per-gem outputs composed into a project bundle. Node is currently in a phase-1 project-level `nodeModules` composition flow.
+
 ## Install
 
 ```bash
@@ -101,6 +112,23 @@ onix backfill
 ```
 
 Runs `nix-eval`, `packageset-complete`, and `secrets` checks in parallel.
+
+## Quality workflow
+
+Use strict local gates before merge:
+
+```bash
+just fmt-check   # nixfmt --check over tracked .nix files
+just check       # onix checks
+just test        # full test suite
+just qa          # fmt-check + check + test
+```
+
+Development flow is TDD-first:
+
+1. write a failing test,
+2. implement the smallest fix,
+3. refactor with tests green.
 
 ### 6. pnpm Pilot (Vite)
 

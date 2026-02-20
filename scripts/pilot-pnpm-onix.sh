@@ -7,6 +7,8 @@ DEFAULT_PROJECT_DIR="${ONIX_PILOT_PATH:-$(pwd)}"
 PROJECT_DIR="${1:-$DEFAULT_PROJECT_DIR}"
 PROJECT_NAME="${2:-$(basename "$PROJECT_DIR")}"
 REPORT_FILE="${ONIX_PILOT_REPORT:-${PROJECT_DIR}/.onix-pilot-report.md}"
+WARM_HYDRATE_RUNS="${ONIX_PILOT_WARM_RUNS:-5}"
+WARM_HYDRATE_SLO_SECONDS="${ONIX_PILOT_WARM_SLO_SECONDS:-2}"
 declare -a ONIX_CMD=()
 
 log() {
@@ -39,7 +41,9 @@ run_step() {
   local start end elapsed
   start=$(date +%s)
   local status=0
-  if ! "$@"; then
+  if "$@"; then
+    status=0
+  else
     status=$?
   fi
   end=$(date +%s)
@@ -121,7 +125,7 @@ if [ ! -f pnpm-lock.yaml ]; then
 fi
 
 run_step "Readiness: lockfile" bash -lc "test -f pnpm-lock.yaml"
-run_step "Readiness: git status capture" bash -lc "git -C \"$PROJECT_DIR\" status --short"
+run_step "Readiness: git status capture" bash -lc "git -C \"$PROJECT_DIR\" status --short || true"
 
 run_step "Import" run_onix_project import .
 run_step "Generate" run_onix_project generate
@@ -156,6 +160,26 @@ else
   log "- node_modules id changed: re-hydrated from changed derivation"
 fi
 
+declare -a WARM_HYDRATE_DURATIONS=()
+for i in $(seq 1 "$WARM_HYDRATE_RUNS"); do
+  start=$(date +%s)
+  run_onix_project hydrate "$PROJECT_NAME" "$PROJECT_DIR"
+  end=$(date +%s)
+  elapsed=$((end - start))
+  WARM_HYDRATE_DURATIONS+=("$elapsed")
+  log "- warm hydrate #$i: ${elapsed}s"
+done
+
+mapfile -t SORTED_WARM_HYDRATE_DURATIONS < <(printf '%s\n' "${WARM_HYDRATE_DURATIONS[@]}" | sort -n)
+P95_INDEX=$(( (95 * WARM_HYDRATE_RUNS + 99) / 100 - 1 ))
+WARM_HYDRATE_P95="${SORTED_WARM_HYDRATE_DURATIONS[$P95_INDEX]}"
+log "- warm hydrate p95: ${WARM_HYDRATE_P95}s (SLO <= ${WARM_HYDRATE_SLO_SECONDS}s)"
+
+if [ "$WARM_HYDRATE_P95" -gt "$WARM_HYDRATE_SLO_SECONDS" ]; then
+  log "warm-cache hydrate SLO failed: p95 ${WARM_HYDRATE_P95}s > ${WARM_HYDRATE_SLO_SECONDS}s"
+  exit 1
+fi
+
 run_step "Node module size snapshot" bash -lc "cd \"$PROJECT_DIR\" && du -sh node_modules"
 run_step "Secret surface scan" bash -lc "cd \"$PROJECT_DIR\" && \
   rg -n \"npm.*token|_auth|authToken|Authorization|Bearer\" --glob '!node_modules' --glob '!.git' . 2>/dev/null || true"
@@ -169,6 +193,10 @@ cat > "$REPORT_FILE" <<EOF
 - first_id: $ID_AFTER_FIRST
 - second_id: $ID_AFTER_SECOND
 - unchanged: $([ "$ID_AFTER_FIRST" = "$ID_AFTER_SECOND" ] && echo "true" || echo "false")
+- warm_hydrate_runs: $WARM_HYDRATE_RUNS
+- warm_hydrate_durations_s: $(printf '%s ' "${WARM_HYDRATE_DURATIONS[@]}")
+- warm_hydrate_p95_s: $WARM_HYDRATE_P95
+- warm_hydrate_slo_s: $WARM_HYDRATE_SLO_SECONDS
 EOF
 
 log ""

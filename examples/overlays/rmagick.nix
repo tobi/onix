@@ -1,5 +1,10 @@
 # rmagick — ImageMagick + pkg-config Ruby gem at build time
-{ pkgs, ruby, buildGem, ... }:
+{
+  pkgs,
+  ruby,
+  buildGem,
+  ...
+}:
 {
   deps = with pkgs; [
     imagemagick

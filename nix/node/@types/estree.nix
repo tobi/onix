@@ -3,7 +3,7 @@
   "1.0.8" = {
     version = "1.0.8";
     source = "pnpm";
-    deps = [  ];
+    deps = [ ];
     groups = [ "development" ];
   };
 }

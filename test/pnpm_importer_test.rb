@@ -72,16 +72,22 @@ class PnpmImporterTest < Minitest::Test
     end
   end
 
-  def test_rejects_pnpm_workspace_with_multiple_importers_without_root
+  def test_imports_pnpm_workspace_with_multiple_importers_without_root
     Dir.mktmpdir do |dir|
       File.write(File.join(dir, "pnpm-lock.yaml"), File.read(fixture_path("pnpm", "workspace", "pnpm-lock.yaml")))
       File.write(File.join(dir, "package.json"), "{}\n")
 
       @command.instance_variable_set(:@project, stub_project(dir))
 
-      assert_raises(SystemExit) do
-        @command.send(:import_pnpm, File.join(dir, "pnpm-lock.yaml"), "workspace")
-      end
+      @command.send(:import_pnpm, File.join(dir, "pnpm-lock.yaml"), "workspace")
+
+      packageset = File.join(dir, "packagesets", "workspace.jsonl")
+      assert File.exist?(packageset)
+
+      _meta, entries = Onix::Packageset.read(packageset)
+      assert entries.any? { |entry| entry.importer == "bar" && entry.name == "is-positive" }
+      assert entries.any? { |entry| entry.importer == "foo" && entry.name == "is-negative" }
+      assert entries.any? { |entry| entry.source == "link" && entry.version.start_with?("link:") }
     end
   end
 
@@ -120,10 +126,11 @@ class PnpmImporterTest < Minitest::Test
       assert File.exist?(packageset)
 
       meta, entries = Onix::Packageset.read(packageset)
-      assert_equal 4, entries.count { |e| e.installer == "node" }
-      assert_equal 4, entries.length
+      assert_equal 15, entries.count { |e| e.installer == "node" }
+      assert_equal 15, entries.length
       assert entries.all? { |entry| entry.source == "pnpm" }, entries.map(&:source).uniq.inspect
       assert_equal File.join(dir, "pnpm-lock.yaml"), meta.lockfile_path
+      assert entries.all? { |entry| entry.importer == "." }
     end
   end
 
@@ -197,10 +204,32 @@ class PnpmImporterTest < Minitest::Test
 
       packageset = File.join(dir, "packagesets", "simple.jsonl")
       meta, entries = Onix::Packageset.read(packageset)
-      assert_equal 4, entries.count { |entry| entry.installer == "node" }
-      assert_equal 4, entries.size
+      assert_equal 15, entries.count { |entry| entry.installer == "node" }
+      assert_equal 15, entries.size
       assert_equal "allowed", meta.script_policy
       assert_equal "pnpm@10.0.0", meta.package_manager
+      assert_equal 10, meta.pnpm_version_major
+    end
+  end
+
+  def test_import_captures_integrity_resolution_and_engines
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "pnpm-lock.yaml"), File.read(fixture_path("pnpm", "workspace", "pnpm-lock.yaml")))
+      File.write(File.join(dir, "package.json"), '{ "packageManager": "pnpm@10.0.0", "engines": { "node": ">=22.0.0" } }')
+
+      @command.instance_variable_set(:@project, stub_project(dir))
+      @command.send(:import_pnpm, File.join(dir, "pnpm-lock.yaml"), "workspace")
+
+      packageset = File.join(dir, "packagesets", "workspace.jsonl")
+      meta, entries = Onix::Packageset.read(packageset)
+      positive = entries.find { |entry| entry.name == "is-positive" && entry.version == "1.0.0" }
+
+      assert positive
+      assert_equal "sha1-iACYVrZKLx632LsBeUGEJK4EUss=", positive.integrity
+      assert_equal({ "integrity" => "sha1-iACYVrZKLx632LsBeUGEJK4EUss=" }, positive.resolution)
+      assert_equal({ "node" => ">=0.10.0" }, positive.engines)
+      assert_equal 22, meta.node_version_major
+      assert_equal 10, meta.pnpm_version_major
     end
   end
 

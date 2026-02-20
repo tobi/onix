@@ -129,7 +129,7 @@ class GenerateNodeTest < Minitest::Test
 
       assert File.exist?(workspace_nix), "expected project file: #{workspace_nix}"
       project_contents = File.read(workspace_nix)
-      node_keys = project_contents.scan(/^\s+("[^"]+\/[^"]+") = \{\s*$/).flatten
+      node_keys = project_contents.scan(/^\s+("[^"]+\/[^"]+") = \(nodeSpec /).flatten
       assert_equal ['"dup/1.0.0"', '"dup/2.0.0"', '"file-link/0.1.0"'], node_keys
       assert_includes project_contents, "nodeModules ="
       assert_includes project_contents, "projectRoot = ../.;"
@@ -309,6 +309,44 @@ class GenerateNodeTest < Minitest::Test
 
       project_contents = File.read(File.join(dir, "nix", "workspace.nix"))
       assert_includes project_contents, %(pnpmDepsHash = "sha256-dummy";)
+      assert_includes project_contents, %(globalDepsKey = "lock=sha256-dummy;pnpm=0;node=0";)
+    end
+  end
+
+  def test_generate_projects_include_node_and_pnpm_majors
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+
+      entries = [
+        Onix::Packageset::Entry.new(
+          installer: "node",
+          name: "vite",
+          version: "5.0.0",
+          source: "pnpm",
+          deps: ["esbuild"],
+        ),
+      ]
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "workspace.jsonl"),
+        meta: Onix::Packageset::Meta.new(
+          ruby: nil,
+          bundler: nil,
+          platforms: [],
+          node_version_major: 22,
+          pnpm_version_major: 10,
+        ),
+        entries: entries,
+      )
+
+      Dir.chdir(dir) do
+        @command.run([])
+      end
+
+      project_contents = File.read(File.join(dir, "nix", "workspace.nix"))
+      assert_includes project_contents, "nodeVersionMajor = 22;"
+      assert_includes project_contents, "pnpmVersionMajor = 10;"
+      assert_includes project_contents, %(globalDepsKey = "lock=sha256-dummy;pnpm=10;node=22";)
     end
   end
 
@@ -598,8 +636,8 @@ class GenerateNodeTest < Minitest::Test
           { pkgs }:
           {
             deps = [ pkgs.python3 ];
-            preInstall = "echo preInstall from overlay";
-            pnpmInstallFlags = [ "--link-workspace-packages=false" ];
+            preBuild = "echo preBuild from overlay";
+            installFlags = [ "--link-workspace-packages=false" ];
           }
         NIX
       )
@@ -614,13 +652,21 @@ class GenerateNodeTest < Minitest::Test
       assert_includes project_contents, "inherit nodeConfig;"
 
       build_nix = File.read(File.join(dir, "nix", "build-node-modules.nix"))
-      assert_includes build_nix, "nodeConfig ? {}"
+      assert_match(/nodeConfig\s*\?\s*\{\s*\}/, build_nix)
       assert_includes build_nix, "nodeOverlayDeps"
-      assert_includes build_nix, "nodePreInstall"
-      assert_includes build_nix, "nodePnpmInstallFlags"
-      assert_includes build_nix, "preInstall = nodePreInstall;"
-      assert_includes build_nix, "prePnpmInstall = nodePrePnpmInstall;"
+      assert_includes build_nix, "nodePreBuild"
+      assert_includes build_nix, "nodeInstallFlags"
+      assert_includes build_nix, "preBuild = nodePreBuild;"
     end
+  end
+
+  def test_node_overlay_loader_rejects_legacy_keys
+    node_config_nix = File.read(File.join(__dir__, "..", "lib", "onix", "data", "node-config.nix"))
+
+    assert_includes node_config_nix, "deprecated key(s)"
+    assert_includes node_config_nix, "preInstall"
+    assert_includes node_config_nix, "prePnpmInstall"
+    assert_includes node_config_nix, "pnpmInstallFlags"
   end
 
   def test_generate_infers_node_build_config_for_known_packages
@@ -651,9 +697,9 @@ class GenerateNodeTest < Minitest::Test
         @command.run([])
       end
 
-      project_nix = File.read(File.join(dir, "nix", "workspace.nix"))
-      assert_includes project_nix, "buildConfig = {"
-      assert_includes project_nix, "deps = [ pkgs.python3 ];"
+      node_nix = File.read(File.join(dir, "nix", "node", "node-sass.nix"))
+      assert_includes node_nix, "buildConfig = {"
+      assert_includes node_nix, "deps = [ pkgs.python3 ];"
     end
   end
 
@@ -689,7 +735,7 @@ class GenerateNodeTest < Minitest::Test
           { pkgs }:
           {
             deps = [ pkgs.gzip ];
-            preInstall = "echo ONIX_NODE_OVERLAY_GRPC=1";
+            preBuild = "echo ONIX_NODE_OVERLAY_GRPC=1";
           }
         NIX
       )
@@ -698,18 +744,18 @@ class GenerateNodeTest < Minitest::Test
         @command.run([])
       end
 
-      project_nix = File.read(File.join(dir, "nix", "workspace.nix"))
-      assert_includes project_nix, "buildConfig = {"
-      assert_includes project_nix, "pkgs.python3"
-      assert_includes project_nix, %(pkgs."pkg-config")
-      assert_includes project_nix, "ONIX_NODE_INFERRED_GRPC_BUILD=1"
+      node_nix = File.read(File.join(dir, "nix", "node", "grpc.nix"))
+      assert_includes node_nix, "buildConfig = {"
+      assert_includes node_nix, "pkgs.python3"
+      assert_includes node_nix, %(pkgs."pkg-config")
+      assert_includes node_nix, "ONIX_NODE_INFERRED_GRPC_BUILD=1"
 
       build_node_modules = File.read(File.join(dir, "nix", "build-node-modules.nix"))
-      assert_includes build_node_modules, "nodeConfigFromBuild = base: overrides:"
+      assert_match(/nodeConfigFromBuild\s*=\s*base:\s*overrides:/, build_node_modules)
       assert_includes build_node_modules, "inferredNodeConfigs"
       assert_includes build_node_modules, "nodeConfigPairs"
-      assert_includes build_node_modules, "override = nodeConfig.${name} or {}"
-      assert_includes build_node_modules, "if inferred == {} then override else"
+      assert_match(/override\s*=\s*nodeConfig\.\$\{name\}\s*or\s*\{\s*\}/, build_node_modules)
+      assert_match(/if\s+inferred\s*==\s*\{\s*\}\s+then\s+override\s+else/, build_node_modules)
     end
   end
 
@@ -828,6 +874,9 @@ class GenerateNodeTest < Minitest::Test
     assert_includes build_node_modules_nix, 'cp ${lockfile} "$out/pnpm-lock.yaml"'
     assert_includes build_node_modules_nix, 'cp "${toString lockfile}" pnpm-lock.yaml'
     assert_includes build_node_modules_nix, "src = normalizedSourceRoot;"
+    assert_includes build_node_modules_nix, "onix-pnpm-deps-node${toString nodeMajor}-pnpm${toString pnpmMajor}"
+    refute_includes build_node_modules_nix, "onix-${safeProject}-pnpm-deps"
+    assert_includes build_node_modules_nix, "artifactIdentity"
   end
 end
 end

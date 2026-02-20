@@ -3,7 +3,10 @@
   "1.0.0-rc.4" = {
     version = "1.0.0-rc.4";
     source = "pnpm";
-    deps = [ "@oxc-project/types" "@rolldown/pluginutils" ];
+    deps = [
+      "@oxc-project/types"
+      "@rolldown/pluginutils"
+    ];
     groups = [ "development" ];
   };
 }

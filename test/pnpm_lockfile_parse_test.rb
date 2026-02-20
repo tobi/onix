@@ -71,4 +71,41 @@ class PnpmLockfileParseTest < Minitest::Test
       assert_equal({ "bar" => "1.0.0" }, snapshot.dependencies)
     end
   end
+
+  def test_package_for_exposes_resolution_and_platform_constraints
+    lockfile_yaml = <<~YAML
+      lockfileVersion: '9.0'
+      importers:
+        .:
+          dependencies:
+            foo:
+              specifier: ^1.0.0
+              version: 1.0.0
+      snapshots:
+        foo@1.0.0: {}
+      packages:
+        foo@1.0.0:
+          resolution:
+            integrity: sha512-xyz
+          os: [linux]
+          cpu: [x64]
+          libc: [glibc]
+          engines:
+            node: ">=20"
+    YAML
+
+    Dir.mktmpdir do |dir|
+      lockfile = File.join(dir, "pnpm-lock.yaml")
+      File.write(lockfile, lockfile_yaml)
+      parsed = Onix::Pnpm::Lockfile.parse(lockfile)
+      package = parsed.package_for("foo", "1.0.0")
+
+      assert package
+      assert_equal({ "integrity" => "sha512-xyz" }, package.resolution)
+      assert_equal ["linux"], package.os
+      assert_equal ["x64"], package.cpu
+      assert_equal ["glibc"], package.libc
+      assert_equal({ "node" => ">=20" }, package.engines)
+    end
+  end
 end

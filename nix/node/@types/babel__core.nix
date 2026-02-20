@@ -3,7 +3,13 @@
   "7.20.5" = {
     version = "7.20.5";
     source = "pnpm";
-    deps = [ "@babel/parser" "@babel/types" "@types/babel__generator" "@types/babel__template" "@types/babel__traverse" ];
+    deps = [
+      "@babel/parser"
+      "@babel/types"
+      "@types/babel__generator"
+      "@types/babel__template"
+      "@types/babel__traverse"
+    ];
     groups = [ "development" ];
   };
 }

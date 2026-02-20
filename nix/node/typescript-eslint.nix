@@ -3,7 +3,14 @@
   "8.54.0(eslint@9.39.2(jiti@2.6.1)(ms@2.1.3))(ms@2.1.3)(typescript@5.9.3)" = {
     version = "8.54.0(eslint@9.39.2(jiti@2.6.1)(ms@2.1.3))(ms@2.1.3)(typescript@5.9.3)";
     source = "pnpm";
-    deps = [ "@typescript-eslint/eslint-plugin" "@typescript-eslint/parser" "@typescript-eslint/typescript-estree" "@typescript-eslint/utils" "eslint" "typescript" ];
+    deps = [
+      "@typescript-eslint/eslint-plugin"
+      "@typescript-eslint/parser"
+      "@typescript-eslint/typescript-estree"
+      "@typescript-eslint/utils"
+      "eslint"
+      "typescript"
+    ];
     groups = [ "development" ];
   };
 }
