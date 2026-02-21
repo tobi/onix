@@ -4,6 +4,7 @@ require "etc"
 require "json"
 require "open3"
 require "tmpdir"
+require "set"
 require_relative "../packageset"
 
 module Onix
@@ -12,6 +13,7 @@ module Onix
       CHECKS = %i[
         nix_eval
         packageset_complete
+        packageset_metadata
         secrets
       ].freeze
 
@@ -34,6 +36,7 @@ module Onix
         end
 
         UI.header "Check"
+        start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
         passed = 0
         failed = 0
@@ -66,8 +69,12 @@ module Onix
         end
 
         threads.each(&:join)
-        total_time = UI.format_time(Process.clock_gettime(Process::CLOCK_MONOTONIC) - threads.first.instance_variable_get(:@t0) || 0) rescue ""
-        UI.summary("#{passed} passed", failed > 0 ? UI.red("#{failed} failed") : "0 failed")
+        total_time = UI.format_time(Process.clock_gettime(Process::CLOCK_MONOTONIC) - start)
+        UI.summary(
+          "#{passed} passed",
+          failed > 0 ? UI.red("#{failed} failed") : "0 failed",
+          "time #{UI.dim(total_time)}"
+        )
         exit 1 if failed > 0
       end
 
@@ -80,7 +87,7 @@ module Onix
         return [true, "no nix/ dir"] unless Dir.exist?(nix_dir)
 
         files = Dir.glob(File.join(nix_dir, "**", "*.nix")) +
-                Dir.glob(File.join(@project.overlays_dir, "*.nix"))
+                Dir.glob(File.join(@project.overlays_dir, "**", "*.nix"))
         files.uniq!
 
         errors = 0
@@ -103,32 +110,61 @@ module Onix
       end
 
       # ── packageset-complete ──────────────────────────────────────
-      # Every buildable gem in each packageset has a corresponding nix/ruby/<name>.nix
+      # Every buildable package in each packageset has a generated file.
 
       def check_packageset_complete
         packagesets = Dir.glob(File.join(@project.packagesets_dir, "*.jsonl"))
         return [true, "no packagesets"] if packagesets.empty?
 
-        missing = []
+        missing = Set.new
         total = 0
 
         packagesets.each do |f|
+          project = File.basename(f, ".jsonl")
           _meta, entries = Packageset.read(f)
           entries.each do |e|
             next if e.source == "stdlib" || e.source == "path"
             total += 1
-            nix_file = File.join(@project.ruby_dir, "#{e.name}.nix")
+            base_dir = e.installer == "node" ? @project.node_dir : @project.ruby_dir
+            filename = e.name
+            nix_file = File.join(base_dir, "#{filename}.nix")
             unless File.exist?(nix_file)
-              missing << e.name
+              missing << filename
             end
           end
         end
 
         if missing.any?
-          sample = missing.uniq.first(10).join(", ")
-          [false, "#{missing.uniq.size} gems missing from nix/ruby/ — run `onix generate`\n  #{sample}"]
+          sample = missing.to_a.sort.first(10).join(", ")
+          [false, "#{missing.uniq.size} packages missing from generated files — run `onix generate`\n  #{sample}"]
         else
-          [true, "#{total} gems all have nix files"]
+          [true, "#{total} packages all have generated files"]
+        end
+      end
+
+      # ── packageset-metadata ──────────────────────────────────────
+      # Soft warning check for lockfile metadata presence.
+
+      def check_packageset_metadata
+        packagesets = Dir.glob(File.join(@project.packagesets_dir, "*.jsonl"))
+        return [true, "no packagesets"] if packagesets.empty?
+
+        missing = []
+
+        packagesets.each do |f|
+          project = File.basename(f, ".jsonl")
+          meta, _entries = Packageset.read(f)
+          next if meta.nil?
+          next if meta.lockfile_path && !meta.lockfile_path.empty?
+
+          missing << project
+        end
+
+        if missing.empty?
+          [true, "metadata complete"]
+        else
+          sample = missing.sort.first(10).join(", ")
+          [true, "warning: #{missing.size} packagesets missing lockfile_path — run `onix backfill`\n  #{sample}"]
         end
       end
 
@@ -140,10 +176,10 @@ module Onix
           return [true, "skipped — install gitleaks"]
         end
 
-        scan_dirs = %w[overlays nix packagesets].filter_map do |d|
+        scan_dirs = %w[overlays nix packagesets log logs].map do |d|
           dir = File.join(@project.root, d)
           Dir.exist?(dir) ? dir : nil
-        end
+        end.compact
         return [true, "no directories to scan"] if scan_dirs.empty?
 
         report = File.join(Dir.tmpdir, "gitleaks-#{$$}.json")

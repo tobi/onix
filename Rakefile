@@ -18,4 +18,11 @@ task "install:link" => :install do
   puts "Linked #{installed_exe} → exe/"
 end
 
+desc "Run tests"
+task :test do
+  tests = Dir["test/**/*_test.rb"].sort
+  abort "No tests found" if tests.empty?
+  ruby "-Ilib:test", "-e", 'Dir["test/**/*_test.rb"].sort.each { |f| load f }'
+end
+
 task default: "install:link"

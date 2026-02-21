@@ -1,0 +1,17 @@
+{
+  "name": "onix-node-basic-single",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node -e \"console.log('build ok')\"",
+    "dev": "node -e \"console.log('dev ok')\""
+  },
+  "dependencies": {
+    "is-positive": "3.1.0",
+    "react": "18.3.1"
+  }
+}

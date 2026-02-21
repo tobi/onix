@@ -1,5 +1,10 @@
 # commonmarker — Rust extension via rb_sys, needs cargo/rustc + clang for bindgen
-{ pkgs, ruby, buildGem, ... }:
+{
+  pkgs,
+  ruby,
+  buildGem,
+  ...
+}:
 {
   deps = with pkgs; [
     rustc

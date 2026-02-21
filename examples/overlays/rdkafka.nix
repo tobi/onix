@@ -1,5 +1,6 @@
 # rdkafka — uses RDKAFKA_EXT_PATH to link against system librdkafka
-{ pkgs, ruby, ... }: {
+{ pkgs, ruby, ... }:
+{
   deps = with pkgs; [ rdkafka ];
   preBuild = ''
     export RDKAFKA_EXT_PATH="${pkgs.rdkafka}"

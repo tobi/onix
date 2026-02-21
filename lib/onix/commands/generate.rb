@@ -6,8 +6,11 @@ require "fileutils"
 require "thread"
 require "uri"
 require "cgi"
+require "pathname"
 require "scint/credentials"
 require_relative "../packageset"
+require_relative "../pnpm/credentials"
+require_relative "../pnpm/node_inference"
 
 module Onix
   module Commands
@@ -15,20 +18,30 @@ module Onix
     #
     # Output:
     #   nix/ruby/<name>.nix   — per-gem: all known versions + sha256 hashes
+    #   nix/node/<name>.nix   — per-node-package: all known versions
     #   nix/<project>.nix     — per-project: selects gem versions
-    #   nix/build-gem.nix     — generic builder
-    #   nix/gem-config.nix    — overlay loader
+    #   nix/build-gem.nix          — generic Ruby builder
+    #   nix/build-node-modules.nix  — minimal node_modules builder
+    #   nix/gem-config.nix         — overlay loader
     #
     class Generate
       def run(argv)
         @project = Project.new
-        jobs = (ENV["JOBS"] || "20").to_i
+        jobs = parse_jobs(ENV["JOBS"] || "20", source: "JOBS")
+        @script_policy_override = nil
 
         while argv.first&.start_with?("-")
           case argv.shift
-          when "-j", "--jobs" then jobs = argv.shift.to_i
+          when "-j", "--jobs"
+            value = argv.shift
+            abort "Missing --jobs value" if value.nil?
+            jobs = parse_jobs(value, source: "--jobs")
+          when "--scripts"
+            value = argv.shift
+            abort "Invalid --scripts value #{value}" unless %w[none allowed].include?(value)
+            @script_policy_override = value
           when "--help", "-h"
-            $stderr.puts "Usage: onix generate [-j JOBS]"
+            $stderr.puts "Usage: onix generate [-j JOBS] [--scripts none|allowed]"
             exit 0
           end
         end
@@ -43,7 +56,7 @@ module Onix
 
         # ── Load all packagesets ─────────────────────────────────────
 
-        all_entries = {}   # "name/version" => Entry
+        all_entries = {}   # "installer/name/version" => Entry
         projects = {}      # project_name => [Entry, ...]
         all_meta = {}      # project_name => Meta
 
@@ -55,7 +68,7 @@ module Onix
 
           entries.each do |e|
             next if e.source == "stdlib" || e.source == "path"
-            key = "#{e.name}/#{e.version}"
+            key = "#{e.installer}/#{e.name}/#{e.version}"
             all_entries[key] ||= e
           end
         end
@@ -68,10 +81,29 @@ module Onix
           @credentials.register_uri(e.remote)
         end
 
-        rubygem_entries = all_entries.values.select { |e| e.source == "rubygems" }
-        git_entries = all_entries.values.select { |e| e.source == "git" }
-        UI.info "#{packagesets.size} packagesets, #{all_entries.size} unique gems " \
-                "(#{rubygem_entries.size} rubygems, #{git_entries.size} git)"
+        rubygem_entries = all_entries.values.select { |e| e.installer != "node" && e.source == "rubygems" }
+        git_entries = all_entries.values.select { |e| e.installer != "node" && e.source == "git" }
+        node_entries = all_entries.values.select { |e| e.installer == "node" }
+        UI.info "#{packagesets.size} packagesets, #{all_entries.size} unique packages " \
+                "(#{rubygem_entries.size} rubygems, #{git_entries.size} git, #{node_entries.size} node)"
+
+        # ── Resolve pnpm lockfile hashes ─────────────────────────
+
+        node_hashes = {}
+        node_lockfiles = {}
+        projects.each do |name, entries|
+          next unless entries.any? { |e| e.installer == "node" }
+
+          node_lockfile = resolve_pnpm_lockfile(name, all_meta[name])
+          hash = prefetch_pnpm_deps_hash(name, all_meta[name], node_lockfile)
+          unless hash
+            UI.fail "Unable to resolve pnpm lockfile hash for #{name}"
+            exit 1
+          end
+          node_hashes[name] = hash
+          node_lockfiles[name] = node_lockfile
+          UI.info "resolved pnpm hash for #{name}: #{hash}"
+        end
 
         # ── Load existing hashes ─────────────────────────────────────
 
@@ -159,27 +191,50 @@ module Onix
         nix_dir = File.join(@project.root, "nix")
         FileUtils.mkdir_p(ruby_dir)
 
-        by_name = {}
+        ruby_by_name = {}
+        node_by_name = {}
         all_entries.each_value do |e|
-          (by_name[e.name] ||= []) << e
+          if e.installer == "node"
+            (node_by_name[e.name] ||= []) << e
+          else
+            (ruby_by_name[e.name] ||= []) << e
+          end
         end
 
-        by_name.each do |name, entries|
+        ruby_by_name.each do |name, entries|
           write_gem_nix(ruby_dir, name, entries, sha256_for)
         end
-        UI.wrote "nix/ruby/ (#{by_name.size} gems)"
+        UI.wrote "nix/ruby/ (#{ruby_by_name.size} gems)"
+
+        node_dir = File.join(@project.root, "nix", "node")
+        FileUtils.mkdir_p(node_dir)
+        node_by_name.each do |name, entries|
+          write_node_nix(node_dir, name, entries)
+        end
+        UI.wrote "nix/node/ (#{node_by_name.size} packages)"
 
         # ── Write per-project nix ────────────────────────────────────
 
         projects.each do |name, entries|
-          write_project_nix(nix_dir, name, entries, all_meta[name])
+          write_project_nix(nix_dir, name, entries, all_meta[name], node_hashes[name], node_lockfiles[name])
         end
 
         # ── Copy support files ───────────────────────────────────────
 
         copy_support_files(nix_dir)
 
-        UI.done "#{by_name.size} gems, #{projects.size} projects"
+        total_packages = all_entries.size
+        UI.done "#{total_packages} packages, #{projects.size} projects"
+      end
+
+      def parse_jobs(raw, source:)
+        value = raw.to_s.strip
+        abort "Invalid #{source} value #{value.inspect}. Expected a positive integer." unless value.match?(/\A\d+\z/)
+
+        parsed = value.to_i
+        abort "Invalid #{source} value #{value.inspect}. Expected a positive integer." if parsed <= 0
+
+        parsed
       end
 
       private
@@ -292,12 +347,165 @@ module Onix
         nil
       end
 
+      def prefetch_pnpm_deps_hash(project_name, meta, lockfile = nil)
+        lockfile ||= resolve_pnpm_lockfile(project_name, meta)
+        return nil unless lockfile
+
+        out, err, status = Open3.capture3(
+          pnpm_prefetch_env(lockfile),
+          "nix-build",
+          "--impure",
+          "--no-out-link",
+          "--expr",
+          prefetch_pnpm_deps_expr(lockfile, meta),
+        )
+
+        hash = extract_pnpm_fetch_hash(out + err)
+        return hash if hash
+
+        return nil if status.success?
+
+        status.success? ? hash : nil
+      end
+
+      def pnpm_prefetch_env(lockfile)
+        token_lines = Pnpm::Credentials.token_lines(File.dirname(lockfile))
+        env = {}
+        env["ONIX_NPM_TOKEN_LINES"] = token_lines.join("\n") unless token_lines.empty?
+        %w[SSL_CERT_FILE NODE_EXTRA_CA_CERTS].each do |name|
+          value = ENV[name]
+          env[name] = value unless value.nil? || value.empty?
+        end
+        env
+      rescue StandardError
+        {}
+      end
+
+      def prefetch_pnpm_deps_expr(lockfile, meta = nil)
+        lockfile_path = File.expand_path(lockfile)
+        lockfile_dir = File.expand_path(File.dirname(lockfile_path))
+        project_name = File.basename(lockfile_dir)
+        pnpm_major = meta&.pnpm_version_major
+        <<~NIX
+          let
+            pkgs = import <nixpkgs> {};
+            lockfilePath = #{nix_path(lockfile_path)};
+            lockfileDir = builtins.dirOf lockfilePath;
+            prefetchSrc =
+              if builtins.baseNameOf lockfilePath == "pnpm-lock.yaml"
+              then lockfileDir
+              else pkgs.runCommand "onix-#{project_name}-prefetch-src" { } ''
+                cp -R ${lockfileDir}/. "$out/"
+                chmod -R +w "$out"
+                cp ${lockfilePath} "$out/pnpm-lock.yaml"
+              '';
+            pnpmMajor = #{nix_value(pnpm_major)};
+            pnpmPackage =
+              if pnpmMajor == null then pkgs.pnpm
+              else if pnpmMajor == 8 then pkgs.pnpm_8 or pkgs.pnpm
+              else if pnpmMajor == 9 then pkgs.pnpm_9 or pkgs.pnpm
+              else if pnpmMajor == 10 then pkgs.pnpm_10 or pkgs.pnpm
+              else throw "Unsupported pnpm major ${toString pnpmMajor}; supported majors: 8, 9, 10";
+            fetchPnpmDeps =
+              if pkgs ? fetchPnpmDeps then pkgs.fetchPnpmDeps
+              else pnpmPackage.fetchDeps;
+          in
+          fetchPnpmDeps {
+            pname = #{nix_str("onix-#{project_name}-pnpm-deps")};
+            src = prefetchSrc;
+            fetcherVersion = 3;
+            hash = pkgs.lib.fakeHash;
+            prePnpmInstall = ''
+              #{pnpm_prefetch_npmrc_expr}
+              pnpm config set package-import-method clone-or-copy
+              pnpm config set side-effects-cache false
+              pnpm config set update-notifier false
+              pnpm config set manage-package-manager-versions false
+              pnpm config set engine-strict false
+            '';
+            pnpmInstallFlags = [ ];
+            pnpmWorkspaces = [ ];
+          }
+        NIX
+      end
+
+      def pnpm_prefetch_npmrc_expr
+        <<~EOF
+          if [ -z "''${SSL_CERT_FILE:-}" ] || [ ! -f "''${SSL_CERT_FILE:-}" ]; then
+            export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+          fi
+          if [ -z "''${NODE_EXTRA_CA_CERTS:-}" ] || [ ! -f "''${NODE_EXTRA_CA_CERTS:-}" ]; then
+            export NODE_EXTRA_CA_CERTS="$SSL_CERT_FILE"
+          fi
+          if [ -f "$SSL_CERT_FILE" ]; then
+            export NPM_CONFIG_CAFILE="$SSL_CERT_FILE"
+          fi
+          if [ -n "$ONIX_NPM_TOKEN_LINES" ]; then
+            printf '%s\\n' "$ONIX_NPM_TOKEN_LINES" > .npmrc
+          fi
+        EOF
+      end
+
+      def extract_pnpm_fetch_hash(output)
+        output.scan(/got:\s*(sha256-[A-Za-z0-9+\/=]+)/).flatten.first
+      end
+
+      def find_pnpm_lockfile(project_name, meta = nil)
+        return nil unless @project
+
+        meta_lockfile = meta&.lockfile_path
+        candidates = [
+          meta_lockfile && lockfile_candidate(meta_lockfile),
+          File.join(@project.root, "pnpm-lock.yaml"),
+          File.join(@project.root, "#{project_name}/pnpm-lock.yaml"),
+          File.join(@project.root, "#{project_name}.pnpm-lock.yaml"),
+        ].compact.uniq
+
+        candidates.find { |path| File.file?(path) }
+      end
+
+      def resolve_pnpm_lockfile(project_name, meta)
+        find_pnpm_lockfile(project_name, meta)
+      rescue ArgumentError
+        # Backward-compatible with tests stubbing old single-arg signature.
+        find_pnpm_lockfile(project_name)
+      end
+
+      def lockfile_candidate(path)
+        expanded = File.expand_path(path.to_s)
+        return expanded if path.to_s.start_with?("/")
+
+        File.expand_path(path.to_s, @project.root)
+      end
+
+      def project_node_paths(pnpm_lockfile)
+        default_root = "../."
+        default_lockfile = "../pnpm-lock.yaml"
+        return [default_root, default_lockfile] if pnpm_lockfile.nil? || pnpm_lockfile.empty?
+
+        base = Pathname.new(@project.root).expand_path
+        lock_path = Pathname.new(pnpm_lockfile).expand_path
+        relative_project = lock_path.parent.relative_path_from(base).to_s
+        relative_lockfile = lock_path.relative_path_from(base).to_s
+
+        project_root = if relative_project == "."
+          "../."
+        else
+          "../#{relative_project}/."
+        end
+        lockfile = "../#{relative_lockfile}"
+
+        [project_root, lockfile]
+      rescue StandardError
+        [default_root, default_lockfile]
+      end
+
       # ── Writers ────────────────────────────────────────────────
 
       def write_gem_nix(dir, name, entries, sha256_for)
         nix = +"# #{name} — generated by onix. Do not edit.\n{\n"
 
-        entries.sort_by { |e| Gem::Version.new(e.version) rescue Gem::Version.new("0") }.each do |e|
+        sort_versions(entries).each do |e|
           sha256 = sha256_for["#{e.name}/#{e.version}"]
           nix << "  #{nix_str e.version} = {\n"
           nix << "    version = #{nix_str e.version};\n"
@@ -336,8 +544,14 @@ module Onix
         File.write(File.join(dir, "#{name}.nix"), nix)
       end
 
-      def write_project_nix(dir, project_name, entries, meta)
+      def write_project_nix(dir, project_name, entries, meta, pnpm_deps_hash, pnpm_lockfile)
         buildable = entries.reject { |e| e.source == "stdlib" || e.source == "path" }
+        nodes = entries.select { |e| e.installer == "node" }
+        ruby_nodes = buildable.reject { |e| e.installer == "node" }
+        source_root = node_source_root(pnpm_lockfile)
+        validate_required_node_link_paths!(project_name, nodes, source_root)
+        workspace_paths = node_workspace_paths(nodes)
+        project_root, lockfile = project_node_paths(pnpm_lockfile)
 
         nix = +"# #{project_name} — generated by onix. Do not edit.\n"
         nix << "{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:\n"
@@ -354,6 +568,10 @@ module Onix
         nix << "    overlayDir = ../overlays;\n"
         nix << "    rubyDir = ./ruby;\n"
         nix << "    buildGemFn = buildGemByName;\n"
+        nix << "  };\n"
+        nix << "  nodeConfig = import ./node-config.nix {\n"
+        nix << "    inherit pkgs;\n"
+        nix << "    overlayDir = ../overlays/node;\n"
         nix << "  };\n"
         nix << "\n"
         nix << "  build = name: version:\n"
@@ -373,10 +591,41 @@ module Onix
         nix << "      // (if config ? buildGems then { inherit (config) buildGems; } else {}));\n"
         nix << "\n"
         nix << "  gems = {\n"
-        buildable.sort_by(&:name).each do |e|
+        ruby_nodes.sort_by(&:name).each do |e|
           nix << "    #{nix_key(e.name)} = build #{nix_str e.name} #{nix_str e.version};\n"
         end
         nix << "  };\n"
+        nix << "\n"
+        nix << "  nodeSpec = name: version:\n"
+        nix << "    let\n"
+        nix << "      versions = import (./node + \"/\${name}.nix\");\n"
+        nix << "    in versions.\${version};\n"
+        nix << "  nodePackages = {\n"
+        nodes.sort_by { |e| "#{e.name}/#{e.version}" }.each do |e|
+          key = "#{e.name}/#{e.version}"
+          nix << "    #{nix_key(key)} = (nodeSpec #{nix_str e.name} #{nix_str e.version}) // {\n"
+          nix << "      name = #{nix_str e.name};\n"
+          nix << "    };\n"
+        end
+        nix << "  };\n"
+        nix << "\n"
+        if nodes.any?
+          nix << "  nodeModules = pkgs.callPackage ./build-node-modules.nix {\n"
+          nix << "    inherit nodePackages;\n"
+          nix << "    inherit nodeConfig;\n"
+          nix << "    project = #{nix_str project_name};\n"
+          nix << "    projectRoot = #{nix_path(project_root)};\n"
+          nix << "    lockfile = #{nix_path(lockfile)};\n"
+          nix << "    packageManager = #{nix_value(meta.package_manager)};\n"
+          nix << "    scriptPolicy = #{nix_str(resolve_node_script_policy(meta))};\n"
+          nix << "    pnpmDepsHash = #{nix_str(pnpm_deps_hash)};\n"
+          nix << "    globalDepsKey = #{nix_str(node_global_deps_key(meta, pnpm_deps_hash))};\n"
+          nix << "    nodeVersionMajor = #{nix_value(meta.node_version_major)};\n"
+          nix << "    pnpmVersionMajor = #{nix_value(meta.pnpm_version_major)};\n"
+          nix << "    workspacePaths = [ #{workspace_paths.map { |path| nix_str(path) }.join(" ")} ];\n" unless workspace_paths.empty?
+          nix << "  };\n"
+          nix << "  nodeModulesIdentity = nodeModules.onixIdentity;\n"
+        end
         nix << "\n"
         nix << "  bundlePath = pkgs.buildEnv {\n"
         nix << "    name = #{nix_str "#{project_name}-bundle"};\n"
@@ -384,6 +633,8 @@ module Onix
         nix << "  };\n"
         nix << "in gems // {\n"
         nix << "  inherit bundlePath;\n"
+        nix << "  inherit nodeModules;\n" if nodes.any?
+        nix << "  inherit nodeModulesIdentity;\n" if nodes.any?
         nix << "  devShell = { buildInputs ? [], shellHook ? \"\", ... }@args:\n"
         nix << "    pkgs.mkShell (builtins.removeAttrs args [\"buildInputs\" \"shellHook\"] // {\n"
         nix << "      name = #{nix_str "#{project_name}-devshell"};\n"
@@ -400,20 +651,265 @@ module Onix
         UI.wrote "nix/#{project_name}.nix"
       end
 
+      def node_workspace_paths(nodes)
+        importer_paths = nodes.flat_map do |entry|
+          split_importers(entry.importer).map { |path| normalize_project_relative_path(path) }.compact
+        end
+
+        link_paths = nodes.map(&:path).compact.flat_map do |path|
+          normalize_node_path(path, nodes_for_path(nodes, path))
+        end
+
+        (importer_paths + link_paths).uniq.sort
+      end
+
+      def validate_required_node_link_paths!(project_name, nodes, source_root)
+        errors = nodes.flat_map do |entry|
+          validate_link_entry_paths(entry, source_root)
+        end
+        return if errors.empty?
+
+        lines = ["Unable to resolve required node link paths for #{project_name}:"]
+        errors.sort_by { |error| [error[:name], error[:importer], error[:raw]] }.each do |error|
+          lines << "  #{error[:name]} importer=#{error[:importer]} raw=#{error[:raw]} normalized=#{error[:normalized]} reason=#{error[:reason]}"
+        end
+        abort lines.join("\n")
+      end
+
+      def validate_link_entry_paths(entry, source_root)
+        return [] unless entry.source == "link"
+
+        raw_path = entry.path.to_s.strip
+        return [] if raw_path.empty?
+
+        importers = split_importers(entry.importer)
+        importers = ["."] if importers.empty?
+
+        importers.map do |importer|
+          normalized = normalize_importer_relative_path(raw_path, importer)
+          if normalized.nil?
+            {
+              name: entry.name,
+              importer: importer,
+              raw: raw_path,
+              normalized: "(outside project root)",
+              reason: "outside project root",
+            }
+          elsif !File.exist?(File.expand_path(normalized, source_root))
+            {
+              name: entry.name,
+              importer: importer,
+              raw: raw_path,
+              normalized: normalized,
+              reason: "path does not exist",
+            }
+          end
+        end.compact
+      end
+
+      def node_source_root(pnpm_lockfile)
+        return @project.root if pnpm_lockfile.nil? || pnpm_lockfile.empty?
+
+        File.expand_path(File.dirname(pnpm_lockfile))
+      rescue StandardError
+        @project.root
+      end
+
+      def nodes_for_path(nodes, path)
+        nodes.select { |entry| entry.path == path }
+      end
+
+      def normalize_node_path(path, nodes)
+        relative = path.to_s.strip
+        return [] if relative.empty?
+
+        importers = nodes.flat_map { |entry| split_importers(entry.importer) }
+        importers = ["."] if importers.empty?
+
+        importers.map { |importer| normalize_importer_relative_path(relative, importer) }.compact
+      end
+
+      def normalize_importer_relative_path(path, importer)
+        importer_base = importer.nil? || importer.empty? ? "." : importer
+        normalized = Pathname.new(importer_base).join(path.to_s).cleanpath.to_s
+        normalize_project_relative_path(normalized)
+      rescue StandardError
+        nil
+      end
+
+      def split_importers(importers)
+        importers.to_s.split(",").map(&:strip).reject(&:empty?)
+      end
+
+      def normalize_project_relative_path(path)
+        return nil if path.nil?
+
+        normalized = Pathname.new(path.to_s).cleanpath.to_s
+        return nil if normalized.empty? || normalized == "."
+        return nil if normalized.start_with?("..")
+
+        normalized
+      rescue StandardError
+        nil
+      end
+
+      def write_node_nix(dir, name, entries)
+        nix = +"# #{name} — generated by onix. Do not edit.\n{\n"
+
+        sort_versions(entries).each do |e|
+          nix << "  #{nix_str e.version} = {\n"
+          nix << "    name = #{nix_str e.name};\n"
+          nix << "    version = #{nix_str e.version};\n"
+          nix << "    source = #{nix_str e.source};\n"
+          nix << "    importer = #{nix_str e.importer};\n" if e.importer
+          nix << "    integrity = #{nix_str e.integrity};\n" if e.integrity
+          if e.resolution
+            nix << "    resolution = #{nix_attrset(e.resolution, 4)};\n"
+          end
+          nix << "    os = [ #{(e.os || []).map { |dep| nix_str(dep) }.join(" ")} ];\n" if e.os && !e.os.empty?
+          nix << "    cpu = [ #{(e.cpu || []).map { |dep| nix_str(dep) }.join(" ")} ];\n" if e.cpu && !e.cpu.empty?
+          nix << "    libc = [ #{(e.libc || []).map { |dep| nix_str(dep) }.join(" ")} ];\n" if e.libc && !e.libc.empty?
+          if e.engines && !e.engines.empty?
+            nix << "    engines = #{nix_attrset(e.engines, 4)};\n"
+          end
+          nix << "    deps = [ #{(e.deps || []).map { |dep| nix_str(dep) }.join(" ")} ];\n"
+          nix << "    groups = [ #{(e.groups || ['default']).map { |group| nix_str(group) }.join(" ")} ];\n"
+          nix << "    path = #{nix_str e.path};\n" if e.path
+          render_node_build_config(nix, node_inferred_config(e), indent: "    ")
+          nix << "  };\n"
+        end
+
+        nix << "}\n"
+        path = File.join(dir, "#{name}.nix")
+        FileUtils.mkdir_p(File.dirname(path))
+        File.write(path, nix)
+      end
+
       def copy_support_files(dir)
         data_dir = File.expand_path("../data", __dir__)
-        %w[build-gem.nix gem-config.nix].each do |f|
+        %w[build-gem.nix build-node-modules.nix gem-config.nix node-config.nix].each do |f|
           FileUtils.cp(File.join(data_dir, f), File.join(dir, f))
         end
-        UI.wrote "nix/build-gem.nix, nix/gem-config.nix"
+        UI.wrote "nix/build-gem.nix, nix/build-node-modules.nix, nix/gem-config.nix, nix/node-config.nix"
+      end
+
+      def render_node_build_config(nix, config, indent: "      ")
+        return if config.nil? || config.empty?
+
+        nix << "#{indent}buildConfig = {\n"
+        inner = "#{indent}  "
+        if (deps = config[:deps])
+          nix << "#{inner}deps = [ #{deps.map { |name| nix_pkg_ref(name) }.join(" ")} ];\n"
+        end
+
+        if (pre_install = config[:pre_install])
+          nix << "#{inner}preBuild = ''\n"
+          nix << "#{inner}  #{pre_install}\n"
+          nix << "#{inner}'';\n"
+        end
+
+        if (pre_pnpm_install = config[:pre_pnpm_install])
+          nix << "#{inner}postBuild = ''\n"
+          nix << "#{inner}  #{pre_pnpm_install}\n"
+          nix << "#{inner}'';\n"
+        end
+
+        if (flags = config[:pnpm_install_flags])
+          nix << "#{inner}installFlags = [ #{flags.map { |f| nix_str(f) }.join(" ")} ];\n"
+        end
+
+        nix << "#{indent}};\n"
+      end
+
+      def nix_pkg_ref(name)
+        safe = name.to_s
+        return "pkgs.#{safe}" if safe.match?(/\A[a-zA-Z_][a-zA-Z0-9_]*\z/)
+        %{pkgs."#{safe}"}
+      end
+
+      def node_inferred_config(entry)
+        config = Pnpm::NodeInference.config_for(entry)
+        return nil if config.nil? || config.empty?
+
+        config
+      end
+
+      def node_global_deps_key(meta, pnpm_deps_hash)
+        pnpm_major = meta&.pnpm_version_major || 0
+        node_major = meta&.node_version_major || 0
+        "lock=#{pnpm_deps_hash};pnpm=#{pnpm_major};node=#{node_major}"
       end
 
       def nix_key(name)
         name =~ /^[a-zA-Z_][a-zA-Z0-9_]*$/ ? name : "\"#{name}\""
       end
 
+      def nix_path(path)
+        return "null" if path.nil?
+        path = path.to_s
+        return path if path.start_with?("/", "./", "../")
+        nix_str(path)
+      end
+
+      def nix_value(value)
+        return "null" if value.nil?
+        return value.to_s if value.is_a?(Numeric)
+        return "true" if value == true
+        return "false" if value == false
+
+        nix_str(value)
+      end
+
       def nix_str(s)
         "\"#{s}\""
+      end
+
+      def nix_attrset(hash, indent)
+        return "{}" if hash.nil? || hash.empty?
+
+        space = " " * indent
+        attrs = hash.sort_by { |key, _| key.to_s }.map do |key, value|
+          "#{space}#{nix_key(key.to_s)} = #{nix_attr_value(value, indent)};"
+        end
+        "{\n#{attrs.join("\n")}\n#{' ' * (indent - 2)}}"
+      end
+
+      def nix_attr_value(value, indent)
+        case value
+        when String then nix_str(value)
+        when Numeric then value.to_s
+        when TrueClass then "true"
+        when FalseClass then "false"
+        when NilClass then "null"
+        when Array
+          "[ #{value.map { |item| nix_attr_value(item, indent + 2) }.join(" ")} ]"
+        when Hash
+          nix_attrset(value, indent + 2)
+        else
+          nix_str(value.to_s)
+        end
+      end
+
+      def resolve_node_script_policy(meta)
+        candidate = @script_policy_override || meta.script_policy || "none"
+        return "none" if candidate == "none"
+        return "allowed" if candidate == "allowed"
+        abort "Unsupported script policy #{candidate.inspect}; expected none|allowed"
+      end
+
+      def sort_versions(entries)
+        entries.each_with_index
+          .sort_by do |entry, index|
+            parsed = parse_semver(entry.version.to_s)
+            parsed ? [0, parsed, index] : [1, index]
+          end
+          .map(&:first)
+      end
+
+      def parse_semver(value)
+        Gem::Version.new(value)
+      rescue StandardError
+        nil
       end
     end
   end

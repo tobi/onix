@@ -1,0 +1,20 @@
+lockfileVersion: '9.0'
+
+importers:
+  .:
+    dependencies:
+      foo:
+        specifier: ^1.0.0
+        version: 1.0.0(bar@2.0.0)
+
+packages:
+  foo@1.0.0:
+    resolution: {integrity: sha512-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa=}
+  bar@2.0.0:
+    resolution: {integrity: sha512-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb=}
+
+snapshots:
+  foo@1.0.0(bar@2.0.0):
+    dependencies:
+      bar: 2.0.0
+  bar@2.0.0: {}

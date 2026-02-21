@@ -9,10 +9,25 @@ module Onix
       @root = File.expand_path(root)
     end
 
-    def nix_dir         = File.join(root, "nix")
-    def ruby_dir        = File.join(nix_dir, "ruby")
-    def overlays_dir    = File.join(root, "overlays")
-    def packagesets_dir = File.join(root, "packagesets")
+    def nix_dir
+      File.join(root, "nix")
+    end
+
+    def ruby_dir
+      File.join(nix_dir, "ruby")
+    end
+
+    def node_dir
+      File.join(nix_dir, "node")
+    end
+
+    def overlays_dir
+      File.join(root, "overlays")
+    end
+
+    def packagesets_dir
+      File.join(root, "packagesets")
+    end
 
     # All overlay names (without .nix extension)
     def overlays

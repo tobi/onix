@@ -7,7 +7,9 @@ module Onix
       "import"   => "Import Gemfile.lock into a hermetic packageset",
       "generate" => "Prefetch hashes and generate nix derivations",
       "build"    => "Build all gems via Nix",
+      "hydrate"  => "Hydrate node_modules into a target workspace",
       "check"    => "Run checks on built gems",
+      "backfill" => "Backfill packageset metadata fields",
     }.freeze
 
     def self.run(argv)
@@ -42,7 +44,7 @@ module Onix
         $stderr.puts "  #{UI.amber(name.ljust(10))} #{desc}"
       end
       $stderr.puts
-      $stderr.puts UI.dim("  Workflow: init → import → generate → build")
+      $stderr.puts UI.dim("  Workflow: init → import → generate → build → hydrate")
       $stderr.puts
     end
   end

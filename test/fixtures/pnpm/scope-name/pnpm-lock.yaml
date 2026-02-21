@@ -1,0 +1,18 @@
+lockfileVersion: '9.0'
+importers:
+  .:
+    dependencies:
+      "@scope/foo":
+        specifier: ^2.0.0
+        version: 2.0.0
+snapshots:
+  "@scope/foo@2.0.0":
+    dependencies:
+      bar: 1.0.0
+packages:
+  "@scope/foo@2.0.0":
+    resolution:
+      integrity: sha512-aaaaaaaa
+  "bar@1.0.0":
+    resolution:
+      integrity: sha512-bbbbbbbb

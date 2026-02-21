@@ -1,5 +1,10 @@
 # ffi-yajl — needs yajl headers + libyajl2 gem for the Ruby helper module
-{ pkgs, ruby, buildGem, ... }:
+{
+  pkgs,
+  ruby,
+  buildGem,
+  ...
+}:
 {
   deps = with pkgs; [
     yajl

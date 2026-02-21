@@ -1,17 +1,59 @@
 # AGENTS.md
 
+## Commands
+
+```bash
+# Project workflow
+onix init
+onix import .
+onix generate [--scripts none|allowed]
+onix build
+onix check
+onix backfill
+
+# Node-focused path
+onix import --installer pnpm .
+onix import --installer pnpm --allow-pnpm-patch-drift .
+onix generate
+onix build <project> node
+
+# Diagnostics
+nix log <drv>       # inspect failing build
+rg -n "secret" log  # ad-hoc artifact checks
+```
+
 ## Architecture
 
 ```
 Gemfile.lock
     ↓
 onix import           parse lockfile, clone git repos → packagesets/<name>.jsonl
+pnpm-lock.yaml
     ↓
-onix generate         prefetch hashes → nix/ruby/<name>.nix (per gem)
+onix import           parse lockfile and workspace metadata → packagesets/<name>.jsonl
+    ↓
+onix generate         prefetch hashes
+        → nix/ruby/<name>.nix (per gem)
+        → nix/node/<name>.nix (per node package)
                                       → nix/<project>.nix (per project)
+                          with optional overlays from overlays/node/
     ↓
 onix build            nix-build → /nix/store/<hash>-<gem>-<ver>/
+onix build <project> node
+                   → /nix/store/<hash>-onix-<project>-node-modules
+onix hydrate <project> [target]
+                   → pre-check nodeModulesIdentity vs target/.onix_node_modules_id
+                   → skip nix-build when identity matches and target/node_modules exists
+                   → otherwise build + rsync --delete workspace/node_modules
 ```
+
+Architectural intent:
+
+1. **Global artifact layer (Nix store):** build lockfile-resolved dependencies into immutable `/nix/store/...` outputs that are reusable across projects and CI.
+2. **Project composition layer:** assemble project-scoped outputs from those artifacts (`bundlePath` for Ruby, `nodeModules` for Node).
+
+onix is not a package registry. Lockfiles stay the source of truth; onix translates them into reproducible Nix derivations.
+Ruby already follows this model as per-gem outputs composed into project bundles. Node is currently in a phase-1 project-level `nodeModules` composition path.
 
 Everything under `nix/` is generated. Never hand-edit — run `onix generate` to regenerate.
 
@@ -27,6 +69,12 @@ All customization lives in `overlays/`.
 4. Test with `onix build` and `onix check`.
 5. **Always link against system libraries from nixpkgs.** Never use vendored/bundled copies of libraries that a gem ships in its source tree. If a gem bundles libxml2, sqlite, openssl, etc. — the overlay must pass flags like `--use-system-libraries` or `--enable-system-libraries` to `extconf.rb` so it links against the nixpkgs version. This is the whole point of hermetic builds: every shared library comes from a known nix store path, not from some tarball the gem author downloaded at release time. If the gem has no flag for system libraries, patch `extconf.rb` or provide the right `pkg-config` / header paths via environment variables so it finds the nix versions.
 6. **Prefer generating into `default.nix` over config files or overlays.** If build requirements are knowable from gem metadata or `extconf.rb` analysis at generate time (e.g., `pkg_config('libffi')` → needs `pkgs.libffi`), teach `onix generate` to detect and inline them directly into the generated derivation. No overlay file, no config file, no indirection. Overlays are for cases that can't be inferred automatically.
+7. **Script policy for pnpm is constrained to `none|allowed` only.** `all` is rejected.
+8. **pnpm manager checks are strict by default.** `engines.pnpm` must be exact and must match `packageManager` exactly; lockfile major compatibility is always enforced.
+9. **`--allow-pnpm-patch-drift` is an explicit import-only override.** It permits exact same-major patch drift only; major mismatch still fails.
+10. **Node `link:` paths are validated at generate time.** Required unresolved/out-of-root link targets fail fast in `onix generate` with importer/path diagnostics.
+11. **Follow TDD (red → green → refactor).** Start with a failing test, implement the smallest change to pass, then clean up with tests green.
+12. **Run strict local quality gates before merge.** `just fmt-check`, `just check`, `just test` (or `just qa`).
 
 ## Writing overlays
 

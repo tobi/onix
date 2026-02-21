@@ -7,7 +7,10 @@ require "fileutils"
 require "json"
 require "set"
 require "tmpdir"
+require_relative "../pnpm/lockfile"
+require_relative "../pnpm/project_config"
 require_relative "../packageset"
+require_relative "../project"
 
 module Onix
   module Commands
@@ -20,26 +23,282 @@ module Onix
       def run(argv)
         @project = Project.new
         name_override = nil
+        installer_override = nil
+        @allow_pnpm_patch_drift = false
 
         while argv.first&.start_with?("-")
           case argv.shift
           when "--name", "-n" then name_override = argv.shift
+          when "--installer", "-i" then installer_override = argv.shift
+          when "--allow-pnpm-patch-drift" then @allow_pnpm_patch_drift = true
           when "--help", "-h"
-            $stderr.puts "Usage: onix import [--name NAME] <path/to/Gemfile.lock>"
+            $stderr.puts "Usage: onix import [--installer ruby|pnpm] [--name NAME] [--allow-pnpm-patch-drift] <path/to/Gemfile.lock|pnpm-lock.yaml|project>"
             exit 0
           end
         end
 
         if argv.empty?
-          $stderr.puts "Usage: onix import <path/to/Gemfile.lock>"
+          $stderr.puts "Usage: onix import [--installer ruby|pnpm] [--name NAME] [--allow-pnpm-patch-drift] <path/to/Gemfile.lock|pnpm-lock.yaml|project>"
           exit 1
         end
 
-        lockfile, project_name = resolve_lockfile(argv.first, name_override)
+        lockfile, project_name, installer = resolve_lockfile(argv.first, name_override, installer_override)
 
         UI.header "Import #{UI.bold(project_name)}"
         UI.info lockfile
 
+        if installer == "pnpm"
+          import_pnpm(lockfile, project_name)
+        else
+          import_ruby(lockfile, project_name)
+        end
+      end
+
+      private
+
+      def resolve_lockfile(arg, name_override, installer_override)
+        path = File.expand_path(arg)
+        installer = installer_override
+
+        if File.directory?(path)
+          case installer
+          when "pnpm"
+            lockfile = find_directory_pnpm_lockfile(path)
+            abort "No pnpm lockfile found in #{path}" unless lockfile
+          when "ruby"
+            lockfile = File.join(path, "Gemfile.lock")
+            abort "No Gemfile.lock in #{path}" unless File.exist?(lockfile)
+          else
+            pnpm_lockfile = find_directory_pnpm_lockfile(path)
+            ruby_lockfile = File.join(path, "Gemfile.lock")
+            if pnpm_lockfile && File.exist?(pnpm_lockfile)
+              installer = "pnpm"
+              lockfile = pnpm_lockfile
+            elsif File.exist?(ruby_lockfile)
+              installer = "ruby"
+              lockfile = ruby_lockfile
+            else
+              abort "No Gemfile.lock or pnpm lockfile in #{path}"
+            end
+          end
+        else
+          filename = File.basename(path)
+          case filename
+          when "Gemfile"
+            lockfile = "#{path}.lock"
+            abort "No Gemfile.lock found next to #{path}" unless File.exist?(lockfile)
+            installer = "ruby" unless installer
+          when "Gemfile.lock"
+            lockfile = path
+            installer = "ruby" unless installer
+          else
+            if pnpm_lockfile_name?(filename)
+              lockfile = path
+              installer = "pnpm" unless installer
+            elsif File.exist?(path)
+              abort "Unknown lockfile type: #{arg}"
+            else
+              abort "Not found: #{arg}"
+            end
+          end
+
+          if installer_override
+            unless installer_override == installer
+              abort "Installer mismatch: requested #{installer_override}, detected #{installer}"
+            end
+          end
+        end
+
+        if installer.nil?
+          abort "Could not detect installer for #{arg}; pass --installer ruby|pnpm"
+        end
+
+        project = name_override || File.basename(File.dirname(lockfile))
+        [lockfile, project, installer]
+      end
+
+      def find_directory_pnpm_lockfile(path)
+        candidates = [
+          File.join(path, "pnpm-lock.yaml"),
+          File.join(path, "pnpm-lock.yml"),
+        ] +
+          Dir.glob(File.join(path, "*.pnpm-lock.yaml")) +
+          Dir.glob(File.join(path, "*.pnpm-lock.yml"))
+        resolved = candidates.uniq.select { |candidate| File.file?(candidate) }
+
+        return resolved.first if resolved.length == 1
+
+        if resolved.length > 1
+          abort "Multiple pnpm lockfiles found in #{path}; pass the lockfile path explicitly.\n  #{resolved.map { |file| File.basename(file) }.sort.join(", ")}"
+        end
+
+        nil
+      end
+
+      def pnpm_lockfile_name?(filename)
+        filename == "pnpm-lock.yaml" ||
+          filename == "pnpm-lock.yml" ||
+          filename.match?(%r{\A.+\.pnpm-lock\.ya?ml\z})
+      end
+
+      def import_pnpm(lockfile, project_name)
+        lockdata = Pnpm::Lockfile.parse(lockfile)
+        project_config = Pnpm::ProjectConfig.new(File.dirname(lockfile))
+        patch_drift_override_used = project_config.enforce_manager_compatible_with(
+          lockdata.lockfile_version,
+          allow_patch_drift: @allow_pnpm_patch_drift,
+        )
+        if patch_drift_override_used
+          UI.warn(
+            "--allow-pnpm-patch-drift: engines.pnpm #{project_config.pnpm_engine_exact_version} " \
+            "differs from packageManager pnpm@#{project_config.package_manager_version} (same major)"
+          )
+        end
+        script_policy = project_config.script_policy
+        package_manager = project_config.package_manager
+
+        entries_by_key = {}
+        work = []
+        seen = Set.new
+
+        lockdata.importers.each do |importer_name, importer|
+          enqueue_node_imports(work, importer_name, importer.dependencies, ["default"])
+          enqueue_node_imports(work, importer_name, importer.dev_dependencies, ["development"])
+          enqueue_node_imports(work, importer_name, importer.optional_dependencies, ["optional"])
+        end
+
+        until work.empty?
+          item = work.shift
+          name = item.fetch(:name)
+          version = item.fetch(:version)
+          importer_name = item.fetch(:importer)
+          groups = item.fetch(:groups)
+          visit_key = "#{importer_name}/#{name}/#{version}/#{groups.sort.join(",")}"
+          next if seen.include?(visit_key)
+          seen << visit_key
+
+          entry = build_node_entry(name, version, groups, lockdata, importer_name)
+          key = "#{entry.name}/#{entry.version}"
+
+          if entries_by_key.key?(key)
+            existing = entries_by_key[key]
+            existing.groups = (existing.groups + entry.groups).uniq
+            existing.deps = (existing.deps + entry.deps).uniq
+            existing.importer = merge_importers(existing.importer, entry.importer)
+          else
+            entries_by_key[key] = entry
+          end
+
+          next unless entry.source == "pnpm"
+
+          snapshot = lockdata.snapshot_for(name, version)
+          package_deps = snapshot && snapshot.dependencies ? snapshot.dependencies : {}
+          package_deps.each do |dep_name, dep_version|
+            work << {
+              importer: importer_name,
+              name: dep_name,
+              version: dep_version.to_s,
+              groups: groups,
+            }
+          end
+        end
+
+        entries = entries_by_key.values
+
+        UI.info "#{entries.size} node dependencies from #{File.basename(lockfile)}"
+
+        meta = Packageset::Meta.new(
+          ruby: nil,
+          bundler: nil,
+          platforms: [],
+          package_manager: package_manager,
+          script_policy: script_policy,
+          lockfile_path: File.expand_path(lockfile),
+          node_version_major: project_config.node_version_major,
+          pnpm_version_major: project_config.pnpm_version_major(lockdata.lockfile_version),
+        )
+
+        FileUtils.mkdir_p(@project.packagesets_dir)
+        outpath = File.join(@project.packagesets_dir, "#{project_name}.jsonl")
+        Packageset.write(outpath, meta: meta, entries: entries)
+
+        UI.wrote "packagesets/#{project_name}.jsonl"
+        UI.done "#{entries.size} packages"
+      end
+
+      def enqueue_node_imports(queue, importer_name, deps, groups)
+        deps.each do |name, dep|
+          queue << {
+            importer: importer_name,
+            name: name,
+            version: dep.version.to_s,
+            groups: groups,
+          }
+        end
+      end
+
+      def build_node_entry(name, dep_version, groups, lockdata, importer_name)
+        dep_version = dep_version.to_s
+
+        if dep_version.start_with?("link:")
+          return Packageset::Entry.new(
+            installer: "node",
+            name: name,
+            version: dep_version,
+            source: "link",
+            importer: importer_name,
+            path: dep_version.sub("link:", ""),
+            deps: [],
+            groups: groups,
+          )
+        end
+
+        if dep_version.start_with?("file:")
+          return Packageset::Entry.new(
+            installer: "node",
+            name: name,
+            version: dep_version,
+            source: "file",
+            importer: importer_name,
+            path: dep_version.sub("file:", ""),
+            deps: [],
+            groups: groups,
+          )
+        end
+
+        snapshot = lockdata.snapshot_for(name, dep_version)
+        package = lockdata.package_for(name, dep_version)
+        package_deps = snapshot && snapshot.dependencies ? snapshot.dependencies : {}
+        resolution = package&.resolution
+        integrity = resolution.is_a?(Hash) ? resolution["integrity"] : nil
+
+        Packageset::Entry.new(
+          installer: "node",
+          name: name,
+          version: dep_version,
+          source: "pnpm",
+          importer: importer_name,
+          integrity: integrity,
+          resolution: resolution,
+          os: package&.os || [],
+          cpu: package&.cpu || [],
+          libc: package&.libc || [],
+          engines: package&.engines || {},
+          deps: package_deps.keys,
+          groups: groups,
+        )
+      end
+
+      def merge_importers(current, incoming)
+        list = []
+        list.concat(current.to_s.split(",")) if current
+        list << incoming.to_s
+        list = list.map(&:strip).reject(&:empty?).uniq.sort
+        return nil if list.empty?
+        list.join(",")
+      end
+
+      def import_ruby(lockfile, project_name)
         lockdata = Scint::Lockfile::Parser.parse(lockfile)
         credentials = Scint::Credentials.new
         credentials.register_lockfile_sources(lockdata.sources)
@@ -162,6 +421,7 @@ module Onix
           ruby: lockdata.ruby_version,
           bundler: lockdata.bundler_version,
           platforms: lockdata.platforms,
+          lockfile_path: File.expand_path(lockfile),
         )
 
         FileUtils.mkdir_p(@project.packagesets_dir)
@@ -170,27 +430,6 @@ module Onix
 
         UI.wrote "packagesets/#{project_name}.jsonl"
         UI.done "#{entries.size} packages"
-      end
-
-      private
-
-      def resolve_lockfile(arg, name_override)
-        path = File.expand_path(arg)
-
-        if File.directory?(path)
-          lockfile = File.join(path, "Gemfile.lock")
-          abort "No Gemfile.lock in #{path}" unless File.exist?(lockfile)
-        elsif File.basename(path) == "Gemfile"
-          lockfile = "#{path}.lock"
-          abort "No Gemfile.lock found next to #{path}" unless File.exist?(lockfile)
-        elsif File.exist?(path)
-          lockfile = path
-        else
-          abort "Not found: #{arg}"
-        end
-
-        project = name_override || File.basename(File.dirname(lockfile))
-        [lockfile, project]
       end
 
       # Clone a git repo and find which subdirectory each gem lives in.
@@ -235,7 +474,7 @@ module Onix
 
           # Find all gemspecs and map gem names to directories
           gemspec_map = {}
-          glob = repo[:glob] || "{,*,*/*}.gemspec"
+          glob = repo[:glob] || File.join("**", "*.gemspec")
           Dir.glob(File.join(clone_dir, glob)).each do |path|
             begin
               content = File.read(path)
@@ -258,6 +497,7 @@ module Onix
 
         subdirs
       end
+
     end
   end
 end

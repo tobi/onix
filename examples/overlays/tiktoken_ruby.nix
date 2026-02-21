@@ -1,5 +1,10 @@
 # tiktoken_ruby — Rust extension via rb_sys
-{ pkgs, ruby, buildGem, ... }:
+{
+  pkgs,
+  ruby,
+  buildGem,
+  ...
+}:
 {
   deps = with pkgs; [
     rustc

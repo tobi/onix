@@ -1,0 +1,13 @@
+{
+  "name": "onix-node-overlay-canonical",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "is-positive": "3.1.0",
+    "react": "18.3.1"
+  }
+}

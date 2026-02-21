@@ -25,14 +25,14 @@ in
 {
   source,
   skip ? false,
-  subdir ? ".",              # subdirectory within git repo (monorepo support)
-  buildGems ? [],
+  subdir ? ".", # subdirectory within git repo (monorepo support)
+  buildGems ? [ ],
   extconfFlags ? "",
   preBuild ? "",
   buildPhase ? null,
-  platform ? null,           # non-null for prebuilt-only gems (e.g. sorbet-static)
+  platform ? null, # non-null for prebuilt-only gems (e.g. sorbet-static)
   requirePaths ? [ "lib" ],
-  executables ? [],
+  executables ? [ ],
   bindir ? "exe",
   ...
 }@args:
@@ -49,9 +49,12 @@ let
         allRefs = true;
         submodules = source.fetchSubmodules or false;
       }
-    else null;
+    else
+      null;
 
-  hasSubdir = source.type == "git" && subdir != "."
+  hasSubdir =
+    source.type == "git"
+    && subdir != "."
     && gitSrc != null
     && builtins.pathExists (gitSrc + "/${subdir}/lib");
 
@@ -72,15 +75,23 @@ let
 
   # Attrs to strip before forwarding to buildRubyGem
   removedAttrs = [
-    "source" "skip" "subdir" "buildGems" "extconfFlags"
-    "preBuild" "buildPhase" "platform" "requirePaths"
-    "executables" "bindir"
+    "source"
+    "skip"
+    "subdir"
+    "buildGems"
+    "extconfFlags"
+    "preBuild"
+    "buildPhase"
+    "platform"
+    "requirePaths"
+    "executables"
+    "bindir"
   ];
 
 in
 if skip then
   # Produce an empty derivation with a minimal gemspec
-  pkgs.runCommand key {} ''
+  pkgs.runCommand key { } ''
     mkdir -p $out/${ruby.gemPath}/gems/${key}
     mkdir -p $out/${ruby.gemPath}/specifications
     cat > $out/${ruby.gemPath}/specifications/${key}.gemspec <<'EOF'
@@ -94,19 +105,21 @@ if skip then
     EOF
   ''
 else
-  buildRubyGem (builtins.removeAttrs args removedAttrs // {
-    # For git+subdir, use "url" type (path-based install via bundler)
-    # since the subdirectory is pre-extracted from the git repo
-    type = if hasSubdir then "url" else source.type;
-    source = builtins.removeAttrs source [ "type" ];
-    platform = if platform != null then platform else "ruby";
-    gemPath = buildGems;
-    buildFlags = lib.optional (extconfFlags != "") extconfFlags;
-    dontBuild = !needsUnpack;
-  }
-  // lib.optionalAttrs (preBuildHook != "") { preBuild = preBuildHook; }
-  # Environment setup from preBuild also goes in preInstall since
-  # extension compilation happens during gem install (installPhase)
-  // lib.optionalAttrs (preBuild != "") { preInstall = preBuild; }
-  // lib.optionalAttrs hasSubdir { src = gitSrc + "/${subdir}"; }
+  buildRubyGem (
+    builtins.removeAttrs args removedAttrs
+    // {
+      # For git+subdir, use "url" type (path-based install via bundler)
+      # since the subdirectory is pre-extracted from the git repo
+      type = if hasSubdir then "url" else source.type;
+      source = builtins.removeAttrs source [ "type" ];
+      platform = if platform != null then platform else "ruby";
+      gemPath = buildGems;
+      buildFlags = lib.optional (extconfFlags != "") extconfFlags;
+      dontBuild = !needsUnpack;
+    }
+    // lib.optionalAttrs (preBuildHook != "") { preBuild = preBuildHook; }
+    # Environment setup from preBuild also goes in preInstall since
+    # extension compilation happens during gem install (installPhase)
+    // lib.optionalAttrs (preBuild != "") { preInstall = preBuild; }
+    // lib.optionalAttrs hasSubdir { src = gitSrc + "/${subdir}"; }
   )

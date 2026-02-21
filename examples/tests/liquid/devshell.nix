@@ -1,7 +1,16 @@
-{ pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
+{
+  pkgs ? import <nixpkgs> { },
+  ruby ? pkgs.ruby_3_4,
+}:
 let
   project = import ../../nix/liquid.nix { inherit pkgs ruby; };
-in project.devShell {
+in
+project.devShell {
   name = "liquid-devshell";
-  buildInputs = with pkgs; [ libyaml openssl zlib pkg-config ];
+  buildInputs = with pkgs; [
+    libyaml
+    openssl
+    zlib
+    pkg-config
+  ];
 }
